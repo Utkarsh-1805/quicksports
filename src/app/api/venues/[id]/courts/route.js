@@ -1,0 +1,124 @@
+import { NextResponse } from "next/server";
+import { prisma } from "../../../../lib/prisma";
+import { authenticateUser } from "../../../../lib/auth";
+
+// GET /api/venues/[id]/courts - Get courts for a venue
+export async function GET(request, { params }) {
+  try {
+    const { id } = params;
+    
+    const courts = await prisma.court.findMany({
+      where: {
+        facilityId: id,
+        isActive: true
+      },
+      include: {
+        timeSlots: {
+          where: { isActive: true },
+          orderBy: [
+            { dayOfWeek: 'asc' },
+            { startTime: 'asc' }
+          ]
+        },
+        facility: {
+          select: {
+            name: true,
+            status: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'asc'
+      }
+    });
+    
+    return NextResponse.json({
+      success: true,
+      data: { courts }
+    });
+    
+  } catch (error) {
+    console.error('Get courts error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/venues/[id]/courts - Create court for venue (Owner only)
+export async function POST(request, { params }) {
+  try {
+    const user = await authenticateUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
+    const { id: facilityId } = params;
+    
+    // Check if user owns this facility
+    const facility = await prisma.facility.findUnique({
+      where: { id: facilityId }
+    });
+    
+    if (!facility) {
+      return NextResponse.json(
+        { success: false, message: 'Venue not found' },
+        { status: 404 }
+      );
+    }
+    
+    if (facility.ownerId !== user.id && user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, message: 'You can only add courts to your own venues' },
+        { status: 403 }
+      );
+    }
+    
+    const body = await request.json();
+    const { name, description, sportType, pricePerHour, openingTime, closingTime } = body;
+    
+    // Validate required fields
+    if (!name || !sportType || !pricePerHour) {
+      return NextResponse.json(
+        { success: false, message: 'Name, sport type, and price per hour are required' },
+        { status: 400 }
+      );
+    }
+    
+    const court = await prisma.court.create({
+      data: {
+        name,
+        description,
+        sportType,
+        pricePerHour: parseFloat(pricePerHour),
+        openingTime: openingTime || '06:00',
+        closingTime: closingTime || '22:00',
+        facilityId
+      },
+      include: {
+        facility: {
+          select: {
+            name: true
+          }
+        }
+      }
+    });
+    
+    return NextResponse.json({
+      success: true,
+      message: 'Court created successfully',
+      data: { court }
+    });
+    
+  } catch (error) {
+    console.error('Create court error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
