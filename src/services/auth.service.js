@@ -11,11 +11,11 @@ export class AuthService {
   
   /**
    * Register a new user
-   * @param {Object} userData - { email, password, name, phone }
+   * @param {Object} userData - { email, password, name, phone, role }
    * @returns {Promise<Object>} - Created user data (without password)
    */
   async registerUser(userData) {
-    const { email, password, name, phone } = userData;
+    const { email, password, name, phone, role = 'USER' } = userData;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -36,7 +36,7 @@ export class AuthService {
         password: hashedPassword,
         name: name.trim(),
         phone: phone?.trim() || null,
-        role: 'USER'
+        role: role
       },
       select: {
         id: true,

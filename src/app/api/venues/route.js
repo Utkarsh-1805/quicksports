@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { authenticateUser } from "../../../lib/auth";
+import { verifyAuthToken } from "../../../lib/auth";
 
 // GET /api/venues - Get all approved venues with filters
 export async function GET(request) {
@@ -122,15 +122,17 @@ export async function GET(request) {
 // POST /api/venues - Create new venue (Facility Owner only)
 export async function POST(request) {
   try {
-    const user = await authenticateUser(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: 'Authentication required' },
+        { success: false, message: authResult.error },
         { status: 401 }
       );
     }
     
-    if (user.role !== 'OWNER' && user.role !== 'ADMIN') {
+    const user = authResult.user;
+    
+    if (user.role !== 'FACILITY_OWNER' && user.role !== 'ADMIN') {
       return NextResponse.json(
         { success: false, message: 'Only facility owners can create venues' },
         { status: 403 }

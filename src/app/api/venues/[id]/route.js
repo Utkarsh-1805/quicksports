@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
-import { authenticateUser } from "../../../../lib/auth";
+import { verifyAuthToken } from "../../../../lib/auth";
 
 // GET /api/venues/[id] - Get single venue details
 export async function GET(request, { params }) {
@@ -62,13 +62,15 @@ export async function GET(request, { params }) {
 // PUT /api/venues/[id] - Update venue (Owner only)
 export async function PUT(request, { params }) {
   try {
-    const user = await authenticateUser(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: 'Authentication required' },
+        { success: false, message: authResult.error },
         { status: 401 }
       );
     }
+    
+    const user = authResult.user;
     
     const { id } = params;
     const body = await request.json();
@@ -127,13 +129,15 @@ export async function PUT(request, { params }) {
 // DELETE /api/venues/[id] - Delete venue (Owner/Admin only)
 export async function DELETE(request, { params }) {
   try {
-    const user = await authenticateUser(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: 'Authentication required' },
+        { success: false, message: authResult.error },
         { status: 401 }
       );
     }
+    
+    const user = authResult.user;
     
     const { id } = params;
     

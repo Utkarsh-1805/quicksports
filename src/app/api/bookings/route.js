@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { authenticateUser } from "../../../lib/auth";
+import { verifyAuthToken } from "../../../lib/auth";
 
 // GET /api/bookings - Get user's bookings
 export async function GET(request) {
   try {
-    const user = await authenticateUser(request);
+    const user = await verifyAuthToken(request);
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
@@ -74,7 +74,7 @@ export async function GET(request) {
 // POST /api/bookings - Create new booking
 export async function POST(request) {
   try {
-    const user = await authenticateUser(request);
+    const user = await verifyAuthToken(request);
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },

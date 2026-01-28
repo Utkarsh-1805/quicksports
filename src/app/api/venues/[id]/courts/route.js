@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
-import { authenticateUser } from "../../../../lib/auth";
+import { prisma } from "../../../../../lib/prisma";
+import { verifyAuthToken } from "../../../../../lib/auth";
 
 // GET /api/venues/[id]/courts - Get courts for a venue
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const courts = await prisma.court.findMany({
       where: {
@@ -49,15 +49,17 @@ export async function GET(request, { params }) {
 // POST /api/venues/[id]/courts - Create court for venue (Owner only)
 export async function POST(request, { params }) {
   try {
-    const user = await authenticateUser(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: 'Authentication required' },
+        { success: false, message: authResult.error },
         { status: 401 }
       );
     }
     
-    const { id: facilityId } = params;
+    const user = authResult.user;
+    
+    const { id: facilityId } = await params;
     
     // Check if user owns this facility
     const facility = await prisma.facility.findUnique({
