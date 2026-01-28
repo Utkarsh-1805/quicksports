@@ -15,7 +15,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Validate request body
+    // Validate and sanitize request body
     const validation = validateRequest(body, authValidation.resendOtp);
     if (!validation.isValid) {
       return createErrorResponse(
@@ -25,9 +25,9 @@ export async function POST(request) {
       );
     }
 
-    // Check if user exists
+    // Check if user exists with sanitized email
     const user = await prisma.user.findUnique({
-      where: { email: body.email.toLowerCase() }
+      where: { email: validation.data.email }
     });
 
     if (!user) {

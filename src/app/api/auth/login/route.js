@@ -13,7 +13,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Validate request body
+    // Validate and sanitize request body
     const validation = validateRequest(body, authValidation.login);
     if (!validation.isValid) {
       return createErrorResponse(
@@ -23,10 +23,10 @@ export async function POST(request) {
       );
     }
 
-    // Login user
+    // Login user with sanitized data
     const result = await authService.loginUser(
-      body.email,
-      body.password
+      validation.data.email,
+      validation.data.password
     );
     
     return createResponse(

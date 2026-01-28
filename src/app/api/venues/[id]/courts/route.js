@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { verifyAuthToken } from "../../../../../lib/auth";
+import { facilityValidation, validateRequest } from "../../../../../validations/facility.validation.js";
 
 // GET /api/venues/[id]/courts - Get courts for a venue
 export async function GET(request, { params }) {
@@ -81,24 +82,21 @@ export async function POST(request, { params }) {
     }
     
     const body = await request.json();
-    const { name, description, sportType, pricePerHour, openingTime, closingTime } = body;
     
-    // Validate required fields
-    if (!name || !sportType || !pricePerHour) {
+    // Validate and sanitize request body
+    const validation = validateRequest(body, facilityValidation.createCourt);
+    if (!validation.isValid) {
       return NextResponse.json(
-        { success: false, message: 'Name, sport type, and price per hour are required' },
+        { success: false, message: 'Validation failed', errors: validation.errors },
         { status: 400 }
       );
     }
     
+    const courtData = validation.data;
+    
     const court = await prisma.court.create({
       data: {
-        name,
-        description,
-        sportType,
-        pricePerHour: parseFloat(pricePerHour),
-        openingTime: openingTime || '06:00',
-        closingTime: closingTime || '22:00',
+        ...courtData,
         facilityId
       },
       include: {

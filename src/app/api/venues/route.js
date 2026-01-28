@@ -1,18 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { verifyAuthToken } from "../../../lib/auth";
+import { facilityValidation, validateQueryParams, validateRequest } from "../../../validations/facility.validation.js";
 
 // GET /api/venues - Get all approved venues with filters
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 10;
-    const sportType = searchParams.get('sportType');
-    const minPrice = searchParams.get('minPrice');
-    const maxPrice = searchParams.get('maxPrice');
-    const city = searchParams.get('city');
-    const search = searchParams.get('search');
+    
+    // Validate and sanitize query parameters
+    const queryValidation = validateQueryParams(searchParams, facilityValidation.facilityQuery);
+    if (!queryValidation.isValid) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid query parameters', errors: queryValidation.errors },
+        { status: 400 }
+      );
+    }
+    
+    const { page = 1, limit = 10, sportType, minPrice, maxPrice, city, search } = queryValidation.data;
     
     const skip = (page - 1) * limit;
     
@@ -140,35 +145,21 @@ export async function POST(request) {
     }
     
     const body = await request.json();
-    const {
-      name,
-      description,
-      address,
-      city,
-      state,
-      pincode,
-      latitude,
-      longitude
-    } = body;
     
-    // Validate required fields
-    if (!name || !address || !city || !state || !pincode) {
+    // Validate and sanitize request body
+    const validation = validateRequest(body, facilityValidation.createFacility);
+    if (!validation.isValid) {
       return NextResponse.json(
-        { success: false, message: 'Name, address, city, state, and pincode are required' },
+        { success: false, message: 'Validation failed', errors: validation.errors },
         { status: 400 }
       );
     }
     
+    const facilityData = validation.data;
+    
     const facility = await prisma.facility.create({
       data: {
-        name,
-        description,
-        address,
-        city,
-        state,
-        pincode,
-        latitude,
-        longitude,
+        ...facilityData,
         ownerId: user.id,
         status: 'PENDING' // Requires admin approval
       },

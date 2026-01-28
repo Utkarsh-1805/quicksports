@@ -14,7 +14,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Validate request body
+    // Validate and sanitize request body
     const validation = validateRequest(body, authValidation.register);
     if (!validation.isValid) {
       return createErrorResponse(
@@ -24,8 +24,8 @@ export async function POST(request) {
       );
     }
 
-    // Register user
-    const user = await authService.registerUser(body);
+    // Register user with sanitized data
+    const user = await authService.registerUser(validation.data);
     
     // Generate OTP for email verification
     const otpResult = await authService.generateOtp(

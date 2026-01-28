@@ -13,7 +13,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     
-    // Validate request body
+    // Validate and sanitize request body
     const validation = validateRequest(body, authValidation.verifyOtp);
     if (!validation.isValid) {
       return createErrorResponse(
@@ -23,10 +23,10 @@ export async function POST(request) {
       );
     }
 
-    // Verify OTP
+    // Verify OTP with sanitized data
     const result = await authService.verifyOtp(
-      body.email,
-      body.code,
+      validation.data.email,
+      validation.data.code,
       body.type || 'EMAIL_VERIFICATION'
     );
     
