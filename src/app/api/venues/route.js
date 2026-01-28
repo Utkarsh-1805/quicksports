@@ -19,7 +19,10 @@ export async function GET(request) {
     
     const { page = 1, limit = 10, sportType, minPrice, maxPrice, city, search } = queryValidation.data;
     
-    const skip = (page - 1) * limit;
+    // Ensure page and limit are valid numbers
+    const validPage = Number.isInteger(page) && page > 0 ? page : 1;
+    const validLimit = Number.isInteger(limit) && limit > 0 ? limit : 10;
+    const skip = (validPage - 1) * validLimit;
     
     // Build filter conditions
     const where = {
@@ -52,7 +55,7 @@ export async function GET(request) {
     const facilities = await prisma.facility.findMany({
       where,
       skip,
-      take: limit,
+      take: validLimit,
       include: {
         owner: {
           select: {
@@ -85,15 +88,16 @@ export async function GET(request) {
     if (minPrice || maxPrice) {
       filteredFacilities = facilities.filter(facility => {
         const prices = facility.courts.map(court => court.pricePerHour);
-        const minFacilityPrice = Math.min(...prices);
-        const maxFacilityPrice = Math.max(...prices);
         
         if (minPrice && maxPrice) {
-          return minFacilityPrice >= parseFloat(minPrice) && maxFacilityPrice <= parseFloat(maxPrice);
+          // Has at least one court within the price range
+          return prices.some(price => price >= minPrice && price <= maxPrice);
         } else if (minPrice) {
-          return minFacilityPrice >= parseFloat(minPrice);
+          // Has at least one court above minimum price
+          return prices.some(price => price >= minPrice);
         } else if (maxPrice) {
-          return maxFacilityPrice <= parseFloat(maxPrice);
+          // Has at least one court within budget
+          return prices.some(price => price <= maxPrice);
         }
         return true;
       });
@@ -107,10 +111,10 @@ export async function GET(request) {
       data: {
         venues: filteredFacilities,
         pagination: {
-          page,
-          limit,
+          page: validPage,
+          limit: validLimit,
           total: totalCount,
-          pages: Math.ceil(totalCount / limit)
+          pages: Math.ceil(totalCount / validLimit)
         }
       }
     });

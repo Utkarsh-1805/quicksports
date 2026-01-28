@@ -5,13 +5,16 @@ import { verifyAuthToken } from "../../../lib/auth";
 // GET /api/bookings - Get user's bookings
 export async function GET(request) {
   try {
-    const user = await verifyAuthToken(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error || !authResult.user) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       );
     }
+    
+    const user = authResult.user;
+    console.log('GET bookings - User:', user);
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -24,6 +27,8 @@ export async function GET(request) {
       userId: user.id,
       ...(status && { status })
     };
+    
+    console.log('GET bookings - Where clause:', where);
     
     const bookings = await prisma.booking.findMany({
       where,
@@ -48,6 +53,9 @@ export async function GET(request) {
     });
     
     const totalCount = await prisma.booking.count({ where });
+    
+    console.log('GET bookings - Found bookings:', bookings.length);
+    console.log('GET bookings - Total count:', totalCount);
     
     return NextResponse.json({
       success: true,
@@ -74,13 +82,15 @@ export async function GET(request) {
 // POST /api/bookings - Create new booking
 export async function POST(request) {
   try {
-    const user = await verifyAuthToken(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error || !authResult.user) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       );
     }
+    
+    const user = authResult.user;
     
     const body = await request.json();
     const { courtId, bookingDate, startTime, endTime, totalAmount } = body;
@@ -160,7 +170,6 @@ export async function POST(request) {
         endTime,
         totalAmount: parseFloat(totalAmount),
         status: 'CONFIRMED',
-        paymentStatus: 'PAID',
         paymentId: `PAY_${Date.now()}`
       },
       include: {

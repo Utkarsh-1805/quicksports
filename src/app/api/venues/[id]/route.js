@@ -5,7 +5,7 @@ import { verifyAuthToken } from "../../../../lib/auth";
 // GET /api/venues/[id] - Get single venue details
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const facility = await prisma.facility.findFirst({
       where: {
@@ -24,9 +24,9 @@ export async function GET(request, { params }) {
           where: { isActive: true },
           include: {
             timeSlots: {
-              where: { isActive: true },
+              where: { isBlocked: false },
               orderBy: [
-                { dayOfWeek: 'asc' },
+                { date: 'asc' },
                 { startTime: 'asc' }
               ]
             }
@@ -72,7 +72,7 @@ export async function PUT(request, { params }) {
     
     const user = authResult.user;
     
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     // Check if user owns this facility or is admin
@@ -139,7 +139,7 @@ export async function DELETE(request, { params }) {
     
     const user = authResult.user;
     
-    const { id } = params;
+    const { id } = await params;
     
     // Check if user owns this facility or is admin
     const facility = await prisma.facility.findUnique({

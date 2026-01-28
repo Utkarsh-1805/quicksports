@@ -5,17 +5,18 @@ import { verifyAuthToken } from "../../../../lib/auth";
 // PUT /api/bookings/[id] - Update booking (cancel)
 export async function PUT(request, { params }) {
   try {
-    const user = await verifyAuthToken(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error || !authResult.user) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       );
     }
     
-    const { id } = params;
+    const user = authResult.user;
+    const { id } = await params;
     const body = await request.json();
-    const { action } = body;
+    const { action, status } = body;
     
     // Find the booking
     const booking = await prisma.booking.findUnique({
@@ -72,8 +73,7 @@ export async function PUT(request, { params }) {
       const updatedBooking = await prisma.booking.update({
         where: { id },
         data: { 
-          status: 'CANCELLED',
-          paymentStatus: 'REFUNDED'
+          status: 'CANCELLED'
         },
         include: {
           court: {
@@ -95,8 +95,41 @@ export async function PUT(request, { params }) {
       });
     }
     
+    // Handle direct status update
+    if (status) {
+      const validStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid status' },
+          { status: 400 }
+        );
+      }
+      
+      const updatedBooking = await prisma.booking.update({
+        where: { id },
+        data: { status },
+        include: {
+          court: {
+            include: {
+              facility: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      return NextResponse.json({
+        success: true,
+        message: `Booking status updated to ${status}`,
+        data: { booking: updatedBooking }
+      });
+    }
+    
     return NextResponse.json(
-      { success: false, message: 'Invalid action' },
+      { success: false, message: 'No valid action or status provided' },
       { status: 400 }
     );
     
@@ -112,15 +145,16 @@ export async function PUT(request, { params }) {
 // GET /api/bookings/[id] - Get single booking details
 export async function GET(request, { params }) {
   try {
-    const user = await verifyAuthToken(request);
-    if (!user) {
+    const authResult = await verifyAuthToken(request);
+    if (authResult.error || !authResult.user) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       );
     }
     
-    const { id } = params;
+    const user = authResult.user;
+    const { id } = await params;
     
     const booking = await prisma.booking.findFirst({
       where: {
