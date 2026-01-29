@@ -4,7 +4,7 @@ import { prisma } from "../../../lib/prisma";
 // GET /api/home - Get home page data
 export async function GET(request) {
   try {
-    // Get popular venues (by number of courts or recent bookings)
+    // Get popular venues (by number of courts first, then by creation date)
     const popularVenues = await prisma.facility.findMany({
       where: {
         status: 'APPROVED'
@@ -22,14 +22,13 @@ export async function GET(request) {
         },
         _count: {
           select: {
-            courts: { where: { isActive: true } },
-            bookings: { where: { status: 'CONFIRMED' } }
+            courts: { where: { isActive: true } }
           }
         }
       },
       orderBy: [
-        { courts: { _count: 'desc' } },
-        { createdAt: 'desc' }
+        { courts: { _count: 'desc' } },   // Most courts = potentially most popular
+        { createdAt: 'desc' }             // Newer venues as tiebreaker
       ]
     });
 
