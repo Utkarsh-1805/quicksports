@@ -102,6 +102,8 @@ model Facility {
   longitude   Float?
   status      FacilityStatus @default(PENDING)
   adminNote   String?        // Admin comments on approval/rejection
+  approvedAt  DateTime?      // When venue was approved/rejected
+  approvedBy  String?        // Admin user ID who approved/rejected
   
   // Owner relation
   ownerId     String
