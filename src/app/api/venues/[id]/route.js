@@ -20,6 +20,27 @@ export async function GET(request, { params }) {
             phone: true
           }
         },
+        amenities: {
+          include: {
+            amenity: {
+              select: {
+                id: true,
+                name: true,
+                icon: true
+              }
+            }
+          }
+        },
+        photos: {
+          select: {
+            id: true,
+            url: true,
+            caption: true
+          },
+          orderBy: {
+            createdAt: 'asc'
+          }
+        },
         courts: {
           where: { isActive: true },
           include: {
@@ -44,10 +65,16 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
+
+    // Transform amenities structure for cleaner response
+    const transformedFacility = {
+      ...facility,
+      amenities: facility.amenities.map(fa => fa.amenity)
+    };
     
     return NextResponse.json({
       success: true,
-      data: { venue: facility }
+      data: { venue: transformedFacility }
     });
     
   } catch (error) {
