@@ -60,6 +60,28 @@ export function extractToken(request) {
 }
 
 /**
+ * Unified auth verification function
+ * Returns consistent { success, user } or { success: false, error }
+ * @param {Request} request 
+ * @returns {Object} - { success: boolean, user?: Object, error?: string }
+ */
+export async function verifyAuth(request) {
+  const result = await verifyAuthToken(request);
+  
+  if (result.error || !result.user) {
+    return { 
+      success: false, 
+      error: result.error || 'Authentication failed' 
+    };
+  }
+  
+  return { 
+    success: true, 
+    user: result.user 
+  };
+}
+
+/**
  * Create standard API response
  * @param {Object} data 
  * @param {string} message 
