@@ -279,18 +279,43 @@ model Booking {
 model Review {
   id          String   @id @default(cuid())
   rating      Int      // 1-5
+  title       String?  // Optional review title
   comment     String?
   
+  // Relationships
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   facilityId  String
   facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   
+  // Verified booking badge
+  isVerifiedBooking Boolean @default(false)
+  
+  // Owner response
+  ownerResponse     String?
+  ownerRespondedAt  DateTime?
+  
+  // Helpful votes
+  helpfulCount      Int      @default(0)
+  helpfulVoters     Json?    // Array of user IDs who found this helpful
+  
+  // Moderation
+  isApproved        Boolean  @default(true)
+  isFlagged         Boolean  @default(false)
+  flagReason        String?
+  flaggedBy         String?
+  flaggedAt         DateTime?
+  moderatedBy       String?
+  moderatedAt       DateTime?
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([userId, facilityId]) // One review per user per facility
+  @@index([facilityId])
+  @@index([isApproved])
+  @@index([isFlagged])
   @@map("reviews")
 }
 
