@@ -9,10 +9,10 @@ import { z } from 'zod';
  */
 
 // Valid sport types in the system
-const sportTypes = ['BADMINTON', 'TENNIS', 'BASKETBALL', 'FOOTBALL', 'TABLE_TENNIS', 'SWIMMING', 'CRICKET', 'VOLLEYBALL'];
+const sportTypes = ['BADMINTON', 'TENNIS', 'BASKETBALL', 'FOOTBALL', 'TABLE_TENNIS', 'SWIMMING', 'CRICKET', 'VOLLEYBALL', 'SQUASH', 'OTHER'];
 
 // Valid sorting options for venue search
-const sortOptions = ['relevance', 'price_low', 'price_high', 'rating', 'newest', 'popular', 'distance'];
+const sortOptions = ['relevance', 'price_low', 'price_high', 'rating', 'newest', 'popular', 'distance', 'reviews'];
 
 /**
  * ADVANCED VENUE SEARCH SCHEMA
@@ -22,6 +22,7 @@ const sortOptions = ['relevance', 'price_low', 'price_high', 'rating', 'newest',
  * - Sport type filtering
  * - Amenity-based filtering (multiple amenities)
  * - Price range filtering
+ * - Rating filtering
  * - Geolocation-based search (lat/lng + radius)
  * - Sorting options
  * - Pagination
@@ -45,6 +46,10 @@ export const advancedSearchSchema = z.object({
   // Price range filtering
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
+  
+  // Rating filter
+  minRating: z.coerce.number().min(1).max(5).optional(),
+  hasReviews: z.enum(['true', 'false']).optional(),
   
   // Geolocation search (find venues near a location)
   latitude: z.coerce.number().min(-90).max(90).optional(),

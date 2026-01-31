@@ -72,6 +72,8 @@ export async function GET(request) {
       amenities: amenitiesString,
       minPrice,
       maxPrice,
+      minRating,
+      hasReviews,
       latitude,
       longitude,
       radius,
@@ -354,6 +356,27 @@ export async function GET(request) {
     }
     
     // ========================================
+    // STEP 11.5: RATING FILTER (Post-processing)
+    // ========================================
+    /**
+     * LOGIC: Filter venues by minimum rating or review presence
+     * 
+     * - minRating: Only show venues with average rating >= minRating
+     * - hasReviews: Filter by presence of reviews
+     */
+    if (minRating !== undefined) {
+      processedVenues = processedVenues.filter(venue => {
+        return venue.averageRating !== null && venue.averageRating >= minRating;
+      });
+    }
+    
+    if (hasReviews === 'true') {
+      processedVenues = processedVenues.filter(venue => venue.reviewCount > 0);
+    } else if (hasReviews === 'false') {
+      processedVenues = processedVenues.filter(venue => venue.reviewCount === 0);
+    }
+    
+    // ========================================
     // STEP 12: SORT POST-PROCESSING
     // ========================================
     /**
@@ -390,6 +413,11 @@ export async function GET(request) {
             return a.distance - b.distance;
           });
         }
+        break;
+      case 'reviews':
+        processedVenues.sort((a, b) => {
+          return b.reviewCount - a.reviewCount;
+        });
         break;
     }
     
