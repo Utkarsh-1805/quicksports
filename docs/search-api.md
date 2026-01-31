@@ -1,6 +1,6 @@
 # QuickCourt Search & Discovery API
 
-## Phase 2A: Enhanced Search & Discovery
+## Phase 8: Advanced Search & Filtering
 
 This document covers the advanced search and discovery APIs for the QuickCourt platform.
 
@@ -11,6 +11,13 @@ This document covers the advanced search and discovery APIs for the QuickCourt p
 1. [Advanced Search API](#1-advanced-search-api)
 2. [Search Suggestions API](#2-search-suggestions-api)
 3. [Nearby Venues API](#3-nearby-venues-api)
+4. [Trending Venues API](#4-trending-venues-api)
+5. [Featured Cities API](#5-featured-cities-api)
+6. [Filter Options API](#6-filter-options-api)
+7. [Availability Search API](#7-availability-search-api)
+8. [Popular Sports API](#8-popular-sports-api)
+9. [Similar Venues API](#9-similar-venues-api)
+10. [Search Analytics API (Admin)](#10-search-analytics-api-admin)
 
 ---
 
@@ -31,6 +38,8 @@ Comprehensive venue search with multiple filters and sorting options.
 | `amenities` | string | No | Comma-separated amenity IDs |
 | `minPrice` | number | No | Minimum price per hour |
 | `maxPrice` | number | No | Maximum price per hour |
+| `minRating` | number | No | Minimum rating (1-5) |
+| `hasReviews` | string | No | Filter by review presence: `true` or `false` |
 | `latitude` | number | No | User's latitude for distance calculation |
 | `longitude` | number | No | User's longitude for distance calculation |
 | `radius` | number | No | Search radius in km (requires lat/lng) |
@@ -44,6 +53,7 @@ Comprehensive venue search with multiple filters and sorting options.
 - `price_low` - Cheapest courts first
 - `price_high` - Most expensive first
 - `rating` - Highest rated first
+- `reviews` - Most reviewed first
 - `newest` - Recently added first
 - `popular` - Most courts first
 - `distance` - Nearest first (requires lat/lng)
@@ -242,6 +252,387 @@ curl "http://localhost:3000/api/venues/nearby?latitude=28.6139&longitude=77.2090
     },
     "count": 5,
     "message": null
+  }
+}
+```
+
+---
+
+## 4. Trending Venues API
+
+**Endpoint:** `GET /api/venues/trending`
+
+Get trending venues based on recent booking activity and ratings.
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | number | No | Max results (default: 10, max: 50) |
+| `city` | string | No | Filter by city |
+| `sportType` | string | No | Filter by sport type |
+| `includeSports` | string | No | Include popular sports (true/false) |
+
+### Example Request
+
+```bash
+curl "http://localhost:3000/api/venues/trending?limit=10&includeSports=true"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Trending venues fetched successfully",
+  "data": {
+    "venues": [
+      {
+        "id": "facility-001",
+        "name": "Sports Arena Delhi",
+        "city": "Delhi",
+        "address": "123 Sports Complex Road",
+        "photo": "https://example.com/photo.jpg",
+        "rating": 4.5,
+        "reviewCount": 25,
+        "bookingsThisMonth": 150,
+        "minPrice": 300,
+        "sports": ["BADMINTON", "TENNIS"],
+        "amenities": ["Parking", "AC"],
+        "trendingScore": 345
+      }
+    ],
+    "popularSports": [
+      {
+        "sport": "BADMINTON",
+        "courtCount": 50,
+        "bookingsThisMonth": 500,
+        "popularityScore": 1050
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 5. Featured Cities API
+
+**Endpoint:** `GET /api/venues/cities`
+
+Get featured cities with venue counts and available sports.
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | number | No | Max results (default: 10, max: 50) |
+
+### Example Request
+
+```bash
+curl "http://localhost:3000/api/venues/cities?limit=10"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Featured cities fetched successfully",
+  "data": {
+    "cities": [
+      {
+        "city": "Delhi",
+        "venueCount": 45,
+        "sportsAvailable": ["BADMINTON", "TENNIS", "CRICKET"],
+        "priceRange": {
+          "min": 200,
+          "max": 1500,
+          "avg": 450
+        }
+      }
+    ],
+    "total": 10
+  }
+}
+```
+
+---
+
+## 6. Filter Options API
+
+**Endpoint:** `GET /api/venues/filters`
+
+Get available filter options for search UI (cities, sports, amenities, price range).
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `city` | string | No | Get filters specific to a city |
+
+### Example Request
+
+```bash
+curl "http://localhost:3000/api/venues/filters?city=Delhi"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Filter options fetched successfully",
+  "data": {
+    "cities": ["Delhi", "Mumbai", "Bangalore", "Chennai"],
+    "sports": ["BADMINTON", "TENNIS", "BASKETBALL", "CRICKET"],
+    "amenities": [
+      { "id": "amenity-001", "name": "Parking", "icon": "parking" },
+      { "id": "amenity-002", "name": "AC", "icon": "ac" }
+    ],
+    "priceRange": {
+      "min": 100,
+      "max": 2000
+    }
+  }
+}
+```
+
+---
+
+## 7. Availability Search API
+
+**Endpoint:** `POST /api/venues/search/available`
+
+Search venues with real-time availability for a specific date/time.
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `date` | string | No | Date to check (YYYY-MM-DD) |
+| `startTime` | string | No | Start time (HH:MM) |
+| `endTime` | string | No | End time (HH:MM) |
+| `sportType` | string | No | Filter by sport |
+| `city` | string | No | Filter by city |
+| `latitude` | number | No | User latitude |
+| `longitude` | number | No | User longitude |
+| `radius` | number | No | Search radius in km |
+| `minPrice` | number | No | Minimum price |
+| `maxPrice` | number | No | Maximum price |
+| `page` | number | No | Page number |
+| `limit` | number | No | Results per page |
+
+### Example Request
+
+```bash
+curl -X POST "http://localhost:3000/api/venues/search/available" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "date": "2024-02-15",
+    "startTime": "18:00",
+    "endTime": "21:00",
+    "sportType": "BADMINTON",
+    "city": "Delhi",
+    "page": 1,
+    "limit": 10
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Venues with availability fetched successfully",
+  "data": {
+    "venues": [
+      {
+        "id": "facility-001",
+        "name": "Sports Arena Delhi",
+        "city": "Delhi",
+        "address": "123 Sports Complex",
+        "photo": "https://example.com/photo.jpg",
+        "rating": 4.5,
+        "reviewCount": 25,
+        "distance": null,
+        "minPrice": 300,
+        "sports": ["BADMINTON"],
+        "amenities": ["Parking", "AC"],
+        "courtCount": 4,
+        "availableCourts": 3,
+        "matchingSlots": [
+          {
+            "courtId": "court-001",
+            "courtName": "Court 1",
+            "sportType": "BADMINTON",
+            "price": 300,
+            "startTime": "18:00",
+            "endTime": "19:00"
+          }
+        ],
+        "hasAvailability": true
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 10,
+      "total": 5,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
+## 8. Popular Sports API
+
+**Endpoint:** `GET /api/sports/popular`
+
+Get popular sports ranked by court count and booking activity.
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `city` | string | No | Filter by city |
+
+### Example Request
+
+```bash
+curl "http://localhost:3000/api/sports/popular?city=Delhi"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Popular sports fetched successfully",
+  "data": {
+    "sports": [
+      {
+        "sport": "BADMINTON",
+        "courtCount": 50,
+        "bookingsThisMonth": 500,
+        "popularityScore": 1050
+      },
+      {
+        "sport": "TENNIS",
+        "courtCount": 30,
+        "bookingsThisMonth": 200,
+        "popularityScore": 430
+      }
+    ],
+    "city": "Delhi"
+  }
+}
+```
+
+---
+
+## 9. Similar Venues API
+
+**Endpoint:** `GET /api/venues/:id/similar`
+
+Get venues similar to a specific venue based on sports, amenities, and location.
+
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | Yes | Venue ID |
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `limit` | number | No | Max results (default: 5, max: 20) |
+
+### Example Request
+
+```bash
+curl "http://localhost:3000/api/venues/facility-001/similar?limit=5"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Similar venues fetched successfully",
+  "data": {
+    "referenceVenue": "Sports Arena Delhi",
+    "venues": [
+      {
+        "id": "facility-002",
+        "name": "Badminton Hub",
+        "city": "Delhi",
+        "photo": "https://example.com/photo.jpg",
+        "rating": 4.3,
+        "reviewCount": 18,
+        "minPrice": 350,
+        "sports": ["BADMINTON"],
+        "amenities": ["Parking", "Cafeteria"],
+        "similarityScore": 15
+      }
+    ]
+  }
+}
+```
+
+---
+
+## 10. Search Analytics API (Admin)
+
+**Endpoint:** `GET /api/admin/analytics/search`
+
+Get search and inventory analytics (Admin only).
+
+### Headers
+
+| Header | Required | Description |
+|--------|----------|-------------|
+| `Authorization` | Yes | Bearer token (Admin) |
+
+### Example Request
+
+```bash
+curl "http://localhost:3000/api/admin/analytics/search" \
+  -H "Authorization: Bearer <admin_token>"
+```
+
+### Example Response
+
+```json
+{
+  "success": true,
+  "message": "Search analytics fetched successfully",
+  "data": {
+    "inventory": {
+      "totalVenues": 150,
+      "totalCourts": 450,
+      "activeCourts": 420,
+      "inactiveCourts": 30
+    },
+    "geography": {
+      "topCities": [
+        { "city": "Delhi", "venueCount": 45 },
+        { "city": "Mumbai", "venueCount": 38 },
+        { "city": "Bangalore", "venueCount": 32 }
+      ]
+    },
+    "sports": [
+      { "sport": "BADMINTON", "courtCount": 180 },
+      { "sport": "TENNIS", "courtCount": 95 }
+    ],
+    "pricing": {
+      "minPrice": 100,
+      "maxPrice": 2500,
+      "avgPrice": 450
+    }
   }
 }
 ```
