@@ -48,6 +48,29 @@ enum OtpType {
   PASSWORD_RESET
 }
 
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CARD
+  UPI
+  NET_BANKING
+  WALLET
+  EMI
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
 // ==================== USER & AUTH ====================
 
 model User {
@@ -66,6 +89,8 @@ model User {
   bookings   Booking[]  // Bookings made by this user
   otps       Otp[]      // OTPs generated for this user
   reviews    Review[]   // Reviews written by this user
+  payments   Payment[]  // Payments made by this user
+  refunds    Refund[]   // Refunds received by this user
 
   @@map("users")
 }
@@ -207,9 +232,14 @@ model Booking {
   bookingDate   DateTime      @db.Date
   startTime     String        // "HH:MM" format
   endTime       String        // "HH:MM" format
+  duration      Int           @default(60) // Duration in minutes, default 1 hour
   totalAmount   Float
   status        BookingStatus @default(PENDING)
-  paymentId     String?       // Simulated payment reference
+  
+  // Booking lifecycle timestamps
+  confirmedAt      DateTime?
+  cancelledAt      DateTime?
+  cancellationReason String?
   
   userId        String
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -219,6 +249,10 @@ model Booking {
   
   timeSlotId    String?       @unique
   timeSlot      TimeSlot?     @relation(fields: [timeSlotId], references: [id], onDelete: SetNull)
+  
+  // Payment Relations
+  payment       Payment?      // Payment for this booking
+  refunds       Refund[]      // Refunds for this booking
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -244,4 +278,85 @@ model Review {
 
   @@unique([userId, facilityId]) // One review per user per facility
   @@map("reviews")
+}
+
+// ==================== PAYMENT ====================
+
+model Payment {
+  id                  String        @id @default(cuid())
+  bookingId           String        @unique
+  booking             Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  userId              String
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Payment Gateway Details
+  razorpayOrderId     String        @unique
+  razorpayPaymentId   String?       @unique
+  
+  // Amount Details
+  amount              Float         // Original booking amount
+  processingFee       Float         // Payment processing fee
+  gst                 Float         // GST on processing fee
+  totalAmount         Float         // Final amount charged
+  currency            String        @default("INR")
+  
+  // Payment Details
+  method              PaymentMethod
+  status              PaymentStatus @default(PENDING)
+  
+  // Gateway Response
+  gatewayResponse     Json?         // Full gateway response for debugging
+  failureReason       String?       // Failure reason if payment failed
+  
+  // Metadata
+  notes               Json?         // Additional notes/metadata
+  
+  // Timestamps
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  completedAt         DateTime?     // When payment was completed
+  webhookProcessedAt  DateTime?     // When webhook was processed
+  
+  // Relations
+  refunds             Refund[]
+  
+  @@map("payments")
+}
+
+// ==================== REFUND ====================
+
+model Refund {
+  id                String       @id @default(cuid())
+  
+  paymentId         String
+  payment           Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  
+  bookingId         String
+  booking           Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Refund Gateway Details
+  razorpayRefundId  String?      @unique
+  
+  // Amount Details
+  amount            Float        // Refund amount
+  originalAmount    Float        // Original payment amount
+  refundPercentage  Int          // Percentage of original amount refunded
+  
+  // Refund Details
+  status            RefundStatus @default(PENDING)
+  reason            String       // Reason for refund
+  
+  // Metadata
+  notes             Json?        // Additional notes/metadata
+  
+  // Timestamps
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  processedAt       DateTime?    // When refund was processed
+  
+  @@map("refunds")
 }
