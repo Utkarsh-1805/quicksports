@@ -81,8 +81,21 @@ model User {
   phone      String?
   role       Role     @default(USER)
   isVerified Boolean  @default(false)
+  
+  // Profile fields
+  avatar      String?  // Profile picture URL
+  bio         String?  // Short bio/description
+  preferences Json?    // User preferences (notifications, theme, etc.)
+  
+  // Account status
+  isActive    Boolean  @default(true)  // For soft delete / deactivation
+  deactivatedAt DateTime?
+  deactivationReason String?
+  
+  // Timestamps
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  lastLoginAt DateTime?
 
   // Relations
   facilities Facility[] // Facilities owned by this user (for OWNER role)
@@ -91,6 +104,7 @@ model User {
   reviews    Review[]   // Reviews written by this user
   payments   Payment[]  // Payments made by this user
   refunds    Refund[]   // Refunds received by this user
+  notifications Notification[] // User notifications
 
   @@map("users")
 }
@@ -359,4 +373,52 @@ model Refund {
   processedAt       DateTime?    // When refund was processed
   
   @@map("refunds")
+}
+
+// ==================== NOTIFICATION ====================
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_REMINDER
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  REFUND_PROCESSED
+  REVIEW_RESPONSE
+  VENUE_APPROVED
+  VENUE_REJECTED
+  SYSTEM_ALERT
+  PROMOTIONAL
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  
+  // Recipient
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification content
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?            // Additional data (bookingId, venueId, etc.)
+  
+  // Status
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  
+  // Delivery channels
+  emailSent   Boolean          @default(false)
+  smsSent     Boolean          @default(false)
+  pushSent    Boolean          @default(false)
+  
+  // Timestamps
+  createdAt   DateTime         @default(now())
+  expiresAt   DateTime?        // Optional expiry for time-sensitive notifications
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("notifications")
 }
