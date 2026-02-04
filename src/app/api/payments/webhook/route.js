@@ -324,8 +324,3 @@ async function handleRefundProcessed(webhookData) {
 }
 
 // Disable body parsing for raw webhook data
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
