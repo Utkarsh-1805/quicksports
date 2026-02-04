@@ -11,18 +11,19 @@ import { flagReviewSchema } from "../../../../../../../validations/review.valida
 /**
  * POST - Flag a review for moderation
  */
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }
 
     const user = authResult.user;
-    const { reviewId } = await params;
+    const params = await context.params;
+    const { reviewId } = params;
     const body = await request.json();
 
     // Validate input

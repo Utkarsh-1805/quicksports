@@ -4,8 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyAuth } from "../../../../lib/auth";
-import { getUserReviews } from "../../../../services/review.service";
+import { verifyAuth } from "../../../../../lib/auth";
+import { getUserReviews } from "../../../../../services/review.service";
 
 /**
  * GET - Get user's own review history
@@ -13,9 +13,9 @@ import { getUserReviews } from "../../../../services/review.service";
 export async function GET(request) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }

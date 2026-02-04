@@ -14,18 +14,19 @@ import {
 /**
  * POST - Mark review as helpful
  */
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }
 
     const user = authResult.user;
-    const { reviewId } = await params;
+    const params = await context.params;
+    const { reviewId } = params;
 
     const review = await markReviewHelpful(reviewId, user.id);
 
@@ -71,18 +72,19 @@ export async function POST(request, { params }) {
 /**
  * DELETE - Remove helpful vote
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }
 
     const user = authResult.user;
-    const { reviewId } = await params;
+    const params = await context.params;
+    const { reviewId } = params;
 
     const review = await removeHelpfulVote(reviewId, user.id);
 

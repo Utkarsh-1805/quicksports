@@ -17,18 +17,19 @@ import { ownerResponseSchema } from "../../../../../../../validations/review.val
 /**
  * POST - Add owner response to a review
  */
-export async function POST(request, { params }) {
+export async function POST(request, context) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }
 
     const user = authResult.user;
-    const { reviewId } = await params;
+    const params = await context.params;
+    const { reviewId } = params;
     const body = await request.json();
 
     // Validate input
@@ -66,6 +67,11 @@ export async function POST(request, { params }) {
 
   } catch (error) {
     console.error('Add owner response error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
 
     if (error.message === 'REVIEW_NOT_FOUND') {
       return NextResponse.json(
@@ -89,7 +95,7 @@ export async function POST(request, { params }) {
     }
 
     return NextResponse.json(
-      { success: false, message: 'Failed to add response' },
+      { success: false, message: 'Failed to add response', error: error.message },
       { status: 500 }
     );
   }
@@ -98,18 +104,19 @@ export async function POST(request, { params }) {
 /**
  * PUT - Update owner response
  */
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }
 
     const user = authResult.user;
-    const { reviewId } = await params;
+    const params = await context.params;
+    const { reviewId } = params;
     const body = await request.json();
 
     // Validate input
@@ -171,18 +178,19 @@ export async function PUT(request, { params }) {
 /**
  * DELETE - Delete owner response
  */
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
     const authResult = await verifyAuth(request);
-    if (authResult.error) {
+    if (!authResult.success) {
       return NextResponse.json(
-        { success: false, message: authResult.error },
+        { success: false, message: authResult.error || 'Authentication required' },
         { status: 401 }
       );
     }
 
     const user = authResult.user;
-    const { reviewId } = await params;
+    const params = await context.params;
+    const { reviewId } = params;
 
     await deleteOwnerResponse(reviewId, user.id);
 
