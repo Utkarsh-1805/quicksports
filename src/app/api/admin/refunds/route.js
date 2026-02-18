@@ -5,9 +5,9 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "../../../../lib/admin";
-import { prisma } from "../../../../lib/prisma";
-import PaymentService from "../../../../services/payment.service";
+import { requireAdmin } from "@/lib/admin";
+import prisma from "@/lib/prisma";
+import PaymentService from "@/services/payment.service";
 
 /**
  * GET - Get all refunds with filters
@@ -162,6 +162,16 @@ export async function POST(request) {
       );
     }
 
+    // Convert amount to number if provided
+    const requestedAmount = amount ? parseFloat(amount) : null;
+
+    if (requestedAmount !== null && (isNaN(requestedAmount) || requestedAmount <= 0)) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid amount provided' },
+        { status: 400 }
+      );
+    }
+
     // Find payment
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
@@ -198,7 +208,7 @@ export async function POST(request) {
       .reduce((sum, r) => sum + r.amount, 0);
 
     const maxRefundable = payment.totalAmount - existingRefundTotal;
-    const refundAmount = amount || maxRefundable;
+    const refundAmount = requestedAmount || maxRefundable;
 
     if (refundAmount > maxRefundable) {
       return NextResponse.json(

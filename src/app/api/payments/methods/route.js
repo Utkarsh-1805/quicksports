@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import PaymentService from "../../../services/payment.service";
+import PaymentService from "@/services/payment.service";
 
 /**
  * GET - Get available payment methods with fees

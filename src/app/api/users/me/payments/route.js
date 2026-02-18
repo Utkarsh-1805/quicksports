@@ -4,8 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyAuth } from "../../../../lib/auth";
-import { prisma } from "../../../../lib/prisma";
+import { verifyAuth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 /**
  * GET - Get user's payment history
