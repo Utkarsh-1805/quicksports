@@ -84,12 +84,14 @@ export const webhookSchema = z.object({
   event: z.string().min(1, 'Event type is required'),
   payload: z.object({
     payment: z.object({
-      id: z.string(),
-      order_id: z.string().optional(),
-      status: z.string(),
-      amount: z.number(),
-      currency: z.string(),
-      method: z.string().optional()
+      entity: z.object({
+        id: z.string(),
+        order_id: z.string().optional(),
+        status: z.string(),
+        amount: z.number(),
+        currency: z.string(),
+        method: z.string().optional()
+      })
     }).optional(),
     order: z.object({
       id: z.string(),
