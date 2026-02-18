@@ -1,5 +1,3 @@
-// Main Prisma schema file - contains datasource and generator configurations
-
 generator client {
   provider   = "prisma-client-js"
   engineType = "binary"
@@ -9,7 +7,267 @@ datasource db {
   provider = "postgresql"
 }
 
-// ==================== ENUMS ====================
+model User {
+  id                 String         @id @default(cuid())
+  email              String         @unique
+  password           String
+  name               String
+  phone              String?
+  role               Role           @default(USER)
+  isVerified         Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  avatar             String?
+  bio                String?
+  deactivatedAt      DateTime?
+  deactivationReason String?
+  isActive           Boolean        @default(true)
+  lastLoginAt        DateTime?
+  preferences        Json?
+  bookings           Booking[]
+  facilities         Facility[]
+  notifications      Notification[]
+  otps               Otp[]
+  payments           Payment[]
+  refunds            Refund[]
+  reviews            Review[]
+
+  @@map("users")
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  code      String
+  type      OtpType
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("otps")
+}
+
+model Facility {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  city        String
+  state       String
+  pincode     String
+  latitude    Float?
+  longitude   Float?
+  status      FacilityStatus    @default(PENDING)
+  adminNote   String?
+  ownerId     String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  approvedAt  DateTime?
+  approvedBy  String?
+  courts      Court[]
+  owner       User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  amenities   FacilityAmenity[]
+  photos      FacilityPhoto[]
+  reviews     Review[]
+
+  @@map("facilities")
+}
+
+model FacilityPhoto {
+  id         String   @id @default(cuid())
+  url        String
+  caption    String?
+  facilityId String
+  createdAt  DateTime @default(now())
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@map("facility_photos")
+}
+
+model Amenity {
+  id         String            @id @default(cuid())
+  name       String            @unique
+  icon       String?
+  facilities FacilityAmenity[]
+
+  @@map("amenities")
+}
+
+model FacilityAmenity {
+  facilityId String
+  amenityId  String
+  amenity    Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@id([facilityId, amenityId])
+  @@map("facility_amenities")
+}
+
+model Court {
+  id           String     @id @default(cuid())
+  name         String
+  description  String?
+  sportType    SportType
+  pricePerHour Float
+  isActive     Boolean    @default(true)
+  openingTime  String     @default("06:00")
+  closingTime  String     @default("22:00")
+  facilityId   String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  bookings     Booking[]
+  facility     Facility   @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  timeSlots    TimeSlot[]
+
+  @@map("courts")
+}
+
+model TimeSlot {
+  id          String   @id @default(cuid())
+  date        DateTime @db.Date
+  startTime   String
+  endTime     String
+  isBlocked   Boolean  @default(false)
+  blockReason String?
+  courtId     String
+  createdAt   DateTime @default(now())
+  booking     Booking?
+  court       Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@unique([courtId, date, startTime])
+  @@map("time_slots")
+}
+
+model Booking {
+  id                 String        @id @default(cuid())
+  bookingDate        DateTime      @db.Date
+  startTime          String
+  endTime            String
+  totalAmount        Float
+  status             BookingStatus @default(PENDING)
+  userId             String
+  courtId            String
+  timeSlotId         String?       @unique
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  cancellationReason String?
+  cancelledAt        DateTime?
+  confirmedAt        DateTime?
+  duration           Int           @default(60)
+  court              Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  timeSlot           TimeSlot?     @relation(fields: [timeSlotId], references: [id])
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment            Payment?
+  refunds            Refund[]
+
+  @@map("bookings")
+}
+
+model Review {
+  id                String    @id @default(cuid())
+  rating            Int
+  comment           String?
+  userId            String
+  facilityId        String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  flagReason        String?
+  flaggedAt         DateTime?
+  flaggedBy         String?
+  helpfulCount      Int       @default(0)
+  helpfulVoters     Json?
+  isApproved        Boolean   @default(true)
+  isFlagged         Boolean   @default(false)
+  isVerifiedBooking Boolean   @default(false)
+  moderatedAt       DateTime?
+  moderatedBy       String?
+  ownerRespondedAt  DateTime?
+  ownerResponse     String?
+  title             String?
+  facility          Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, facilityId])
+  @@index([facilityId])
+  @@index([isApproved])
+  @@index([isFlagged])
+  @@map("reviews")
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  bookingId          String        @unique
+  userId             String
+  razorpayOrderId    String        @unique
+  razorpayPaymentId  String?       @unique
+  amount             Float
+  processingFee      Float
+  gst                Float
+  totalAmount        Float
+  currency           String        @default("INR")
+  method             PaymentMethod
+  status             PaymentStatus @default(PENDING)
+  gatewayResponse    Json?
+  failureReason      String?
+  notes              Json?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  completedAt        DateTime?
+  webhookProcessedAt DateTime?
+  booking            Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refunds            Refund[]
+
+  @@map("payments")
+}
+
+model Refund {
+  id               String       @id @default(cuid())
+  paymentId        String
+  bookingId        String
+  userId           String
+  razorpayRefundId String?      @unique
+  amount           Float
+  originalAmount   Float
+  refundPercentage Int
+  status           RefundStatus @default(PENDING)
+  reason           String
+  notes            Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  processedAt      DateTime?
+  booking          Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  payment          Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refunds")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  emailSent Boolean          @default(false)
+  smsSent   Boolean          @default(false)
+  pushSent  Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  expiresAt DateTime?
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isRead])
+  @@map("notifications")
+}
 
 enum Role {
   USER
@@ -71,337 +329,6 @@ enum RefundStatus {
   CANCELLED
 }
 
-// ==================== USER & AUTH ====================
-
-model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  password   String
-  name       String
-  phone      String?
-  role       Role     @default(USER)
-  isVerified Boolean  @default(false)
-  
-  // Profile fields
-  avatar      String?  // Profile picture URL
-  bio         String?  // Short bio/description
-  preferences Json?    // User preferences (notifications, theme, etc.)
-  
-  // Account status
-  isActive    Boolean  @default(true)  // For soft delete / deactivation
-  deactivatedAt DateTime?
-  deactivationReason String?
-  
-  // Timestamps
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  lastLoginAt DateTime?
-
-  // Relations
-  facilities Facility[] // Facilities owned by this user (for OWNER role)
-  bookings   Booking[]  // Bookings made by this user
-  otps       Otp[]      // OTPs generated for this user
-  reviews    Review[]   // Reviews written by this user
-  payments   Payment[]  // Payments made by this user
-  refunds    Refund[]   // Refunds received by this user
-  notifications Notification[] // User notifications
-
-  @@map("users")
-}
-
-model Otp {
-  id        String   @id @default(cuid())
-  code      String
-  type      OtpType
-  expiresAt DateTime
-  isUsed    Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  // Relations
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([code])
-  @@index([expiresAt])
-  @@map("otps")
-}
-
-// ==================== FACILITY ====================
-
-model Facility {
-  id          String         @id @default(cuid())
-  name        String
-  description String?
-  address     String
-  city        String
-  state       String
-  pincode     String
-  latitude    Float?
-  longitude   Float?
-  status      FacilityStatus @default(PENDING)
-  adminNote   String?        // Admin comments on approval/rejection
-  approvedAt  DateTime?      // When venue was approved/rejected
-  approvedBy  String?        // Admin user ID who approved/rejected
-  
-  // Owner relation
-  ownerId     String
-  owner       User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  // Relations
-  amenities   FacilityAmenity[]
-  photos      FacilityPhoto[]
-  courts      Court[]
-  reviews     Review[]
-
-  @@map("facilities")
-}
-
-model FacilityPhoto {
-  id         String   @id @default(cuid())
-  url        String
-  caption    String?
-  facilityId String
-  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
-
-  @@map("facility_photos")
-}
-
-model Amenity {
-  id          String            @id @default(cuid())
-  name        String            @unique
-  icon        String?
-  facilities  FacilityAmenity[]
-
-  @@map("amenities")
-}
-
-model FacilityAmenity {
-  facilityId String
-  amenityId  String
-  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  amenity    Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
-
-  @@id([facilityId, amenityId])
-  @@map("facility_amenities")
-}
-
-// ==================== COURT ====================
-
-model Court {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
-  sportType     SportType
-  pricePerHour  Float
-  isActive      Boolean   @default(true)
-  
-  // Operating hours (stored as "HH:MM" format)
-  openingTime   String    @default("06:00")
-  closingTime   String    @default("22:00")
-  
-  facilityId    String
-  facility      Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
-  timeSlots     TimeSlot[]
-  bookings      Booking[]
-
-  @@map("courts")
-}
-
-// ==================== TIME SLOT ====================
-
-model TimeSlot {
-  id          String   @id @default(cuid())
-  date        DateTime @db.Date
-  startTime   String   // "HH:MM" format
-  endTime     String   // "HH:MM" format
-  isBlocked   Boolean  @default(false) // For maintenance
-  blockReason String?
-  
-  courtId     String
-  court       Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  
-  createdAt   DateTime @default(now())
-
-  // Relations
-  booking     Booking?
-
-  @@unique([courtId, date, startTime])
-  @@map("time_slots")
-}
-
-// ==================== BOOKING ====================
-
-model Booking {
-  id            String        @id @default(cuid())
-  bookingDate   DateTime      @db.Date
-  startTime     String        // "HH:MM" format
-  endTime       String        // "HH:MM" format
-  duration      Int           @default(60) // Duration in minutes, default 1 hour
-  totalAmount   Float
-  status        BookingStatus @default(PENDING)
-  
-  // Booking lifecycle timestamps
-  confirmedAt      DateTime?
-  cancelledAt      DateTime?
-  cancellationReason String?
-  
-  userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  courtId       String
-  court         Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
-  
-  timeSlotId    String?       @unique
-  timeSlot      TimeSlot?     @relation(fields: [timeSlotId], references: [id], onDelete: SetNull)
-  
-  // Payment Relations
-  payment       Payment?      // Payment for this booking
-  refunds       Refund[]      // Refunds for this booking
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@map("bookings")
-}
-
-// ==================== REVIEW ====================
-
-model Review {
-  id          String   @id @default(cuid())
-  rating      Int      // 1-5
-  title       String?  // Optional review title
-  comment     String?
-  
-  // Relationships
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  facilityId  String
-  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  
-  // Verified booking badge
-  isVerifiedBooking Boolean @default(false)
-  
-  // Owner response
-  ownerResponse     String?
-  ownerRespondedAt  DateTime?
-  
-  // Helpful votes
-  helpfulCount      Int      @default(0)
-  helpfulVoters     Json?    // Array of user IDs who found this helpful
-  
-  // Moderation
-  isApproved        Boolean  @default(true)
-  isFlagged         Boolean  @default(false)
-  flagReason        String?
-  flaggedBy         String?
-  flaggedAt         DateTime?
-  moderatedBy       String?
-  moderatedAt       DateTime?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([userId, facilityId]) // One review per user per facility
-  @@index([facilityId])
-  @@index([isApproved])
-  @@index([isFlagged])
-  @@map("reviews")
-}
-
-// ==================== PAYMENT ====================
-
-model Payment {
-  id                  String        @id @default(cuid())
-  bookingId           String        @unique
-  booking             Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  userId              String
-  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Payment Gateway Details
-  razorpayOrderId     String        @unique
-  razorpayPaymentId   String?       @unique
-  
-  // Amount Details
-  amount              Float         // Original booking amount
-  processingFee       Float         // Payment processing fee
-  gst                 Float         // GST on processing fee
-  totalAmount         Float         // Final amount charged
-  currency            String        @default("INR")
-  
-  // Payment Details
-  method              PaymentMethod
-  status              PaymentStatus @default(PENDING)
-  
-  // Gateway Response
-  gatewayResponse     Json?         // Full gateway response for debugging
-  failureReason       String?       // Failure reason if payment failed
-  
-  // Metadata
-  notes               Json?         // Additional notes/metadata
-  
-  // Timestamps
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  completedAt         DateTime?     // When payment was completed
-  webhookProcessedAt  DateTime?     // When webhook was processed
-  
-  // Relations
-  refunds             Refund[]
-  
-  @@map("payments")
-}
-
-// ==================== REFUND ====================
-
-model Refund {
-  id                String       @id @default(cuid())
-  
-  paymentId         String
-  payment           Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-  
-  bookingId         String
-  booking           Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  
-  userId            String
-  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Refund Gateway Details
-  razorpayRefundId  String?      @unique
-  
-  // Amount Details
-  amount            Float        // Refund amount
-  originalAmount    Float        // Original payment amount
-  refundPercentage  Int          // Percentage of original amount refunded
-  
-  // Refund Details
-  status            RefundStatus @default(PENDING)
-  reason            String       // Reason for refund
-  
-  // Metadata
-  notes             Json?        // Additional notes/metadata
-  
-  // Timestamps
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  processedAt       DateTime?    // When refund was processed
-  
-  @@map("refunds")
-}
-
-// ==================== NOTIFICATION ====================
-
 enum NotificationType {
   BOOKING_CONFIRMED
   BOOKING_CANCELLED
@@ -414,36 +341,4 @@ enum NotificationType {
   VENUE_REJECTED
   SYSTEM_ALERT
   PROMOTIONAL
-}
-
-model Notification {
-  id          String           @id @default(cuid())
-  
-  // Recipient
-  userId      String
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Notification content
-  type        NotificationType
-  title       String
-  message     String
-  data        Json?            // Additional data (bookingId, venueId, etc.)
-  
-  // Status
-  isRead      Boolean          @default(false)
-  readAt      DateTime?
-  
-  // Delivery channels
-  emailSent   Boolean          @default(false)
-  smsSent     Boolean          @default(false)
-  pushSent    Boolean          @default(false)
-  
-  // Timestamps
-  createdAt   DateTime         @default(now())
-  expiresAt   DateTime?        // Optional expiry for time-sensitive notifications
-
-  @@index([userId])
-  @@index([createdAt])
-  @@index([isRead])
-  @@map("notifications")
 }
