@@ -31,6 +31,7 @@ model User {
   payments           Payment[]
   refunds            Refund[]
   reviews            Review[]
+  reports            Report[]
 
   @@map("users")
 }
@@ -341,4 +342,64 @@ enum NotificationType {
   VENUE_REJECTED
   SYSTEM_ALERT
   PROMOTIONAL
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  targetType  ReportType
+  targetId    String
+  category    ReportCategory
+  title       String
+  description String
+  evidence    Json?        // Array of URLs to evidence
+  priority    ReportPriority @default(MEDIUM)
+  status      ReportStatus @default(PENDING)
+  resolution  String?
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  metadata    Json?        // Additional context data
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  reporter    User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  @@index([reporterId])
+  @@index([targetType, targetId])
+  @@index([status])
+  @@index([priority])
+  @@map("reports")
+}
+
+enum ReportType {
+  FACILITY
+  USER
+  BOOKING
+  REVIEW
+  OTHER
+}
+
+enum ReportCategory {
+  INAPPROPRIATE_CONTENT
+  FAKE_INFORMATION
+  POOR_SERVICE
+  BOOKING_DISPUTE
+  HARASSMENT
+  SPAM
+  FRAUD
+  SAFETY_CONCERN
+  OTHER
+}
+
+enum ReportPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
 }
