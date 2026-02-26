@@ -85,7 +85,7 @@ function LoginForm() {
           Welcome back
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/auth/register" className="font-medium text-green-600 hover:text-green-500 transition-colors">
             Sign up for free
           </Link>

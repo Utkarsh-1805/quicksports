@@ -98,7 +98,7 @@ function VerifyOtpForm() {
         </div>
         <h3 className="text-xl font-bold text-slate-900 mb-2">Check your email</h3>
         <p className="text-sm text-slate-500">
-          We've sent a 6-digit verification code to<br />
+          We&apos;ve sent a 6-digit verification code to<br />
           <span className="font-semibold text-slate-900">{email}</span>
         </p>
       </div>
@@ -146,14 +146,14 @@ function VerifyOtpForm() {
         </Button>
 
         <div className="text-center mt-6">
-          <p className="text-sm text-slate-600 mb-2">Didn't receive the code?</p>
+          <p className="text-sm text-slate-600 mb-2">Didn&apos;t receive the code?</p>
           <button
             type="button"
             onClick={handleResend}
             disabled={countdown > 0 || isResending}
             className={`text-sm font-medium transition-colors ${countdown > 0 || isResending
-                ? 'text-slate-400 cursor-not-allowed'
-                : 'text-green-600 hover:text-green-700'
+              ? 'text-slate-400 cursor-not-allowed'
+              : 'text-green-600 hover:text-green-700'
               }`}
           >
             {isResending ? (

@@ -49,6 +49,7 @@ export default function RegisterPage() {
     }
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedRole = watch('role');
 
   const handleNextStep = async () => {
@@ -197,8 +198,8 @@ export default function RegisterPage() {
                   <div
                     onClick={() => setValue('role', 'USER')}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${selectedRole === 'USER'
-                        ? 'border-green-600 bg-green-50 shadow-md shadow-green-100'
-                        : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                      ? 'border-green-600 bg-green-50 shadow-md shadow-green-100'
+                      : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
                       }`}
                   >
                     <div className="flex gap-4 items-start">
@@ -225,8 +226,8 @@ export default function RegisterPage() {
                   <div
                     onClick={() => setValue('role', 'FACILITY_OWNER')}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${selectedRole === 'FACILITY_OWNER'
-                        ? 'border-green-600 bg-green-50 shadow-md shadow-green-100'
-                        : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
+                      ? 'border-green-600 bg-green-50 shadow-md shadow-green-100'
+                      : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
                       }`}
                   >
                     <div className="flex gap-4 items-start">
