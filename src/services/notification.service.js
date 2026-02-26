@@ -80,7 +80,7 @@ export async function createNotification({
 }) {
   try {
     const template = NOTIFICATION_TEMPLATES[type];
-    
+
     if (!template && !customTitle) {
       throw new Error(`Unknown notification type: ${type}`);
     }
@@ -210,7 +210,7 @@ export async function getUserNotifications(userId, options = {}) {
  */
 export async function markAsRead(notificationId, userId) {
   return prisma.notification.update({
-    where: { 
+    where: {
       id: notificationId,
       userId // Ensure user owns this notification
     },
@@ -441,7 +441,7 @@ export async function notifyVenueRejected(venue, reason) {
   });
 }
 
-export default {
+const notificationService = {
   createNotification,
   createBulkNotifications,
   getUserNotifications,
@@ -459,3 +459,5 @@ export default {
   notifyVenueApproved,
   notifyVenueRejected
 };
+
+export default notificationService;

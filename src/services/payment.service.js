@@ -14,11 +14,11 @@
 
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import { 
-  generateOrderId, 
+import {
+  generateOrderId,
   calculateProcessingFees,
   verifyPaymentSignature,
-  getRefundEligibility 
+  getRefundEligibility
 } from '@/validations/payment.validation';
 
 class PaymentService {
@@ -28,7 +28,7 @@ class PaymentService {
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
-    
+
     this.webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
   }
 
@@ -46,10 +46,10 @@ class PaymentService {
     try {
       // Calculate fees
       const feeBreakdown = calculateProcessingFees(amount);
-      
+
       // Generate unique order ID
       const orderId = generateOrderId(bookingId);
-      
+
       // Create order with Razorpay
       const orderOptions = {
         amount: Math.round(feeBreakdown.totalAmount * 100), // Convert to paise
@@ -122,7 +122,7 @@ class PaymentService {
     try {
       // Check if this is a development/test payment ID
       const isDevelopment = process.env.NODE_ENV === 'development';
-      
+
       if (isDevelopment && (paymentId.startsWith('ORDER_') || paymentId.startsWith('pay_test'))) {
         // Mock payment details for development testing
         return {
@@ -142,7 +142,7 @@ class PaymentService {
       }
 
       const payment = await this.razorpay.payments.fetch(paymentId);
-      
+
       return {
         success: true,
         payment: {
@@ -180,7 +180,7 @@ class PaymentService {
     try {
       // Get original payment details
       const paymentDetails = await this.getPaymentDetails(paymentId);
-      
+
       if (!paymentDetails.success) {
         return {
           success: false,
@@ -189,11 +189,11 @@ class PaymentService {
       }
 
       const refundAmount = amount || paymentDetails.payment.amount;
-      
+
       // Check if this is development mode
       const isDevelopment = process.env.NODE_ENV === 'development';
       let refund;
-      
+
       if (isDevelopment && (paymentId.startsWith('ORDER_') || paymentId.startsWith('pay_test'))) {
         // Mock refund for development testing
         refund = {
@@ -276,7 +276,7 @@ class PaymentService {
    */
   parseWebhookPayload(payload) {
     const { event, payload: data } = payload;
-    
+
     switch (event) {
       case 'payment.captured':
         return {
@@ -361,9 +361,9 @@ class PaymentService {
    */
   calculateRefund(booking, paidAmount) {
     const eligibility = getRefundEligibility(booking.bookingDate, booking.startTime);
-    
+
     const refundAmount = (paidAmount * eligibility.percentage) / 100;
-    
+
     return {
       eligible: eligibility.eligible,
       percentage: eligibility.percentage,
@@ -375,4 +375,5 @@ class PaymentService {
 }
 
 // Export singleton instance
-export default new PaymentService();
+const paymentServiceInstance = new PaymentService();
+export default paymentServiceInstance;
