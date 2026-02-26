@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Star, MapPin, Phone, Mail, Globe, Clock, ShieldCheck, Heart, Share2 } from 'lucide-react';
+import { Star, MapPin, Phone, Mail, Globe, Clock, ShieldCheck, Heart, Share2, Calendar } from 'lucide-react';
 import { VenueGallery } from '@/components/venues/VenueGallery';
 import { VenueReviews } from '@/components/venues/VenueReviews';
+import { CourtSelector } from '@/components/booking/CourtSelector';
 import { Button } from '@/components/ui/Button';
 
 // Mock utility functions for formatted data (will refactor later)
@@ -153,6 +154,24 @@ export default async function VenueDetailsPage({ params }) {
                                 ))}
                                 {venue.amenities.length === 0 && <p className="text-slate-500 italic col-span-2">No amenities listed.</p>}
                             </div>
+                        </section>
+
+                        {/* Available Courts Section */}
+                        <section className="pt-8 mt-8 border-t border-slate-100">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                                    <Calendar className="w-5 h-5 text-green-600" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-slate-900">Book a Court</h2>
+                                    <p className="text-slate-500">Select a court to check availability and book</p>
+                                </div>
+                            </div>
+                            <CourtSelector 
+                                courts={venue.courts} 
+                                venueId={venue.id} 
+                                venueName={venue.name} 
+                            />
                         </section>
 
                         {/* Reviews Section */}
