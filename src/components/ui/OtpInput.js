@@ -2,10 +2,10 @@
 
 import { useRef, useState, useEffect } from 'react';
 
-export function OtpInput({ 
-  length = 6, 
-  value = '', 
-  onChange, 
+export function OtpInput({
+  length = 6,
+  value = '',
+  onChange,
   onComplete,
   disabled = false,
   error = ''
@@ -20,17 +20,22 @@ export function OtpInput({
     }
   }, []);
 
-  useEffect(() => {
-    // Sync with external value
-    if (value) {
+  const [prevValue, setPrevValue] = useState(value);
+
+  // Sync with external value
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (value && value !== otp.join('')) {
       const otpArray = value.split('').slice(0, length);
       setOtp([...otpArray, ...new Array(length - otpArray.length).fill('')]);
+    } else if (!value && otp.some(digit => digit !== '')) {
+      setOtp(new Array(length).fill(''));
     }
-  }, [value, length]);
+  }
 
   const handleChange = (e, index) => {
     const val = e.target.value;
-    
+
     // Only allow digits
     if (!/^\d*$/.test(val)) return;
 
@@ -43,11 +48,11 @@ export function OtpInput({
       });
       setOtp(newOtp);
       onChange?.(newOtp.join(''));
-      
+
       // Focus last filled or last input
       const lastIndex = Math.min(otpArray.length, length) - 1;
       inputRefs.current[lastIndex]?.focus();
-      
+
       // Check if complete
       if (otpArray.length >= length) {
         onComplete?.(newOtp.join(''));
@@ -83,12 +88,12 @@ export function OtpInput({
       setOtp(newOtp);
       onChange?.(newOtp.join(''));
     }
-    
+
     // Handle left arrow
     if (e.key === 'ArrowLeft' && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
-    
+
     // Handle right arrow
     if (e.key === 'ArrowRight' && index < length - 1) {
       inputRefs.current[index + 1]?.focus();
@@ -106,10 +111,10 @@ export function OtpInput({
       });
       setOtp(newOtp);
       onChange?.(newOtp.join(''));
-      
+
       const lastIndex = Math.min(otpArray.length, length) - 1;
       inputRefs.current[lastIndex]?.focus();
-      
+
       if (otpArray.length >= length) {
         onComplete?.(newOtp.join(''));
       }
@@ -136,8 +141,8 @@ export function OtpInput({
               rounded-lg border-2 transition-all duration-200
               focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent
               disabled:bg-gray-100 disabled:cursor-not-allowed
-              ${error 
-                ? 'border-red-500 focus:ring-red-500' 
+              ${error
+                ? 'border-red-500 focus:ring-red-500'
                 : 'border-gray-300 hover:border-gray-400'
               }
             `}

@@ -4,14 +4,14 @@ import { forwardRef } from 'react';
 import { AlertCircle } from 'lucide-react';
 
 export const Input = forwardRef(function Input(
-  { 
-    label, 
-    error, 
-    type = 'text', 
-    className = '', 
+  {
+    label,
+    error,
+    type = 'text',
+    className = '',
     containerClassName = '',
-    ...props 
-  }, 
+    ...props
+  },
   ref
 ) {
   return (
@@ -25,11 +25,11 @@ export const Input = forwardRef(function Input(
         ref={ref}
         type={type}
         className={`
-          w-full px-4 py-3 rounded-lg border transition-colors duration-200
+          w-full px-4 py-3 rounded-lg border text-slate-900 bg-white transition-colors duration-200
           focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent
           disabled:bg-gray-100 disabled:cursor-not-allowed
-          ${error 
-            ? 'border-red-500 focus:ring-red-500' 
+          ${error
+            ? 'border-red-500 focus:ring-red-500'
             : 'border-gray-300 hover:border-gray-400'
           }
           ${className}
