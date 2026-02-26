@@ -35,9 +35,9 @@ export const advancedSearchSchema = z.object({
   city: z.string().max(50).optional(),
   state: z.string().max(50).optional(),
   
-  // Sport type filter - can be single or multiple
+  // Sport type filter - can be single or multiple (comma-separated string for multiple)
   sportType: z.enum(sportTypes).optional(),
-  sportTypes: z.array(z.enum(sportTypes)).optional(), // Multiple sports
+  sportTypes: z.string().optional(), // Comma-separated sport types, will be parsed later
   
   // Amenity filtering - comma-separated amenity IDs
   // Example: "amenity-001,amenity-002,amenity-003"
@@ -118,6 +118,16 @@ export function validateSearchParams(searchParams) {
 export function parseAmenities(amenitiesString) {
   if (!amenitiesString) return [];
   return amenitiesString.split(',').map(id => id.trim()).filter(Boolean);
+}
+
+// Parse sportTypes string into array of sport types
+export function parseSportTypes(sportTypesString) {
+  if (!sportTypesString) return [];
+  const validSportTypes = ['BADMINTON', 'TENNIS', 'BASKETBALL', 'FOOTBALL', 'TABLE_TENNIS', 'SWIMMING', 'CRICKET', 'VOLLEYBALL', 'SQUASH', 'OTHER'];
+  return sportTypesString
+    .split(',')
+    .map(s => s.trim().toUpperCase())
+    .filter(s => validSportTypes.includes(s));
 }
 
 // Validate suggestions parameters

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
-import { validateSearchParams, parseAmenities } from "../../../../validations/search.validation";
+import { validateSearchParams, parseAmenities, parseSportTypes } from "../../../../validations/search.validation";
 
 /**
  * ============================================
@@ -69,6 +69,7 @@ export async function GET(request) {
       city,
       state,
       sportType,
+      sportTypes: sportTypesString,
       amenities: amenitiesString,
       minPrice,
       maxPrice,
@@ -128,14 +129,26 @@ export async function GET(request) {
     // ========================================
     /**
      * LOGIC: Venue must have at least one ACTIVE court
-     * of the specified sport type
+     * of the specified sport type(s)
      * 
      * Uses Prisma's "some" relation filter
+     * Supports both single sportType and multiple sportTypes (comma-separated)
      */
+    const parsedSportTypes = parseSportTypes(sportTypesString);
+    
     if (sportType) {
+      // Single sport type filter
       where.courts = {
         some: {
           sportType: sportType,
+          isActive: true
+        }
+      };
+    } else if (parsedSportTypes.length > 0) {
+      // Multiple sport types filter (OR logic - has at least one of the sports)
+      where.courts = {
+        some: {
+          sportType: { in: parsedSportTypes },
           isActive: true
         }
       };
