@@ -6,8 +6,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyAuth } from "../../../../../lib/auth";
-import prisma from "../../../../../lib/prisma";
+import { verifyAuth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 /**
  * GET /api/owner/courts/[courtId]/analytics
@@ -80,7 +80,7 @@ export async function GET(request, { params }) {
     // Calculate date ranges
     const now = new Date();
     let startDate, endDate;
-    
+
     switch (period) {
       case 'week':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -129,7 +129,7 @@ export async function GET(request, { params }) {
     const totalBookings = bookings.length;
     const confirmedBookings = bookings.filter(b => b.status === 'CONFIRMED');
     const cancelledBookings = bookings.filter(b => b.status === 'CANCELLED');
-    
+
     const totalRevenue = bookings
       .filter(b => b.payment?.status === 'COMPLETED')
       .reduce((sum, b) => sum + (b.payment?.totalAmount || 0), 0);
@@ -142,7 +142,7 @@ export async function GET(request, { params }) {
     // ==========================================
     // STEP 6: Booking Patterns Analysis
     // ==========================================
-    
+
     // Day of week distribution
     const dayOfWeekBookings = bookings.reduce((acc, booking) => {
       const dayOfWeek = booking.bookingDate.getDay();
@@ -161,7 +161,7 @@ export async function GET(request, { params }) {
 
     // Peak hours (top 3)
     const peakHours = Object.entries(hourDistribution)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
       .map(([hour, count]) => ({
         hour: `${hour.padStart(2, '0')}:00`,
@@ -173,14 +173,14 @@ export async function GET(request, { params }) {
     // STEP 7: Booking Heatmap (if requested)
     // ==========================================
     let heatmapData = null;
-    
+
     if (includeHeatmap) {
       const heatmap = {};
-      
+
       bookings.forEach(booking => {
         const day = booking.bookingDate.getDay();
         const hour = parseInt(booking.startTime.split(':')[0]);
-        
+
         if (!heatmap[day]) heatmap[day] = {};
         heatmap[day][hour] = (heatmap[day][hour] || 0) + 1;
       });
@@ -192,16 +192,16 @@ export async function GET(request, { params }) {
     // STEP 8: Trend Analysis (if requested)
     // ==========================================
     let trendData = null;
-    
+
     if (includeTrends) {
       // Group bookings by date for trend analysis
       const dailyBookings = {};
       const dailyRevenue = {};
-      
+
       bookings.forEach(booking => {
         const dateStr = booking.createdAt.toISOString().split('T')[0];
         dailyBookings[dateStr] = (dailyBookings[dateStr] || 0) + 1;
-        
+
         if (booking.payment?.status === 'COMPLETED') {
           dailyRevenue[dateStr] = (dailyRevenue[dateStr] || 0) + (booking.payment.totalAmount || 0);
         }
@@ -211,7 +211,7 @@ export async function GET(request, { params }) {
       const trendDates = [];
       const bookingCounts = [];
       const revenueCounts = [];
-      
+
       for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
         const dateStr = d.toISOString().split('T')[0];
         trendDates.push(dateStr);
@@ -231,7 +231,7 @@ export async function GET(request, { params }) {
     // ==========================================
     const customerAnalysis = {};
     const customerBookings = {};
-    
+
     bookings.forEach(booking => {
       const userId = booking.user?.email || 'Unknown';
       customerBookings[userId] = (customerBookings[userId] || 0) + 1;
@@ -243,7 +243,7 @@ export async function GET(request, { params }) {
 
     // Top customers
     const topCustomers = Object.entries(customerBookings)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
       .map(([email, bookingCount]) => ({
         email,
@@ -265,7 +265,7 @@ export async function GET(request, { params }) {
     });
 
     const maintenanceHours = blockedSlots.length; // Simplified calculation
-    
+
     return NextResponse.json({
       success: true,
       data: {

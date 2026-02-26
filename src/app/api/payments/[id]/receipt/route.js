@@ -4,8 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyAuth } from "../../../../lib/auth";
-import { prisma } from "../../../../lib/prisma";
+import { verifyAuth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET - Get payment receipt/invoice details
@@ -91,14 +91,14 @@ export async function GET(request, { params }) {
       paymentId: payment.id,
       razorpayPaymentId: payment.razorpayPaymentId,
       razorpayOrderId: payment.razorpayOrderId,
-      
+
       // Customer details
       customer: {
         name: payment.user.name,
         email: payment.user.email,
         phone: payment.user.phone
       },
-      
+
       // Venue details
       venue: {
         name: payment.booking.court.facility.name,
@@ -107,7 +107,7 @@ export async function GET(request, { params }) {
         state: payment.booking.court.facility.state,
         pincode: payment.booking.court.facility.pincode
       },
-      
+
       // Booking details
       booking: {
         id: payment.booking.id,
@@ -118,7 +118,7 @@ export async function GET(request, { params }) {
         endTime: payment.booking.endTime,
         duration: payment.booking.duration
       },
-      
+
       // Payment breakdown
       payment: {
         baseAmount: payment.amount,
@@ -129,7 +129,7 @@ export async function GET(request, { params }) {
         method: payment.method,
         status: payment.status
       },
-      
+
       // Refund details if any
       refunds: payment.refunds.map(refund => ({
         id: refund.id,
@@ -138,12 +138,12 @@ export async function GET(request, { params }) {
         reason: refund.reason,
         date: refund.processedAt || refund.createdAt
       })),
-      
+
       // Net amount after refunds
       netAmount: payment.totalAmount - payment.refunds
         .filter(r => r.status === 'COMPLETED')
         .reduce((sum, r) => sum + r.amount, 0),
-      
+
       // Timestamps
       paymentDate: payment.createdAt,
       completedAt: payment.completedAt,

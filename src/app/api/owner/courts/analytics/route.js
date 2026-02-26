@@ -17,8 +17,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyAuth } from "../../../../lib/auth";
-import prisma from "../../../../lib/prisma";
+import { verifyAuth } from "@/lib/auth";
+import prisma from "@/lib/prisma";
 
 /**
  * GET /api/owner/courts/analytics
@@ -66,7 +66,7 @@ export async function GET(request) {
     // Calculate date ranges
     const now = new Date();
     let startDate, endDate, prevStartDate, prevEndDate;
-    
+
     switch (period) {
       case 'week':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -104,7 +104,7 @@ export async function GET(request) {
     // STEP 3: Get Owner's Courts
     // ==========================================
     const venueFilter = venueId ? { id: venueId } : {};
-    
+
     const courts = await prisma.court.findMany({
       where: {
         facility: {
@@ -152,7 +152,7 @@ export async function GET(request) {
           }
         }
       }),
-      
+
       comparePrevious && prevStartDate ? prisma.booking.findMany({
         where: {
           courtId: { in: courtIds },
@@ -172,12 +172,12 @@ export async function GET(request) {
     const courtAnalytics = courts.map(court => {
       const courtBookings = currentBookings.filter(b => b.courtId === court.id);
       const prevCourtBookings = previousBookings.filter(b => b.courtId === court.id);
-      
+
       // Revenue calculation
       const revenue = courtBookings
         .filter(b => b.payment?.status === 'COMPLETED')
         .reduce((sum, b) => sum + (b.payment?.totalAmount || 0), 0);
-        
+
       const prevRevenue = prevCourtBookings
         .filter(b => b.payment?.status === 'COMPLETED')
         .reduce((sum, b) => sum + (b.payment?.totalAmount || 0), 0);
@@ -191,7 +191,7 @@ export async function GET(request) {
       // Calculate utilization rate (simplified: booked hours / available hours)
       const totalBookings = courtBookings.length;
       const avgBookingHours = courtBookings.reduce((sum, b) => sum + (b.duration || 60), 0) / 60; // Convert to hours
-      
+
       // Assume 16 operating hours per day
       const daysInPeriod = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
       const availableHours = daysInPeriod * 16;
@@ -205,13 +205,13 @@ export async function GET(request) {
       }, {});
 
       const peakHour = Object.entries(hourlyBookings)
-        .sort(([,a], [,b]) => b - a)
+        .sort(([, a], [, b]) => b - a)
         .slice(0, 1)
         .map(([hour, count]) => ({ hour: parseInt(hour), bookings: count }))[0];
 
       // Growth calculations
       const revenueGrowth = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue) * 100 : 0;
-      const bookingGrowth = prevCourtBookings.length > 0 ? 
+      const bookingGrowth = prevCourtBookings.length > 0 ?
         ((totalBookings - prevCourtBookings.length) / prevCourtBookings.length) * 100 : 0;
 
       return {
@@ -248,9 +248,9 @@ export async function GET(request) {
     // STEP 6: Calculate Summary Metrics
     // ==========================================
     const totalRevenue = courtAnalytics.reduce((sum, c) => sum + c.metrics.totalRevenue, 0);
-    const avgUtilization = courtAnalytics.length > 0 ? 
+    const avgUtilization = courtAnalytics.length > 0 ?
       courtAnalytics.reduce((sum, c) => sum + c.metrics.utilizationRate, 0) / courtAnalytics.length : 0;
-    
+
     const summary = {
       totalCourts: courts.length,
       totalRevenue: Math.round(totalRevenue * 100) / 100,
