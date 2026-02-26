@@ -243,3 +243,6 @@ export async function PATCH(request, { params }) {
     );
   }
 }
+
+// Also support POST method for cancellation
+export { PATCH as POST };
