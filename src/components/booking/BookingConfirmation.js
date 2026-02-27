@@ -125,6 +125,11 @@ export default function BookingConfirmation({ booking, payment }) {
     };
 
     const downloadReceipt = () => {
+        // Calculate fee breakdown
+        const baseAmount = booking?.totalAmount || 0;
+        const totalPaid = payment?.amount || baseAmount;
+        const fees = totalPaid - baseAmount;
+        
         // Create a simple text receipt (in production, generate PDF)
         const receipt = `
 QUICKCOURT BOOKING RECEIPT
@@ -139,8 +144,17 @@ Sport: ${booking?.court?.sportType}
 Venue: ${booking?.court?.facility?.name}
 Address: ${booking?.court?.facility?.address}, ${booking?.court?.facility?.city}
 
-Amount Paid: ₹${booking?.totalAmount?.toLocaleString()}
+---------------------------
+PAYMENT DETAILS
+---------------------------
+Court Booking:          ₹${baseAmount.toLocaleString()}
+GST & Convenience Fee:  ₹${fees.toLocaleString()}
+---------------------------
+Total Paid:             ₹${totalPaid.toLocaleString()}
+---------------------------
+
 Payment ID: ${payment?.paymentId || 'N/A'}
+Payment Method: ${payment?.method || 'N/A'}
 
 Thank you for booking with QuickCourt!
         `.trim();
@@ -282,14 +296,29 @@ Thank you for booking with QuickCourt!
                             </div>
                         </div>
 
-                        {/* Amount Paid */}
-                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-2xl border border-green-100">
-                            <div>
-                                <p className="text-xs text-green-600 font-medium uppercase">Amount Paid</p>
-                                <p className="text-2xl font-bold text-green-700">₹{booking.totalAmount?.toLocaleString()}</p>
+                        {/* Payment Breakdown */}
+                        <div className="p-4 bg-slate-50 rounded-2xl space-y-3">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-600">Court Booking</span>
+                                <span className="font-medium text-slate-800">₹{booking.totalAmount?.toLocaleString()}</span>
                             </div>
-                            <div className="px-3 py-1.5 bg-green-600 text-white text-sm font-bold rounded-full">
-                                PAID
+                            {payment?.amount && payment.amount > booking.totalAmount && (
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-slate-600">GST & Convenience Fee</span>
+                                    <span className="font-medium text-slate-800">₹{(payment.amount - booking.totalAmount).toLocaleString()}</span>
+                                </div>
+                            )}
+                            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
+                                <span className="font-semibold text-slate-900">Total Paid</span>
+                                <span className="text-xl font-bold text-green-600">₹{(payment?.amount || booking.totalAmount)?.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Payment Status Badge */}
+                        <div className="flex items-center justify-center">
+                            <div className="px-4 py-2 bg-green-100 text-green-700 text-sm font-bold rounded-full flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4" />
+                                PAYMENT SUCCESSFUL
                             </div>
                         </div>
 
