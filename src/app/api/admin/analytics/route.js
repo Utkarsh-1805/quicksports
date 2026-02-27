@@ -98,15 +98,34 @@ export async function GET(request) {
      * - Revenue totals and trends
      */
     const [
-      totalUsers,
-      totalVenues,
-      totalBookings,
-      totalRevenue,
+      // All-time totals
+      allTimeUsers,
+      allTimeVenues,
+      allTimeBookings,
+      allTimeRevenue,
+      // Current period counts (for growth)
+      periodUsers,
+      periodVenues,
+      periodBookings,
+      periodRevenue,
+      // Previous period (for growth comparison)
       previousUsers,
       previousVenues,
       previousBookings,
-      previousRevenue
+      previousRevenue,
+      // Pending approvals count
+      pendingApprovals,
+      // Open reports count  
+      pendingReports
     ] = await Promise.all([
+      // All-time totals
+      prisma.user.count(),
+      prisma.facility.count({ where: { status: 'APPROVED' } }),
+      prisma.booking.count(),
+      prisma.booking.aggregate({
+        where: { status: { in: ['CONFIRMED', 'COMPLETED'] } },
+        _sum: { totalAmount: true }
+      }),
       // Current period
       prisma.user.count({ where: { createdAt: { gte: startDate } } }),
       prisma.facility.count({ where: { createdAt: { gte: startDate }, status: 'APPROVED' } }),
@@ -142,16 +161,26 @@ export async function GET(request) {
           status: { in: ['CONFIRMED', 'COMPLETED'] }
         },
         _sum: { totalAmount: true }
-      })
+      }),
+      // Pending approvals
+      prisma.facility.count({ where: { status: 'PENDING' } }),
+      // Pending reports (if Report model exists, otherwise 0)
+      prisma.report?.count({ where: { status: 'PENDING' } }).catch(() => 0) || Promise.resolve(0)
     ]);
 
-    // Calculate growth rates
-    const userGrowth = previousUsers > 0 ? ((totalUsers - previousUsers) / previousUsers * 100) : 0;
-    const venueGrowth = previousVenues > 0 ? ((totalVenues - previousVenues) / previousVenues * 100) : 0;
-    const bookingGrowth = previousBookings > 0 ? ((totalBookings - previousBookings) / previousBookings * 100) : 0;
+    // Use all-time totals for display
+    const totalUsers = allTimeUsers;
+    const totalVenues = allTimeVenues;
+    const totalBookings = allTimeBookings;
+    const totalRevenue = allTimeRevenue;
+
+    // Calculate growth rates using period-specific counts
+    const userGrowth = previousUsers > 0 ? ((periodUsers - previousUsers) / previousUsers * 100) : (periodUsers > 0 ? 100 : 0);
+    const venueGrowth = previousVenues > 0 ? ((periodVenues - previousVenues) / previousVenues * 100) : (periodVenues > 0 ? 100 : 0);
+    const bookingGrowth = previousBookings > 0 ? ((periodBookings - previousBookings) / previousBookings * 100) : (periodBookings > 0 ? 100 : 0);
     const revenueGrowth = previousRevenue._sum.totalAmount > 0 
-      ? (((totalRevenue._sum.totalAmount || 0) - previousRevenue._sum.totalAmount) / previousRevenue._sum.totalAmount * 100) 
-      : 0;
+      ? (((periodRevenue._sum.totalAmount || 0) - previousRevenue._sum.totalAmount) / previousRevenue._sum.totalAmount * 100) 
+      : (periodRevenue._sum.totalAmount > 0 ? 100 : 0);
 
     // ==========================================
     // STEP 4: Revenue Analytics
@@ -411,26 +440,23 @@ export async function GET(request) {
         name: admin.name
       },
 
-      // Overview metrics
+      // Overview metrics - flat structure for component compatibility
       overview: {
-        users: {
-          total: totalUsers,
-          growth: Math.round(userGrowth * 100) / 100,
-          active: activeUsers
-        },
-        venues: {
-          total: totalVenues,
-          growth: Math.round(venueGrowth * 100) / 100
-        },
-        bookings: {
-          total: totalBookings,
-          growth: Math.round(bookingGrowth * 100) / 100,
-          avgValue: Math.round((avgBookingValue._avg.totalAmount || 0) * 100) / 100
-        },
-        revenue: {
-          total: Math.round((totalRevenue._sum.totalAmount || 0) * 100) / 100,
-          growth: Math.round(revenueGrowth * 100) / 100
-        }
+        totalUsers,
+        totalVenues,
+        totalBookings,
+        totalRevenue: Math.round((totalRevenue._sum.totalAmount || 0) * 100) / 100,
+        userGrowth: Math.round(userGrowth * 100) / 100,
+        venueGrowth: Math.round(venueGrowth * 100) / 100,
+        bookingGrowth: Math.round(bookingGrowth * 100) / 100,
+        revenueGrowth: Math.round(revenueGrowth * 100) / 100,
+        activeUsers,
+        avgBookingValue: Math.round((avgBookingValue._avg.totalAmount || 0) * 100) / 100,
+        pendingApprovals,
+        pendingReports: pendingReports || 0,
+        // New users and bookings today
+        newUsersToday: periodUsers,
+        bookingsToday: periodBookings
       },
 
       // Revenue analytics
