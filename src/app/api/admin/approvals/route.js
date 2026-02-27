@@ -119,12 +119,14 @@ export async function GET(request) {
       id: venue.id,
       name: venue.name,
       description: venue.description,
+      status: venue.status, // Include status field
       address: venue.address,
       city: venue.city,
       state: venue.state,
       pincode: venue.pincode,
       latitude: venue.latitude,
       longitude: venue.longitude,
+      createdAt: venue.createdAt, // Keep as createdAt for date formatting
       submittedAt: venue.createdAt,
       waitingDays: Math.floor((new Date() - new Date(venue.createdAt)) / (1000 * 60 * 60 * 24)),
       
@@ -135,13 +137,14 @@ export async function GET(request) {
       
       courts: venue.courts,
       courtsCount: venue.courts.length,
+      _count: { courts: venue.courts.length }, // Add _count for component compatibility
       
       amenities: venue.amenities.map(a => ({
         name: a.amenity.name,
         icon: a.amenity.icon
       })),
       
-      photos: venue.photos,
+      photos: venue.photos.map(p => p.url), // Extract URLs for component
       photosCount: venue.photos.length,
       
       // Quick review indicators
