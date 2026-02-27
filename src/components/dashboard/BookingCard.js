@@ -178,8 +178,11 @@ export function BookingCard({
 
                 <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                     <div>
-                        <p className="text-xs text-slate-500">Total Amount</p>
-                        <p className="text-xl font-bold text-green-600">₹{(booking.totalAmount || booking.amount)?.toLocaleString()}</p>
+                        <p className="text-xs text-slate-500">Total Paid</p>
+                        <p className="text-xl font-bold text-green-600">₹{(booking.paidAmount || booking.payment?.totalAmount || booking.totalAmount || booking.amount)?.toLocaleString()}</p>
+                        {booking.paidAmount && booking.paidAmount !== booking.totalAmount && (
+                            <p className="text-xs text-slate-400">Includes GST & fees</p>
+                        )}
                     </div>
 
                     {showActions && (

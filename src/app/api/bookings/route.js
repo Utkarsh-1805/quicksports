@@ -110,6 +110,14 @@ export async function GET(request) {
                 }
               }
             }
+          },
+          payment: {
+            select: {
+              id: true,
+              totalAmount: true,
+              status: true,
+              method: true
+            }
           }
         },
         orderBy: [
@@ -134,7 +142,14 @@ export async function GET(request) {
         startTime: booking.startTime,
         endTime: booking.endTime,
         totalAmount: booking.totalAmount,
+        paidAmount: booking.payment?.totalAmount || null,
         court: booking.court,
+        payment: booking.payment ? {
+          id: booking.payment.id,
+          totalAmount: booking.payment.totalAmount,
+          status: booking.payment.status,
+          method: booking.payment.method
+        } : null,
         createdAt: booking.createdAt,
         updatedAt: booking.updatedAt
       })),
