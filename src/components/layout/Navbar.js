@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Zap, User, LogOut, Menu, X, Bell, Calendar, Settings, ChevronDown } from 'lucide-react';
+import { Zap, User, LogOut, Menu, X, Bell, Calendar, Settings, ChevronDown, Shield, Building2 } from 'lucide-react';
 
 export function Navbar() {
     const { user, isAuthenticated, logout, loading } = useAuth();
@@ -40,8 +40,8 @@ export function Navbar() {
     // Handle scroll effect for navbar
     useEffect(() => {
         const handleScroll = () => {
-            // Don't apply scroll effect on dashboard routes
-            if (pathname.includes('/dashboard')) {
+            // Don't apply scroll effect on dashboard/admin/owner routes
+            if (pathname.includes('/dashboard') || pathname.includes('/admin') || pathname.includes('/owner')) {
                 setIsScrolled(true);
                 return;
             }
@@ -55,8 +55,8 @@ export function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [pathname]);
 
-    // Always solid on dashboard or auth pages
-    const isSolidPage = pathname.includes('/dashboard') || pathname.includes('/auth');
+    // Always solid on dashboard, admin, owner, or auth pages
+    const isSolidPage = pathname.includes('/dashboard') || pathname.includes('/admin') || pathname.includes('/owner') || pathname.includes('/auth');
     const navbarClasses = isSolidPage || isScrolled
         ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100 py-3 text-slate-900'
         : 'bg-transparent py-5 text-white';
@@ -77,9 +77,10 @@ export function Navbar() {
 
         if (user?.role === 'ADMIN') {
             return [
-                { name: 'Dashboard', href: '/admin/dashboard' },
+                { name: 'Dashboard', href: '/admin' },
                 { name: 'Approvals', href: '/admin/approvals' },
                 { name: 'Users', href: '/admin/users' },
+                { name: 'Revenue', href: '/admin/revenue' },
             ];
         }
 
@@ -152,23 +153,75 @@ export function Navbar() {
                                             <div className="px-4 py-3 border-b border-slate-100">
                                                 <p className="font-semibold text-slate-900">{user?.name}</p>
                                                 <p className="text-sm text-slate-500 truncate">{user?.email}</p>
+                                                <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                                    user?.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                                                    user?.role === 'FACILITY_OWNER' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                    {user?.role === 'FACILITY_OWNER' ? 'Owner' : user?.role}
+                                                </span>
                                             </div>
                                             
                                             <div className="py-1">
-                                                <Link
-                                                    href="/dashboard"
-                                                    className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
-                                                >
-                                                    <User className="w-4 h-4 text-slate-400" />
-                                                    Dashboard
-                                                </Link>
-                                                <Link
-                                                    href="/dashboard/bookings"
-                                                    className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
-                                                >
-                                                    <Calendar className="w-4 h-4 text-slate-400" />
-                                                    My Bookings
-                                                </Link>
+                                                {user?.role === 'ADMIN' ? (
+                                                    <>
+                                                        <Link
+                                                            href="/admin"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <Shield className="w-4 h-4 text-slate-400" />
+                                                            Admin Panel
+                                                        </Link>
+                                                        <Link
+                                                            href="/admin/approvals"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <Building2 className="w-4 h-4 text-slate-400" />
+                                                            Approvals
+                                                        </Link>
+                                                        <Link
+                                                            href="/admin/users"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <User className="w-4 h-4 text-slate-400" />
+                                                            Manage Users
+                                                        </Link>
+                                                    </>
+                                                ) : user?.role === 'FACILITY_OWNER' ? (
+                                                    <>
+                                                        <Link
+                                                            href="/owner/dashboard"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <User className="w-4 h-4 text-slate-400" />
+                                                            Dashboard
+                                                        </Link>
+                                                        <Link
+                                                            href="/owner/venues"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <Building2 className="w-4 h-4 text-slate-400" />
+                                                            My Venues
+                                                        </Link>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Link
+                                                            href="/dashboard"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <User className="w-4 h-4 text-slate-400" />
+                                                            Dashboard
+                                                        </Link>
+                                                        <Link
+                                                            href="/dashboard/bookings"
+                                                            className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
+                                                        >
+                                                            <Calendar className="w-4 h-4 text-slate-400" />
+                                                            My Bookings
+                                                        </Link>
+                                                    </>
+                                                )}
                                                 <Link
                                                     href="/dashboard/notifications"
                                                     className="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-slate-50 transition-colors"
@@ -275,7 +328,7 @@ export function Navbar() {
                                     </Link>
 
                                     <Link
-                                        href={user?.role === 'FACILITY_OWNER' ? '/owner/dashboard' : '/dashboard'}
+                                        href={user?.role === 'ADMIN' ? '/admin' : user?.role === 'FACILITY_OWNER' ? '/owner/dashboard' : '/dashboard'}
                                         className="w-full text-center py-3 bg-green-600 rounded-xl text-white font-medium hover:bg-green-700 transition-colors"
                                     >
                                         Go to Dashboard
