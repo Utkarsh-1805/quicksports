@@ -76,7 +76,9 @@ export default function RegisterPage() {
       }
 
       // If registered successfully, redirect to OTP verification
-      router.push(`/auth/verify-otp?email=${encodeURIComponent(data.email)}`);
+      // Include OTP in URL for development testing
+      const otpParam = result.otpCode ? `&otp=${result.otpCode}` : '';
+      router.push(`/auth/verify-otp?email=${encodeURIComponent(data.email)}${otpParam}`);
 
     } catch (err) {
       setGlobalError('An unexpected error occurred. Please try again.');

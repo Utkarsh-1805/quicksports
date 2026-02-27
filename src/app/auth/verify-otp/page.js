@@ -12,6 +12,7 @@ function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
+  const devOtp = searchParams.get('otp'); // OTP for development testing
 
   const { verifyOtp, resendOtp, user } = useAuth();
 
@@ -21,6 +22,7 @@ function VerifyOtpForm() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [countdown, setCountdown] = useState(60);
+  const [currentOtpCode, setCurrentOtpCode] = useState(devOtp); // Track current OTP for dev display
 
   // Redirect if no email is provided
   useEffect(() => {
@@ -78,6 +80,10 @@ function VerifyOtpForm() {
         setSuccessMsg('A new verification code has been sent to your email.');
         setCountdown(60);
         setOtp(''); // Clear current input
+        // Update displayed OTP in development mode
+        if (result.otpCode) {
+          setCurrentOtpCode(result.otpCode);
+        }
       } else {
         setError(result.error || 'Failed to resend code. Please try again later.');
       }
@@ -102,6 +108,14 @@ function VerifyOtpForm() {
           <span className="font-semibold text-slate-900">{email}</span>
         </p>
       </div>
+
+      {/* Development OTP Display */}
+      {currentOtpCode && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-xs font-medium text-amber-600 uppercase tracking-wide mb-1">Development Mode</p>
+          <p className="text-sm text-amber-800">Your OTP code is: <span className="font-bold text-lg tracking-widest">{currentOtpCode}</span></p>
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-700">
