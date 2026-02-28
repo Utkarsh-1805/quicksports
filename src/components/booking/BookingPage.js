@@ -49,6 +49,13 @@ export default function BookingPage({ courtId, courtData, venueData }) {
     const duration = selectedSlots.length;
     const subtotal = duration * pricePerHour;
 
+    // Calculate total with fees (same formula as BookingSummary)
+    const calculateTotalWithFees = (baseAmount) => {
+        const convenienceFee = Math.round(baseAmount * 0.02); // 2% convenience fee
+        const gst = Math.round((baseAmount + convenienceFee) * 0.18); // 18% GST
+        return baseAmount + convenienceFee + gst;
+    };
+
     // Steps configuration
     const steps = [
         { id: 1, label: 'Select Time', icon: '📅' },
@@ -416,6 +423,7 @@ export default function BookingPage({ courtId, courtData, venueData }) {
                                 <PaymentForm
                                     booking={booking}
                                     user={user}
+                                    totalWithFees={calculateTotalWithFees(booking?.totalAmount || 0)}
                                     onPaymentSuccess={handlePaymentSuccess}
                                     onPaymentError={handlePaymentError}
                                 />

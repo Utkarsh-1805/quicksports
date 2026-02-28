@@ -124,13 +124,45 @@ export default function BookingConfirmation({ booking, payment }) {
         window.open(calendarUrl, '_blank');
     };
 
-    const downloadReceipt = () => {
+    const downloadReceipt = async () => {
+        try {
+            // Fetch receipt with auth token
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/bookings/${booking?.id}/receipt`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch receipt');
+            }
+            
+            const html = await response.text();
+            
+            // Open new window and write HTML directly
+            const receiptWindow = window.open('', '_blank');
+            if (receiptWindow) {
+                receiptWindow.document.write(html);
+                receiptWindow.document.close();
+            } else {
+                // Popup blocked - fallback
+                downloadReceiptText();
+            }
+        } catch (error) {
+            console.error('Error downloading receipt:', error);
+            // Fallback to text receipt
+            downloadReceiptText();
+        }
+    };
+
+    const downloadReceiptText = () => {
         // Calculate fee breakdown
         const baseAmount = booking?.totalAmount || 0;
         const totalPaid = payment?.amount || baseAmount;
         const fees = totalPaid - baseAmount;
         
-        // Create a simple text receipt (in production, generate PDF)
+        // Create a simple text receipt as fallback
         const receipt = `
 QUICKCOURT BOOKING RECEIPT
 ===========================

@@ -10,6 +10,7 @@ import { CreditCard, Smartphone, Building2, Wallet, Loader2, CheckCircle2, Alert
 export function PaymentForm({ 
     booking,
     user,
+    totalWithFees,
     onPaymentSuccess,
     onPaymentError
 }) {
@@ -78,6 +79,7 @@ export function PaymentForm({
                 },
                 body: JSON.stringify({
                     paymentMethod: selectedMethod,
+                    totalAmount: totalWithFees, // Send the total including fees
                     notes: {
                         source: 'web_booking'
                     }

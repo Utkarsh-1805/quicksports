@@ -1,6 +1,8 @@
 'use client';
 
-import { MapPin, Calendar, Clock, CreditCard, Info, Tag, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { MapPin, Calendar, Clock, CreditCard, Info, Shield } from 'lucide-react';
+import { CouponInput } from '@/components/ui/CouponInput';
 
 /**
  * BookingSummary Component
@@ -11,14 +13,32 @@ export function BookingSummary({
     venue, 
     selectedDate, 
     selectedSlots,
-    pricePerHour
+    pricePerHour,
+    onCouponApplied,
+    onCouponRemoved
 }) {
+    const [appliedDiscount, setAppliedDiscount] = useState(0);
+    const [appliedCoupon, setAppliedCoupon] = useState(null);
+
     // Calculate booking details
     const duration = selectedSlots.length;
     const subtotal = duration * pricePerHour;
     const convenienceFee = Math.round(subtotal * 0.02); // 2% convenience fee
-    const gst = Math.round((subtotal + convenienceFee) * 0.18); // 18% GST on service
-    const totalAmount = subtotal + convenienceFee + gst;
+    const amountAfterDiscount = subtotal - appliedDiscount;
+    const gst = Math.round((amountAfterDiscount + convenienceFee) * 0.18); // 18% GST on service
+    const totalAmount = amountAfterDiscount + convenienceFee + gst;
+
+    const handleCouponApplied = (coupon, discount, finalAmount) => {
+        setAppliedCoupon(coupon);
+        setAppliedDiscount(discount);
+        onCouponApplied?.(coupon, discount);
+    };
+
+    const handleCouponRemoved = () => {
+        setAppliedCoupon(null);
+        setAppliedDiscount(0);
+        onCouponRemoved?.();
+    };
 
     const formatTime = (time) => {
         if (!time) return '';
@@ -125,6 +145,12 @@ export function BookingSummary({
                                 <span className="text-slate-600 text-sm">Court Charges ({duration} hr × ₹{pricePerHour})</span>
                                 <span className="font-medium text-slate-900">₹{subtotal.toLocaleString()}</span>
                             </div>
+                            {appliedDiscount > 0 && (
+                                <div className="flex justify-between items-center text-green-600">
+                                    <span className="text-sm">Coupon Discount ({appliedCoupon?.code})</span>
+                                    <span className="font-medium">-₹{appliedDiscount.toLocaleString()}</span>
+                                </div>
+                            )}
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-1">
                                     <span className="text-slate-600 text-sm">Convenience Fee</span>
@@ -166,21 +192,14 @@ export function BookingSummary({
                     </div>
                 )}
 
-                {/* Promo Code */}
+                {/* Coupon Code Input */}
                 {hasBookingDetails && (
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Tag className="h-4 w-4 text-slate-400" />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Have a promo code?"
-                            className="w-full pl-10 pr-20 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        />
-                        <button className="absolute inset-y-0 right-0 px-4 text-sm font-semibold text-green-600 hover:text-green-700">
-                            Apply
-                        </button>
-                    </div>
+                    <CouponInput
+                        bookingAmount={subtotal}
+                        sportType={court?.sportType}
+                        onCouponApplied={handleCouponApplied}
+                        onCouponRemoved={handleCouponRemoved}
+                    />
                 )}
             </div>
         </div>
