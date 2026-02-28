@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { Star, MapPin, Heart } from 'lucide-react';
+import { Star, MapPin } from 'lucide-react';
+import { FavoriteButton } from '../ui/FavoriteButton';
 
-export function VenueCard({ venue }) {
-    const [isFavorite, setIsFavorite] = useState(false);
-
+export function VenueCard({ venue, isFavorite = false }) {
     // Gracefully handle images (use the placeholder gradient if none provided)
     const imageUrl = venue.thumbnail || (venue.photos && venue.photos.length > 0
         ? venue.photos[0].url || venue.photos[0]
@@ -25,11 +23,6 @@ export function VenueCard({ venue }) {
     } else if (venue.courts?.length > 0) {
         priceDisplay = `₹${Math.min(...venue.courts.map(c => c.pricePerHour))}`;
     }
-
-    const toggleFavorite = (e) => {
-        e.preventDefault(); // prevent simple Link navigation
-        setIsFavorite(!isFavorite);
-    };
 
     return (
         <Link
@@ -54,12 +47,11 @@ export function VenueCard({ venue }) {
                 </div>
 
                 {/* Favorite Toggle */}
-                <button
-                    onClick={toggleFavorite}
-                    className="absolute top-4 left-4 w-9 h-9 bg-white/50 hover:bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors z-10"
-                >
-                    <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                </button>
+                <FavoriteButton 
+                    venueId={venue.id} 
+                    initialFavorite={isFavorite}
+                    className="absolute top-4 left-4"
+                />
 
                 {/* Subtle hover overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
