@@ -40,19 +40,36 @@ class PaymentService {
    * @param {number} params.amount - Amount in rupees
    * @param {string} params.currency - Currency (default: INR)
    * @param {object} params.notes - Additional notes
+   * @param {boolean} params.skipFeeCalculation - Skip adding fees if already included
    * @returns {object} Payment order details
    */
-  async createOrder({ bookingId, amount, currency = 'INR', notes = {} }) {
+  async createOrder({ bookingId, amount, currency = 'INR', notes = {}, skipFeeCalculation = false }) {
     try {
-      // Calculate fees
-      const feeBreakdown = calculateProcessingFees(amount);
+      // Calculate fees only if not skipped
+      let feeBreakdown;
+      let finalAmount;
+      
+      if (skipFeeCalculation) {
+        // Fees already included in amount - pass through directly
+        finalAmount = amount;
+        feeBreakdown = {
+          baseAmount: amount,
+          processingFee: 0,
+          gst: 0,
+          totalFee: 0,
+          totalAmount: amount
+        };
+      } else {
+        feeBreakdown = calculateProcessingFees(amount);
+        finalAmount = feeBreakdown.totalAmount;
+      }
 
       // Generate unique order ID
       const orderId = generateOrderId(bookingId);
 
       // Create order with Razorpay
       const orderOptions = {
-        amount: Math.round(feeBreakdown.totalAmount * 100), // Convert to paise
+        amount: Math.round(finalAmount * 100), // Convert to paise
         currency: currency,
         receipt: orderId,
         notes: {
