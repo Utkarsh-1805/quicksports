@@ -1,9 +1,12 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { PushNotificationProvider } from "@/contexts/PushNotificationContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { ServiceWorkerRegistration } from "@/components/ui/ServiceWorkerRegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -96,18 +99,23 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
       >
-        <AuthProvider>
-          <Navbar />
-          <main className="flex-grow flex flex-col">
-            {children}
-          </main>
-          <Footer />
-          <ToastProvider />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <PushNotificationProvider>
+              <Navbar />
+              <main className="flex-grow flex flex-col">
+                {children}
+              </main>
+              <Footer />
+              <ToastProvider />
+              <ServiceWorkerRegistration />
+            </PushNotificationProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 import { Zap, User, LogOut, Menu, X, Bell, Calendar, Settings, ChevronDown, Shield, Building2 } from 'lucide-react';
 
 export function Navbar() {
@@ -58,7 +60,7 @@ export function Navbar() {
     // Always solid on dashboard, admin, owner, or auth pages
     const isSolidPage = pathname.includes('/dashboard') || pathname.includes('/admin') || pathname.includes('/owner') || pathname.includes('/auth');
     const navbarClasses = isSolidPage || isScrolled
-        ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-slate-100 py-3 text-slate-900'
+        ? 'bg-white/95 backdrop-blur-md shadow-sm py-3 text-slate-900'
         : 'bg-transparent py-5 text-white';
 
     const textClass = isSolidPage || isScrolled ? 'text-slate-600' : 'text-slate-200';
@@ -132,6 +134,12 @@ export function Navbar() {
 
                         {/* Auth Buttons / User Menu */}
                         <div className="hidden md:flex items-center gap-3">
+                            {/* Theme Toggle */}
+                            <ThemeToggle />
+                            
+                            {/* Push Notification Bell - only for authenticated users */}
+                            {isAuthenticated && <NotificationBell />}
+                            
                             {loading ? (
                                 <div className="w-8 h-8 rounded-full bg-slate-200 animate-pulse"></div>
                             ) : isAuthenticated ? (
