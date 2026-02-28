@@ -19,6 +19,7 @@ import { NextResponse } from 'next/server';
 import { verifyAuth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import PaymentService from '@/services/payment.service';
+import { mailService } from '@/lib/mail';
 
 export async function POST(request) {
   try {
@@ -242,8 +243,30 @@ export async function POST(request) {
       }
     };
 
-    // TODO: Send confirmation email/SMS
-    // await sendBookingConfirmation(confirmationData);
+    // Send confirmation email
+    try {
+      await mailService.sendBookingConfirmation({
+        user: result.booking.user,
+        bookingId: result.booking.id,
+        venue: {
+          name: result.booking.court.facility.name,
+          address: result.booking.court.facility.address,
+          city: result.booking.court.facility.city
+        },
+        court: {
+          name: result.booking.court.name,
+          sportType: result.booking.court.sportType
+        },
+        date: result.booking.bookingDate,
+        startTime: result.booking.startTime,
+        endTime: result.booking.endTime,
+        totalAmount: result.payment.totalAmount,
+        paymentMethod: result.payment.method
+      });
+    } catch (emailError) {
+      // Log error but don't fail the transaction
+      console.error('Failed to send confirmation email:', emailError);
+    }
 
     return NextResponse.json({
       success: true,

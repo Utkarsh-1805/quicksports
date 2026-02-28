@@ -326,6 +326,10 @@ export async function GET(request) {
       courtName: booking.court.name,
       sportType: booking.court.sportType,
       status: booking.status,
+      bookingDate: booking.bookingDate,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      amount: booking.totalAmount,
       createdAt: booking.createdAt,
       message: `${booking.user.name} booked ${booking.court.name} for ${booking.court.sportType}`
     }));

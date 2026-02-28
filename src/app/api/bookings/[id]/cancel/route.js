@@ -22,6 +22,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
 import { cancelBookingSchema } from "@/validations/booking.validation";
+import { mailService } from "@/lib/mail";
 
 export async function PATCH(request, { params }) {
   try {
@@ -180,12 +181,17 @@ export async function PATCH(request, { params }) {
       where: { id: bookingId },
       data: {
         status: 'CANCELLED',
-        // Store cancellation details in a note/metadata if needed
-        // cancelledAt: now,
-        // cancelReason: reason,
-        // refundAmount: refundAmount
+        cancellationReason: reason,
+        cancelledAt: now
       },
       include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
         court: {
           select: {
             id: true,
@@ -195,13 +201,43 @@ export async function PATCH(request, { params }) {
               select: {
                 id: true,
                 name: true,
-                city: true
+                city: true,
+                address: true
               }
             }
           }
         }
       }
     });
+    
+    // Send cancellation email
+    try {
+      await mailService.sendBookingCancellation({
+        user: updatedBooking.user,
+        bookingId: updatedBooking.id,
+        venue: {
+          name: updatedBooking.court.facility.name,
+          address: updatedBooking.court.facility.address,
+          city: updatedBooking.court.facility.city
+        },
+        court: {
+          name: updatedBooking.court.name,
+          sportType: updatedBooking.court.sportType
+        },
+        date: updatedBooking.bookingDate,
+        startTime: updatedBooking.startTime,
+        endTime: updatedBooking.endTime,
+        totalAmount: updatedBooking.totalAmount,
+        refund: {
+          amount: refundAmount,
+          percentage: refundPercentage,
+          policy: refundPolicy
+        }
+      });
+    } catch (emailError) {
+      // Log error but don't fail the cancellation
+      console.error('Failed to send cancellation email:', emailError);
+    }
     
     // ==========================================
     // STEP 8: Return Response

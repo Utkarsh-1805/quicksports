@@ -44,7 +44,7 @@ export async function POST(request, { params }) {
     const body = await request.json();
     
     // Manual validation instead of Zod
-    const { paymentMethod, notes } = body;
+    const { paymentMethod, notes, totalAmount: frontendTotal } = body;
     
     if (!paymentMethod || !VALID_PAYMENT_METHODS.includes(paymentMethod)) {
       return NextResponse.json({
@@ -112,10 +112,15 @@ export async function POST(request, { params }) {
     }
 
     // Create payment order with Razorpay
+    // Use frontend total if provided (includes fees calculated by frontend)
+    const amountToCharge = frontendTotal || booking.totalAmount;
+    const skipFees = !!frontendTotal; // Skip backend fee calculation if frontend sent total
+    
     const orderResult = await PaymentService.createOrder({
       bookingId: bookingId,
-      amount: booking.totalAmount,
+      amount: amountToCharge,
       currency: 'INR',
+      skipFeeCalculation: skipFees,
       notes: {
         facilityName: booking.court.facility.name,
         courtName: booking.court.name,
@@ -145,9 +150,9 @@ export async function POST(request, { params }) {
         },
         razorpayOrderId: orderResult.order.razorpayOrderId,
         amount: booking.totalAmount,
-        processingFee: orderResult.order.feeBreakdown.processingFee,
-        gst: orderResult.order.feeBreakdown.gst,
-        totalAmount: orderResult.order.feeBreakdown.totalAmount,
+        processingFee: skipFees ? 0 : orderResult.order.feeBreakdown.processingFee,
+        gst: skipFees ? 0 : orderResult.order.feeBreakdown.gst,
+        totalAmount: amountToCharge,
         currency: 'INR',
         method: paymentMethod,
         status: 'PENDING',
