@@ -162,9 +162,35 @@ export default function MyBookingsPage() {
     };
 
     const handleDownloadReceipt = async (bookingId) => {
-        // This would typically call an API to generate a PDF receipt
-        // For now, we'll open the confirmation page in a new tab
-        window.open(`/booking/confirmation/${bookingId}`, '_blank');
+        try {
+            // Fetch receipt with auth token
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/bookings/${bookingId}/receipt`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch receipt');
+            }
+            
+            const html = await response.text();
+            
+            // Open new window and write HTML directly
+            const receiptWindow = window.open('', '_blank');
+            if (receiptWindow) {
+                receiptWindow.document.write(html);
+                receiptWindow.document.close();
+            } else {
+                // Popup blocked - fallback to confirmation page
+                window.open(`/booking/confirmation/${bookingId}`, '_blank');
+            }
+        } catch (error) {
+            console.error('Error downloading receipt:', error);
+            // Fallback to confirmation page
+            window.open(`/booking/confirmation/${bookingId}`, '_blank');
+        }
     };
 
     const openCancelModal = (booking) => {

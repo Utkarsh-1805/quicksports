@@ -18,7 +18,7 @@ import {
     Sparkles
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { StatsCard, BookingCard, ActivityFeed, QuickActions } from '@/components/dashboard';
+import { StatsCard, BookingCard, ActivityFeed, QuickActions, FavoritesSection } from '@/components/dashboard';
 import { Button } from '@/components/ui/Button';
 
 /**
@@ -308,8 +308,8 @@ export default function UserDashboardContent() {
                     </div>
 
                     {/* Recent Activity - Takes 1 column */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-28">
+                    <div className="lg:col-span-1 space-y-6">
+                        <div className="bg-white rounded-2xl border border-slate-200 p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="font-bold text-lg text-slate-900">Recent Activity</h2>
                             </div>
@@ -318,6 +318,9 @@ export default function UserDashboardContent() {
                                 loading={false}
                             />
                         </div>
+                        
+                        {/* Favorites Section */}
+                        <FavoritesSection />
                     </div>
                 </div>
             </div>
