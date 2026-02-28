@@ -20,7 +20,8 @@ import {
     RecentBookingsTable, 
     TopCourtsCard,
     OwnerQuickActions,
-    VenuePerformanceCard
+    VenuePerformanceCard,
+    BookingCalendar
 } from '@/components/owner';
 import { Button } from '@/components/ui/Button';
 
@@ -304,6 +305,14 @@ export default function OwnerDashboardContent() {
                     venues={venues || []}
                     loading={loading}
                 />
+
+                {/* Booking Calendar */}
+                <div className="mt-8">
+                    <BookingCalendar
+                        bookings={getRecentBookings()}
+                        loading={loading}
+                    />
+                </div>
             </div>
         </div>
     );

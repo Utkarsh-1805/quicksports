@@ -5,6 +5,7 @@ export { RecentBookingsTable } from './RecentBookingsTable';
 export { TopCourtsCard } from './TopCourtsCard';
 export { OwnerQuickActions } from './OwnerQuickActions';
 export { VenuePerformanceCard } from './VenuePerformanceCard';
+export { BookingCalendar } from './BookingCalendar';
 export { default as OwnerDashboardContent } from './OwnerDashboardContent';
 export { default as FacilitiesContent } from './FacilitiesContent';
 export { default as AddFacilityForm } from './AddFacilityForm';
