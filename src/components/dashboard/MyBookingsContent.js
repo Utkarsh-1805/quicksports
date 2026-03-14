@@ -193,6 +193,17 @@ export default function MyBookingsPage() {
         }
     };
 
+    const handleReviewBooking = (booking) => {
+        const facilityId = booking?.venue?.id || booking?.court?.facilityId || booking?.court?.facility?.id;
+
+        if (!facilityId) {
+            setError('Venue details not found for this booking.');
+            return;
+        }
+
+        router.push(`/venues/${facilityId}?writeReview=1#reviews-section`);
+    };
+
     const openCancelModal = (booking) => {
         setBookingToCancel(booking);
         setShowCancelModal(true);
@@ -340,6 +351,7 @@ export default function MyBookingsPage() {
                                     variant="detailed"
                                     onCancel={openCancelModal}
                                     onDownload={handleDownloadReceipt}
+                                    onReview={handleReviewBooking}
                                     showActions={true}
                                 />
                             ))}
