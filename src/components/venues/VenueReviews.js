@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Star, MessageCircle, User } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock utility functions for formatting dates
 function abbreviateDate(dateString) {
@@ -11,11 +13,26 @@ function abbreviateDate(dateString) {
 }
 
 export function VenueReviews({ venueId, initialStats }) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { user, getToken } = useAuth();
     const [reviews, setReviews] = useState([]);
     const [stats, setStats] = useState(initialStats || { total: 0, averageRating: null, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
     const [pagination, setPagination] = useState({ page: 1, limit: 5, hasMore: false });
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
+    const [showReviewForm, setShowReviewForm] = useState(false);
+    const [selectedRating, setSelectedRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState('');
+    const [submitLoading, setSubmitLoading] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const [editingReviewId, setEditingReviewId] = useState(null);
+    const [editRating, setEditRating] = useState(0);
+    const [editHoverRating, setEditHoverRating] = useState(0);
+    const [editComment, setEditComment] = useState('');
+    const [editLoading, setEditLoading] = useState(false);
+    const [editError, setEditError] = useState('');
 
     // Fetch reviews initially and on load-more
     const fetchReviews = async (page = 1) => {
@@ -48,9 +65,131 @@ export function VenueReviews({ venueId, initialStats }) {
         fetchReviews(1);
     }, [venueId]);
 
+    useEffect(() => {
+        if (searchParams.get('writeReview') === '1') {
+            setShowReviewForm(true);
+        }
+    }, [searchParams]);
+
     const loadMore = () => {
         if (pagination.hasMore && !isLoading) {
             fetchReviews(pagination.page + 1);
+        }
+    };
+
+    const handleSubmitReview = async () => {
+        if (!selectedRating || submitLoading) return;
+
+        setSubmitLoading(true);
+        setSubmitError('');
+
+        try {
+            const token = document.cookie
+                .split('; ')
+                .find(row => row.startsWith('quickcourt_token='))
+                ?.split('=')[1];
+
+            if (!token) {
+                router.push(`/auth/login?redirect=/venues/${venueId}`);
+                return;
+            }
+
+            const res = await fetch(`/api/venues/${venueId}/reviews`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    rating: selectedRating,
+                    comment: reviewComment.trim() || null
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                setSubmitError(data.message || 'Failed to submit review');
+                return;
+            }
+
+            // Reset form
+            setShowReviewForm(false);
+            setSelectedRating(0);
+            setHoverRating(0);
+            setReviewComment('');
+
+            // Refresh latest reviews and stats
+            await fetchReviews(1);
+        } catch (error) {
+            console.error('Submit review error:', error);
+            setSubmitError('Failed to submit review. Please try again.');
+        } finally {
+            setSubmitLoading(false);
+        }
+    };
+
+    const canEditReview = (review) => {
+        if (!user) return false;
+        return user.role === 'ADMIN' || review.user?.id === user.id;
+    };
+
+    const startEditReview = (review) => {
+        setEditingReviewId(review.id);
+        setEditRating(review.rating || 0);
+        setEditHoverRating(0);
+        setEditComment(review.comment || '');
+        setEditError('');
+    };
+
+    const cancelEditReview = () => {
+        setEditingReviewId(null);
+        setEditRating(0);
+        setEditHoverRating(0);
+        setEditComment('');
+        setEditError('');
+    };
+
+    const saveEditedReview = async (review) => {
+        if (!editRating || editLoading) return;
+
+        setEditLoading(true);
+        setEditError('');
+
+        try {
+            const token = getToken?.();
+
+            if (!token) {
+                router.push(`/auth/login?redirect=/venues/${venueId}`);
+                return;
+            }
+
+            const res = await fetch(`/api/venues/${venueId}/reviews/${review.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    rating: editRating,
+                    comment: editComment.trim() || null
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                setEditError(data.message || 'Failed to update review');
+                return;
+            }
+
+            cancelEditReview();
+            await fetchReviews(1);
+        } catch (error) {
+            console.error('Edit review error:', error);
+            setEditError('Failed to update review. Please try again.');
+        } finally {
+            setEditLoading(false);
         }
     };
 
@@ -113,7 +252,68 @@ export function VenueReviews({ venueId, initialStats }) {
                         })}
                     </div>
 
-                    <Button fullWidth size="lg">Write a Review</Button>
+                    <Button
+                        fullWidth
+                        size="lg"
+                        onClick={() => {
+                            setShowReviewForm((prev) => !prev);
+                            setSubmitError('');
+                        }}
+                    >
+                        {showReviewForm ? 'Close Review Form' : 'Write a Review'}
+                    </Button>
+
+                    {showReviewForm && (
+                        <div className="mt-5 p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-4">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 mb-2">Your Rating</p>
+                                <div className="flex gap-1">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            onClick={() => setSelectedRating(star)}
+                                            className="p-1"
+                                            aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                                        >
+                                            <Star
+                                                className={`w-7 h-7 transition-colors ${
+                                                    star <= (hoverRating || selectedRating)
+                                                        ? 'text-yellow-400 fill-yellow-400'
+                                                        : 'text-slate-300 fill-slate-300'
+                                                }`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-semibold text-slate-800 mb-2 block">Comment (optional)</label>
+                                <textarea
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                    rows={4}
+                                    placeholder="Tell others about your experience..."
+                                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                />
+                            </div>
+
+                            {submitError && (
+                                <p className="text-sm text-red-600">{submitError}</p>
+                            )}
+
+                            <Button
+                                fullWidth
+                                onClick={handleSubmitReview}
+                                disabled={!selectedRating || submitLoading}
+                            >
+                                {submitLoading ? 'Submitting...' : 'Submit Review'}
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Comments Column */}
@@ -143,18 +343,85 @@ export function VenueReviews({ venueId, initialStats }) {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex gap-0.5">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <Star
-                                                    key={star}
-                                                    className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'}`}
-                                                />
-                                            ))}
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex gap-0.5">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <Star
+                                                        key={star}
+                                                        className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                            {canEditReview(review) && editingReviewId !== review.id && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startEditReview(review)}
+                                                    className="text-xs font-medium text-green-600 hover:text-green-700"
+                                                >
+                                                    Edit
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
-                                    <p className="text-slate-600 leading-relaxed pl-16">
-                                        {review.comment || 'No written comment supplied.'}
-                                    </p>
+
+                                    {editingReviewId === review.id ? (
+                                        <div className="pl-16 space-y-3">
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onMouseEnter={() => setEditHoverRating(star)}
+                                                        onMouseLeave={() => setEditHoverRating(0)}
+                                                        onClick={() => setEditRating(star)}
+                                                        className="p-1"
+                                                        aria-label={`Set rating ${star}`}
+                                                    >
+                                                        <Star
+                                                            className={`w-5 h-5 ${star <= (editHoverRating || editRating)
+                                                                ? 'text-yellow-400 fill-yellow-400'
+                                                                : 'text-slate-300 fill-slate-300'
+                                                            }`}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            <textarea
+                                                value={editComment}
+                                                onChange={(e) => setEditComment(e.target.value)}
+                                                rows={3}
+                                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                            />
+
+                                            {editError && (
+                                                <p className="text-sm text-red-600">{editError}</p>
+                                            )}
+
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => saveEditedReview(review)}
+                                                    disabled={!editRating || editLoading}
+                                                    className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                                                >
+                                                    {editLoading ? 'Saving...' : 'Save'}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelEditReview}
+                                                    disabled={editLoading}
+                                                    className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-slate-600 leading-relaxed pl-16">
+                                            {review.comment || 'No written comment supplied.'}
+                                        </p>
+                                    )}
                                 </div>
                             ))}
                         </div>
