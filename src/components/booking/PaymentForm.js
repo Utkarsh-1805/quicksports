@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CreditCard, Smartphone, Building2, Wallet, Loader2, CheckCircle2, AlertCircle, Shield, Lock } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * PaymentForm Component
  * Handles payment method selection and Razorpay integration
  */
-export function PaymentForm({ 
+export function PaymentForm({
     booking,
     user,
     totalWithFees,
@@ -39,10 +39,10 @@ export function PaymentForm({
     }, []);
 
     const paymentMethods = [
-        { id: 'UPI', label: 'UPI', icon: Smartphone, desc: 'Google Pay, PhonePe, Paytm' },
-        { id: 'CARD', label: 'Card', icon: CreditCard, desc: 'Credit/Debit Card' },
-        { id: 'NET_BANKING', label: 'Net Banking', icon: Building2, desc: 'All major banks' },
-        { id: 'WALLET', label: 'Wallet', icon: Wallet, desc: 'Paytm, Mobikwik' },
+        { id: 'UPI', label: 'UPI', iconName: 'smartphone', desc: 'Google Pay, PhonePe, Paytm' },
+        { id: 'CARD', label: 'Card', iconName: 'credit_card', desc: 'Credit/Debit Card' },
+        { id: 'NET_BANKING', label: 'Net Banking', iconName: 'account_balance', desc: 'All major banks' },
+        { id: 'WALLET', label: 'Wallet', iconName: 'wallet', desc: 'Paytm, Mobikwik' },
     ];
 
     const handlePayment = async () => {
@@ -106,7 +106,7 @@ export function PaymentForm({
                     contact: user?.phone || ''
                 },
                 theme: {
-                    color: '#16a34a' // Green theme
+                    color: '#006b2c' // M3 primary green
                 },
                 handler: async function(response) {
                     // Step 3: Verify payment
@@ -167,49 +167,53 @@ export function PaymentForm({
     };
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div className="card p-7">
             <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-green-600" />
+                <div className="w-10 h-10 rounded-xl bg-primary-container/30 flex items-center justify-center">
+                    <Icon name="credit_card" size={20} className="text-primary" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-slate-900">Payment Method</h3>
-                    <p className="text-sm text-slate-500">Choose how you'd like to pay</p>
+                    <h3 className="font-display text-lg font-semibold text-on-surface">Payment Method</h3>
+                    <p className="text-sm text-on-surface-variant">Choose how you&apos;d like to pay</p>
                 </div>
             </div>
 
-            {/* Payment Methods */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-                {paymentMethods.map((method) => (
-                    <button
-                        key={method.id}
-                        onClick={() => setSelectedMethod(method.id)}
-                        className={`
-                            relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200
-                            ${selectedMethod === method.id
-                                ? 'border-green-500 bg-green-50 shadow-md'
-                                : 'border-slate-200 hover:border-green-300 hover:bg-slate-50'
-                            }
-                        `}
-                    >
-                        <method.icon className={`w-6 h-6 mb-2 ${selectedMethod === method.id ? 'text-green-600' : 'text-slate-500'}`} />
-                        <span className={`font-semibold text-sm ${selectedMethod === method.id ? 'text-green-700' : 'text-slate-700'}`}>
-                            {method.label}
-                        </span>
-                        <span className="text-[10px] text-slate-500 mt-0.5">{method.desc}</span>
-                        
-                        {selectedMethod === method.id && (
-                            <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-green-500" />
-                        )}
-                    </button>
-                ))}
+            {/* Method Tabs */}
+            <label className="font-mono text-[11px] text-on-surface-variant mb-1.5 block uppercase tracking-[0.12em]">Method</label>
+            <div className="bg-surface-container rounded-lg p-1 grid grid-cols-2 sm:grid-cols-4 gap-1 mb-6">
+                {paymentMethods.map((method) => {
+                    const active = selectedMethod === method.id;
+                    return (
+                        <button
+                            key={method.id}
+                            onClick={() => setSelectedMethod(method.id)}
+                            className={`
+                                relative flex flex-col items-center justify-center px-3 py-3 rounded-lg transition-all duration-200
+                                ${active
+                                    ? 'bg-surface-container-lowest shadow-sm text-primary'
+                                    : 'text-on-surface-variant hover:bg-surface-container-high'
+                                }
+                            `}
+                        >
+                            <Icon name={method.iconName} size={20} className={active ? 'text-primary' : 'text-on-surface-variant'} />
+                            <span className={`font-semibold text-sm mt-1 ${active ? 'text-primary' : 'text-on-surface'}`}>
+                                {method.label}
+                            </span>
+                            <span className="text-[10px] text-on-surface-variant mt-0.5 text-center">{method.desc}</span>
+
+                            {active && (
+                                <Icon name="check_circle" filled size={14} className="absolute top-1.5 right-1.5 text-primary" />
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Error Message */}
             {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                    <p className="text-sm text-red-700">{error}</p>
+                <div className="mb-4 p-3 bg-error-container border border-error/20 rounded-lg flex items-center gap-2">
+                    <Icon name="error" size={20} className="text-error shrink-0" />
+                    <p className="text-sm text-on-error-container">{error}</p>
                 </div>
             )}
 
@@ -217,43 +221,40 @@ export function PaymentForm({
             <button
                 onClick={handlePayment}
                 disabled={loading || !booking}
-                className={`
-                    w-full py-4 px-6 rounded-xl font-bold text-white transition-all duration-200
-                    flex items-center justify-center gap-2
-                    ${loading || !booking
-                        ? 'bg-slate-400 cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/30 hover:shadow-green-500/40'
-                    }
-                `}
+                className={`btn btn-lg w-full ${
+                    loading || !booking
+                        ? 'bg-surface-container-high text-on-surface-variant cursor-not-allowed'
+                        : 'btn-cta'
+                }`}
             >
                 {loading ? (
                     <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Icon name="progress_activity" size={20} className="animate-spin" />
                         Processing...
                     </>
                 ) : (
                     <>
-                        <Lock className="w-5 h-5" />
+                        <Icon name="lock" size={20} />
                         Pay Securely
                     </>
                 )}
             </button>
 
             {/* Security Badges */}
-            <div className="mt-6 pt-4 border-t border-slate-100">
+            <div className="mt-6 pt-4 border-t border-outline-variant/40">
                 <div className="flex items-center justify-center gap-6">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Shield className="w-4 h-4 text-green-500" />
+                    <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <Icon name="shield" size={16} className="text-primary" />
                         <span>Secure Payment</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                        <Lock className="w-4 h-4 text-green-500" />
-                        <span>256-bit SSL</span>
+                    <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                        <Icon name="lock" size={16} className="text-primary" />
+                        <span className="font-mono">256-bit SSL</span>
                     </div>
                 </div>
                 <div className="flex items-center justify-center gap-3 mt-3">
                     <img src="https://cdn.razorpay.com/logo/razorpay-logo.svg" alt="Razorpay" className="h-5 opacity-60" />
-                    <span className="text-[10px] text-slate-400">Powered by Razorpay</span>
+                    <span className="text-[10px] text-on-surface-variant font-mono">Powered by Razorpay</span>
                 </div>
             </div>
         </div>

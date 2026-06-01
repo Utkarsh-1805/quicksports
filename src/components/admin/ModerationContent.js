@@ -2,28 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    AlertTriangle,
-    Search,
-    Filter,
-    Clock,
-    CheckCircle,
-    XCircle,
-    User,
-    Building2,
-    Flag,
-    MessageSquare,
-    ChevronDown,
-    ChevronUp,
-    AlertCircle,
-    RefreshCw,
-    Eye,
-    AlertOctagon,
-    Loader2,
-    ExternalLink
-} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * ModerationContent Component
@@ -32,18 +13,18 @@ import { Button } from '@/components/ui/Button';
 export default function ModerationContent() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    
+
     const [reports, setReports] = useState([]);
     const [stats, setStats] = useState(null);
     const [pagination, setPagination] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     const [expandedReport, setExpandedReport] = useState(null);
     const [actionModal, setActionModal] = useState(null);
     const [resolution, setResolution] = useState('');
     const [processing, setProcessing] = useState(false);
-    
+
     const [filters, setFilters] = useState({
         status: 'PENDING',
         priority: '',
@@ -53,7 +34,7 @@ export default function ModerationContent() {
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/admin/moderation');
             return;
@@ -124,7 +105,7 @@ export default function ModerationContent() {
 
     const handleResolve = async (action) => {
         if (!actionModal) return;
-        
+
         setProcessing(true);
         try {
             const token = document.cookie
@@ -162,58 +143,42 @@ export default function ModerationContent() {
         }
     };
 
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-IN', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+    const formatRelativeTime = (date) => {
+        const now = new Date();
+        const then = new Date(date);
+        const diff = (now - then) / 1000;
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+        return `${Math.floor(diff / 86400)} days ago`;
     };
 
-    const getPriorityStyles = (priority) => {
+    const getPriorityAccent = (priority) => {
         switch (priority) {
             case 'CRITICAL':
-                return { bg: 'bg-red-50', text: 'text-red-700', icon: AlertOctagon };
             case 'HIGH':
-                return { bg: 'bg-orange-50', text: 'text-orange-700', icon: AlertTriangle };
+                return { bar: 'bg-error', label: 'text-error' };
             case 'MEDIUM':
-                return { bg: 'bg-amber-50', text: 'text-amber-700', icon: Flag };
+                return { bar: 'bg-secondary', label: 'text-secondary' };
             default:
-                return { bg: 'bg-slate-100', text: 'text-slate-700', icon: Flag };
-        }
-    };
-
-    const getStatusStyles = (status) => {
-        switch (status) {
-            case 'PENDING':
-                return 'bg-amber-50 text-amber-700';
-            case 'INVESTIGATING':
-                return 'bg-blue-50 text-blue-700';
-            case 'RESOLVED':
-                return 'bg-green-50 text-green-700';
-            case 'DISMISSED':
-                return 'bg-slate-100 text-slate-600';
-            default:
-                return 'bg-slate-100 text-slate-700';
+                return { bar: 'bg-outline', label: 'text-on-surface-variant' };
         }
     };
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="min-h-screen bg-surface pt-20">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="animate-pulse">
-                        <div className="h-8 w-48 bg-slate-200 rounded mb-6"></div>
-                        <div className="grid grid-cols-4 gap-4 mb-6">
+                        <div className="h-10 w-64 bg-surface-container rounded mb-8"></div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                             {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="h-24 bg-white rounded-xl"></div>
+                                <div key={i} className="h-24 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                             ))}
                         </div>
                         <div className="space-y-4">
                             {[1, 2, 3].map(i => (
-                                <div key={i} className="h-32 bg-white rounded-xl"></div>
+                                <div key={i} className="h-40 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                             ))}
                         </div>
                     </div>
@@ -224,15 +189,15 @@ export default function ModerationContent() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center p-4">
+                <div className="card p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="error" className="text-on-error-container" size={32} />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading</h2>
-                    <p className="text-slate-500 mb-6">{error}</p>
+                    <h2 className="font-display text-xl text-on-surface mb-2">Error Loading</h2>
+                    <p className="text-on-surface-variant mb-6">{error}</p>
                     <Button onClick={fetchReports}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                        <Icon name="refresh" size={16} className="mr-2" />
                         Try Again
                     </Button>
                 </div>
@@ -241,87 +206,90 @@ export default function ModerationContent() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="min-h-screen bg-surface pt-20">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 pb-6 border-b border-outline-variant">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Reports & Moderation</h1>
-                        <p className="text-slate-500 mt-1">Review and resolve user reports</p>
+                        <div className="eyebrow mb-3">Admin Console</div>
+                        <h1 className="font-display text-3xl sm:text-4xl tracking-tight text-on-surface">Moderation queue</h1>
+                        <p className="text-base text-on-surface-variant mt-1">Review flagged content and maintain community safety.</p>
                     </div>
-                    <button
-                        onClick={fetchReports}
-                        className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 self-start"
-                    >
-                        <RefreshCw className="w-5 h-5" />
-                    </button>
-                </div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant">
+                            <Icon name="warning" className="text-secondary" size={20} />
+                            <span className="font-mono text-sm text-on-surface">
+                                {stats?.byStatus?.PENDING || 0} Flagged Items
+                            </span>
+                        </div>
+                        <button
+                            onClick={fetchReports}
+                            className="p-2 text-on-surface-variant hover:text-primary hover:bg-surface-container rounded-full transition-colors"
+                        >
+                            <Icon name="refresh" />
+                        </button>
+                    </div>
+                </header>
 
-                {/* Stats */}
+                {/* Status Tabs / Stats */}
                 {stats && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <button
-                            onClick={() => setFilters(f => ({ ...f, status: 'PENDING', page: 1 }))}
-                            className={`bg-white rounded-xl border p-4 text-left transition-all ${filters.status === 'PENDING' ? 'border-amber-500 ring-2 ring-amber-500/20' : 'border-slate-200 hover:border-slate-300'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center">
-                                    <Clock className="w-5 h-5 text-amber-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-slate-900">{stats.byStatus?.PENDING || 0}</p>
-                                    <p className="text-sm text-slate-500">Pending</p>
-                                </div>
-                            </div>
-                        </button>
+                        {[
+                            { key: 'PENDING', label: 'Pending', icon: 'schedule', color: 'secondary' },
+                            { key: 'INVESTIGATING', label: 'Investigating', icon: 'visibility', color: 'tertiary' },
+                            { key: 'RESOLVED', label: 'Resolved', icon: 'check_circle', color: 'primary' },
+                            { key: 'CRITICAL', label: 'Critical', icon: 'error', color: 'error', priorityKey: true }
+                        ].map(tab => {
+                            const isActive = !tab.priorityKey && filters.status === tab.key;
+                            const value = tab.priorityKey ? stats.byPriority?.CRITICAL || 0 : stats.byStatus?.[tab.key] || 0;
+                            const ringColor =
+                                tab.color === 'primary' ? 'ring-primary border-primary' :
+                                tab.color === 'tertiary' ? 'ring-tertiary border-tertiary' :
+                                tab.color === 'error' ? 'ring-error border-error' :
+                                'ring-secondary border-secondary';
+                            const iconColor =
+                                tab.color === 'primary' ? 'text-primary' :
+                                tab.color === 'tertiary' ? 'text-tertiary' :
+                                tab.color === 'error' ? 'text-error' :
+                                'text-secondary';
+                            const iconBg =
+                                tab.color === 'primary' ? 'bg-primary-container/20' :
+                                tab.color === 'tertiary' ? 'bg-tertiary-fixed' :
+                                tab.color === 'error' ? 'bg-error-container' :
+                                'bg-secondary-container/20';
 
-                        <button
-                            onClick={() => setFilters(f => ({ ...f, status: 'INVESTIGATING', page: 1 }))}
-                            className={`bg-white rounded-xl border p-4 text-left transition-all ${filters.status === 'INVESTIGATING' ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-300'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
-                                    <Eye className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-slate-900">{stats.byStatus?.INVESTIGATING || 0}</p>
-                                    <p className="text-sm text-slate-500">Investigating</p>
-                                </div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => setFilters(f => ({ ...f, status: 'RESOLVED', page: 1 }))}
-                            className={`bg-white rounded-xl border p-4 text-left transition-all ${filters.status === 'RESOLVED' ? 'border-green-500 ring-2 ring-green-500/20' : 'border-slate-200 hover:border-slate-300'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center">
-                                    <CheckCircle className="w-5 h-5 text-green-600" />
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-slate-900">{stats.byStatus?.RESOLVED || 0}</p>
-                                    <p className="text-sm text-slate-500">Resolved</p>
-                                </div>
-                            </div>
-                        </button>
-
-                        <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-xl p-4 text-white">
-                            <div className="flex items-center gap-2 mb-1">
-                                <AlertOctagon className="w-5 h-5" />
-                                <span className="text-sm font-medium">Critical</span>
-                            </div>
-                            <p className="text-2xl font-bold">{stats.byPriority?.CRITICAL || 0}</p>
-                        </div>
+                            return (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => !tab.priorityKey && setFilters(f => ({ ...f, status: tab.key, page: 1 }))}
+                                    disabled={tab.priorityKey}
+                                    className={`card p-5 text-left transition-all ${
+                                        isActive ? `ring-2 ${ringColor}` : 'card-hover'
+                                    } ${tab.priorityKey ? 'cursor-default' : 'cursor-pointer'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>
+                                            <Icon name={tab.icon} className={iconColor} />
+                                        </div>
+                                        <div>
+                                            <p className="font-display text-2xl text-on-surface">{value}</p>
+                                            <p className="text-sm text-on-surface-variant">{tab.label}</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
                 {/* Filters */}
-                <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+                <div className="card p-4 mb-6">
                     <div className="flex flex-wrap gap-4">
                         <select
                             value={filters.priority}
                             onChange={(e) => setFilters(f => ({ ...f, priority: e.target.value, page: 1 }))}
-                            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                            className="input"
+                            style={{ width: 'auto', padding: '10px 14px', fontSize: 13 }}
                         >
                             <option value="">All Priorities</option>
                             <option value="CRITICAL">Critical</option>
@@ -333,7 +301,8 @@ export default function ModerationContent() {
                         <select
                             value={filters.type}
                             onChange={(e) => setFilters(f => ({ ...f, type: e.target.value, page: 1 }))}
-                            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                            className="input"
+                            style={{ width: 'auto', padding: '10px 14px', fontSize: 13 }}
                         >
                             <option value="">All Types</option>
                             <option value="venue">Venue Reports</option>
@@ -346,157 +315,123 @@ export default function ModerationContent() {
 
                 {/* Reports List */}
                 {reports.length === 0 ? (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-                        <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle className="w-8 h-8 text-slate-400" />
+                    <div className="card p-12 text-center">
+                        <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center mx-auto mb-4">
+                            <Icon name="check_circle" className="text-on-primary-container" size={32} filled />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Reports</h3>
-                        <p className="text-slate-500">
-                            {filters.status === 'PENDING' 
+                        <h3 className="font-display text-lg text-on-surface mb-2">No Reports</h3>
+                        <p className="text-on-surface-variant">
+                            {filters.status === 'PENDING'
                                 ? 'All caught up! No pending reports to review.'
                                 : `No ${filters.status.toLowerCase()} reports found.`
                             }
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {reports.map((report) => {
-                            const priorityStyle = getPriorityStyles(report.priority);
-                            const PriorityIcon = priorityStyle.icon;
-                            
+                            const accent = getPriorityAccent(report.priority);
+                            const expanded = expandedReport === report.id;
+                            const canAct = report.status === 'PENDING' || report.status === 'INVESTIGATING';
+
                             return (
-                                <div key={report.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                                    {/* Report Header */}
-                                    <div 
-                                        className="p-6 cursor-pointer"
-                                        onClick={() => setExpandedReport(expandedReport === report.id ? null : report.id)}
-                                    >
-                                        <div className="flex items-start gap-4">
-                                            {/* Priority Icon */}
-                                            <div className={`w-12 h-12 rounded-xl ${priorityStyle.bg} flex items-center justify-center shrink-0`}>
-                                                <PriorityIcon className={`w-6 h-6 ${priorityStyle.text}`} />
-                                            </div>
+                                <article
+                                    key={report.id}
+                                    className="card card-hover overflow-hidden flex flex-col md:flex-row group"
+                                >
+                                    {/* Priority Color Bar */}
+                                    <div className={`w-full h-2 md:w-3 md:h-auto ${accent.bar} shrink-0`}></div>
 
-                                            {/* Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div>
-                                                        <h3 className="font-semibold text-slate-900">{report.reason || 'Report'}</h3>
-                                                        <p className="text-sm text-slate-500 mt-1">{report.description?.slice(0, 100)}...</p>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${priorityStyle.bg} ${priorityStyle.text}`}>
-                                                            {report.priority}
-                                                        </span>
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyles(report.status)}`}>
-                                                            {report.status}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-wrap gap-4 mt-3 text-sm text-slate-500">
-                                                    <span className="flex items-center gap-1">
-                                                        <User className="w-4 h-4" />
-                                                        {report.reporter?.name || 'Anonymous'}
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        {report.targetType === 'venue' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                                                        {report.targetType}
-                                                    </span>
-                                                    <span className="flex items-center gap-1">
-                                                        <Clock className="w-4 h-4" />
-                                                        {formatDate(report.createdAt)}
+                                    <div className="p-6 flex-1 flex flex-col md:flex-row gap-6">
+                                        <div className="flex-1 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <Icon name="flag" className={accent.label} size={16} />
+                                                    <span className={`font-mono text-xs uppercase tracking-wider ${accent.label}`}>
+                                                        {report.reason || 'Report'} · {report.priority}
                                                     </span>
                                                 </div>
+                                                <span className="text-sm text-on-surface-variant">{formatRelativeTime(report.createdAt)}</span>
                                             </div>
 
-                                            {/* Expand Toggle */}
-                                            <div className="hidden sm:flex items-center">
-                                                {expandedReport === report.id ? (
-                                                    <ChevronUp className="w-5 h-5 text-slate-400" />
-                                                ) : (
-                                                    <ChevronDown className="w-5 h-5 text-slate-400" />
-                                                )}
+                                            <div className="p-4 rounded-xl text-base text-on-surface italic" style={{ background: 'color-mix(in oklab, var(--error) 6%, transparent)', border: '1px solid color-mix(in oklab, var(--error) 18%, var(--outline-variant))' }}>
+                                                &ldquo;{expanded ? report.description : `${report.description?.slice(0, 200)}${report.description?.length > 200 ? '...' : ''}`}&rdquo;
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Expanded Details */}
-                                    {expandedReport === report.id && (
-                                        <div className="border-t border-slate-100 p-6 bg-slate-50/50">
-                                            {/* Full Description */}
-                                            <div className="mb-6">
-                                                <h4 className="font-semibold text-slate-900 mb-2">Report Details</h4>
-                                                <div className="bg-white rounded-xl p-4 border border-slate-200">
-                                                    <p className="text-slate-600 whitespace-pre-wrap">{report.description}</p>
+                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                                                <div className="flex items-center gap-1 text-on-surface-variant">
+                                                    <Icon name="person" size={16} />
+                                                    <span>Reporter: <strong className="text-on-surface">{report.reporter?.name || 'Anonymous'}</strong></span>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-on-surface-variant">
+                                                    <Icon name={report.targetType === 'venue' ? 'domain' : 'person'} size={16} />
+                                                    <span>Target: <strong className="text-on-surface">{report.target?.name || report.targetId}</strong></span>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-on-surface-variant">
+                                                    <Icon name="forum" size={16} />
+                                                    <span>Type: <strong className="text-on-surface capitalize">{report.targetType}</strong></span>
                                                 </div>
                                             </div>
 
-                                            {/* Reporter & Target Info */}
-                                            <div className="grid md:grid-cols-2 gap-6 mb-6">
-                                                <div>
-                                                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                                        <User className="w-4 h-4" />
-                                                        Reporter
-                                                    </h4>
-                                                    <div className="bg-white rounded-xl p-4 border border-slate-200">
-                                                        <p className="font-medium text-slate-900">{report.reporter?.name}</p>
-                                                        <p className="text-sm text-slate-500">{report.reporter?.email}</p>
+                                            <button
+                                                onClick={() => setExpandedReport(expanded ? null : report.id)}
+                                                className="text-sm text-primary font-medium hover:underline"
+                                            >
+                                                {expanded ? 'Show Less' : 'View Full Details'}
+                                            </button>
+
+                                            {expanded && (
+                                                <div className="grid md:grid-cols-2 gap-4 pt-2">
+                                                    <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant">
+                                                        <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant mb-1">Reporter</p>
+                                                        <p className="font-medium text-on-surface">{report.reporter?.name}</p>
+                                                        <p className="text-sm text-on-surface-variant">{report.reporter?.email}</p>
                                                     </div>
-                                                </div>
-
-                                                <div>
-                                                    <h4 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                                        {report.targetType === 'venue' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                                                        Target
-                                                    </h4>
-                                                    <div className="bg-white rounded-xl p-4 border border-slate-200">
-                                                        <p className="font-medium text-slate-900">{report.target?.name || report.targetId}</p>
-                                                        <p className="text-sm text-slate-500 capitalize">{report.targetType}</p>
+                                                    <div className="bg-surface-container-low rounded-xl p-3 border border-outline-variant">
+                                                        <p className="font-mono text-xs uppercase tracking-wider text-on-surface-variant mb-1">Status</p>
+                                                        <p className="font-medium text-on-surface">{report.status}</p>
                                                     </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Actions */}
-                                            {(report.status === 'PENDING' || report.status === 'INVESTIGATING') && (
-                                                <div className="flex flex-wrap gap-3">
-                                                    {report.status === 'PENDING' && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActionModal({ ...report, type: 'investigate' });
-                                                            }}
-                                                            className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                            Start Investigation
-                                                        </button>
-                                                    )}
-                                                    <Button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActionModal({ ...report, type: 'resolve' });
-                                                        }}
-                                                        className="bg-green-600 hover:bg-green-700 text-white"
-                                                    >
-                                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                                        Resolve
-                                                    </Button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActionModal({ ...report, type: 'dismiss' });
-                                                        }}
-                                                        className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors flex items-center gap-2"
-                                                    >
-                                                        <XCircle className="w-4 h-4" />
-                                                        Dismiss
-                                                    </button>
                                                 </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
+
+                                        {/* Actions Column */}
+                                        {canAct ? (
+                                            <div className="md:w-64 border-t md:border-t-0 md:border-l border-outline-variant pt-4 md:pt-0 md:pl-6 flex flex-col justify-center gap-3">
+                                                <button
+                                                    onClick={() => setActionModal({ ...report, type: 'resolve' })}
+                                                    className="btn btn-sm w-full"
+                                                    style={{ background: 'var(--error)', color: 'var(--on-error)' }}
+                                                >
+                                                    <Icon name="delete" size={16} />
+                                                    Resolve & Remove
+                                                </button>
+                                                {report.status === 'PENDING' && (
+                                                    <button
+                                                        onClick={() => setActionModal({ ...report, type: 'investigate' })}
+                                                        className="btn btn-outline btn-sm w-full"
+                                                    >
+                                                        <Icon name="visibility" size={16} />
+                                                        Start Investigation
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => setActionModal({ ...report, type: 'dismiss' })}
+                                                    className="btn btn-outline btn-sm w-full mt-auto"
+                                                >
+                                                    <Icon name="check" size={16} />
+                                                    Dismiss
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="md:w-64 border-t md:border-t-0 md:border-l border-outline-variant pt-4 md:pt-0 md:pl-6 flex flex-col justify-center">
+                                                <span className={`pill ${report.status === 'RESOLVED' ? '' : 'neutral'} justify-center`}>
+                                                    {report.status}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </article>
                             );
                         })}
                     </div>
@@ -508,17 +443,17 @@ export default function ModerationContent() {
                         <button
                             onClick={() => setFilters(f => ({ ...f, page: f.page - 1 }))}
                             disabled={filters.page === 1}
-                            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
+                            className="btn btn-outline btn-sm disabled:opacity-50"
                         >
                             Previous
                         </button>
-                        <span className="px-4 py-2 text-sm text-slate-600">
+                        <span className="px-4 py-2 text-sm font-mono text-on-surface-variant">
                             Page {filters.page} of {pagination.totalPages}
                         </span>
                         <button
                             onClick={() => setFilters(f => ({ ...f, page: f.page + 1 }))}
                             disabled={filters.page === pagination.totalPages}
-                            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50"
+                            className="btn btn-outline btn-sm disabled:opacity-50"
                         >
                             Next
                         </button>
@@ -529,15 +464,15 @@ export default function ModerationContent() {
             {/* Action Modal */}
             {actionModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">
+                    <div className="card max-w-md w-full p-6 shadow-2xl anim-slide-up">
+                        <h3 className="font-display text-2xl text-on-surface mb-4">
                             {actionModal.type === 'investigate' && 'Start Investigation'}
                             {actionModal.type === 'resolve' && 'Resolve Report'}
                             {actionModal.type === 'dismiss' && 'Dismiss Report'}
                         </h3>
-                        
+
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <label className="block font-mono text-xs uppercase tracking-wider text-on-surface-variant mb-2">
                                 {actionModal.type === 'investigate' ? 'Investigation Notes' : 'Resolution Notes'}
                             </label>
                             <textarea
@@ -545,7 +480,8 @@ export default function ModerationContent() {
                                 onChange={(e) => setResolution(e.target.value)}
                                 placeholder="Add notes about the action taken..."
                                 rows={4}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                                className="input"
+                                style={{ resize: 'vertical' }}
                             />
                         </div>
 
@@ -555,22 +491,19 @@ export default function ModerationContent() {
                                     setActionModal(null);
                                     setResolution('');
                                 }}
-                                className="flex-1 px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50"
+                                className="btn btn-outline flex-1"
                             >
                                 Cancel
                             </button>
-                            <Button
+                            <button
                                 onClick={() => handleResolve(actionModal.type)}
                                 disabled={processing}
-                                className={`flex-1 ${
-                                    actionModal.type === 'resolve' ? 'bg-green-600 hover:bg-green-700' :
-                                    actionModal.type === 'dismiss' ? 'bg-slate-600 hover:bg-slate-700' :
-                                    'bg-blue-600 hover:bg-blue-700'
-                                }`}
+                                className={`btn flex-1 disabled:opacity-50 ${actionModal.type === 'investigate' ? 'btn-primary' : actionModal.type === 'dismiss' ? 'btn-outline' : ''}`}
+                                style={actionModal.type === 'resolve' ? { background: 'var(--error)', color: 'var(--on-error)' } : undefined}
                             >
-                                {processing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                {processing && <Icon name="progress_activity" size={16} className="animate-spin" />}
                                 Confirm
-                            </Button>
+                            </button>
                         </div>
                     </div>
                 </div>

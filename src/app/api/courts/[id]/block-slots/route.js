@@ -99,7 +99,7 @@ export async function POST(request, { params }) {
     const validation = blockSlotsSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, message: 'Validation failed', errors: validation.error.errors },
+        { success: false, message: 'Validation failed', errors: validation.error.issues },
         { status: 400 }
       );
     }
@@ -302,7 +302,7 @@ export async function DELETE(request, { params }) {
     const validation = unblockSlotsSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, message: 'Validation failed', errors: validation.error.errors },
+        { success: false, message: 'Validation failed', errors: validation.error.issues },
         { status: 400 }
       );
     }

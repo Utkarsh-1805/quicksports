@@ -101,8 +101,8 @@ export function validateSearchParams(searchParams) {
     if (!result.success) {
       return {
         isValid: false,
-        errors: result.error.errors.map(e => ({
-          field: e.path.join('.'),
+        errors: (result.error.issues || result.error.errors || []).map(e => ({
+          field: (e.path || []).join('.'),
           message: e.message
         }))
       };
@@ -139,8 +139,8 @@ export function validateSuggestionsParams(searchParams) {
     if (!result.success) {
       return {
         isValid: false,
-        errors: result.error.errors.map(e => ({
-          field: e.path.join('.'),
+        errors: (result.error.issues || result.error.errors || []).map(e => ({
+          field: (e.path || []).join('.'),
           message: e.message
         }))
       };
@@ -161,8 +161,8 @@ export function validateNearbyParams(searchParams) {
     if (!result.success) {
       return {
         isValid: false,
-        errors: result.error.errors.map(e => ({
-          field: e.path.join('.'),
+        errors: (result.error.issues || result.error.errors || []).map(e => ({
+          field: (e.path || []).join('.'),
           message: e.message
         }))
       };

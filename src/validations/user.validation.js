@@ -77,12 +77,21 @@ const passwordSchema = z
  * - Must be valid URL or base64 data URI
  * - Optional field
  */
+// Accept: absolute URLs (Cloudinary), relative upload paths (disk fallback,
+// e.g. "/uploads/avatars/x.jpg"), base64 data URIs, or empty/null.
 const avatarSchema = z
   .string()
-  .url('Please provide a valid avatar URL')
-  .optional()
   .nullable()
-  .or(z.string().regex(/^data:image\/(jpeg|png|gif|webp);base64,/, 'Invalid image format'));
+  .optional()
+  .refine(
+    (v) =>
+      v == null ||
+      v === '' ||
+      /^https?:\/\//i.test(v) ||
+      v.startsWith('/') ||
+      /^data:image\/(jpeg|png|gif|webp);base64,/.test(v),
+    { message: 'Invalid avatar URL or image format' }
+  );
 
 // ==========================================
 // PROFILE UPDATE SCHEMA
@@ -162,9 +171,6 @@ export const changePasswordSchema = z.object({
 export const deactivateAccountSchema = z.object({
   password: z.string().min(1, 'Password is required for confirmation'),
   reason: z.string().max(500, 'Reason must not exceed 500 characters').optional(),
-  confirmText: z.literal('DELETE MY ACCOUNT', {
-    errorMap: () => ({ message: 'Please type "DELETE MY ACCOUNT" to confirm' })
-  })
 });
 
 // ==========================================

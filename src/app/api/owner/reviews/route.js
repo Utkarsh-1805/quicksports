@@ -98,11 +98,34 @@ export async function GET(request) {
       }
     });
 
+    // Compute rating distribution over ALL reviews matching `where` (not just current page)
+    const ratingGroups = await prisma.review.groupBy({
+      by: ['rating'],
+      where,
+      _count: { rating: true }
+    });
+
+    const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let ratingSum = 0;
+    let ratingCount = 0;
+    for (const group of ratingGroups) {
+      const r = group.rating;
+      const c = group._count.rating;
+      if (r >= 1 && r <= 5) {
+        ratingDistribution[r] = c;
+        ratingSum += r * c;
+        ratingCount += c;
+      }
+    }
+    const averageRating = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
+
     return NextResponse.json({
       success: true,
       data: {
         reviews,
         unrespondedCount,
+        ratingDistribution,
+        averageRating,
         pagination: {
           page,
           limit,

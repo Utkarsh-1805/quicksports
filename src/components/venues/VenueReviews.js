@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Star, MessageCircle, User } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Mock utility functions for formatting dates
 function abbreviateDate(dateString) {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    return new Date(dateString).toLocaleDateString(undefined, options).toUpperCase();
 }
 
 export function VenueReviews({ venueId, initialStats }) {
@@ -17,7 +15,9 @@ export function VenueReviews({ venueId, initialStats }) {
     const searchParams = useSearchParams();
     const { user, getToken } = useAuth();
     const [reviews, setReviews] = useState([]);
-    const [stats, setStats] = useState(initialStats || { total: 0, averageRating: null, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } });
+    const [stats, setStats] = useState(
+        initialStats || { total: 0, averageRating: null, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } }
+    );
     const [pagination, setPagination] = useState({ page: 1, limit: 5, hasMore: false });
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
@@ -34,24 +34,22 @@ export function VenueReviews({ venueId, initialStats }) {
     const [editLoading, setEditLoading] = useState(false);
     const [editError, setEditError] = useState('');
 
-    // Fetch reviews initially and on load-more
     const fetchReviews = async (page = 1) => {
         setIsLoading(true);
         setIsError(false);
-
         try {
-            const res = await fetch(`/api/venues/${venueId}/reviews?page=${page}&limit=${pagination.limit}`);
+            const token = getToken?.();
+            const res = await fetch(`/api/venues/${venueId}/reviews?page=${page}&limit=${pagination.limit}`, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             if (!res.ok) throw new Error('Failed to fetch reviews');
-
             const data = await res.json();
-
             if (page === 1) {
                 setReviews(data.data.reviews);
-                setStats(data.data.stats); // Use exact backend stats calculation
+                setStats(data.data.stats);
             } else {
-                setReviews(prev => [...prev, ...data.data.reviews]);
+                setReviews((prev) => [...prev, ...data.data.reviews]);
             }
-
             setPagination(data.data.pagination);
         } catch (error) {
             console.error(error);
@@ -61,65 +59,84 @@ export function VenueReviews({ venueId, initialStats }) {
         }
     };
 
+    const toggleHelpful = async (review) => {
+        if (!user) {
+            router.push(`/auth/login?redirect=/venues/${venueId}`);
+            return;
+        }
+        // Owner cannot vote on their own review
+        if (review.user?.id === user.id) return;
+
+        const willVote = !review.userHasVoted;
+        // Optimistic update
+        setReviews((prev) =>
+            prev.map((r) =>
+                r.id === review.id
+                    ? { ...r, userHasVoted: willVote, helpfulCount: Math.max(0, (r.helpfulCount || 0) + (willVote ? 1 : -1)) }
+                    : r
+            )
+        );
+        try {
+            const token = getToken?.();
+            const res = await fetch(`/api/venues/${venueId}/reviews/${review.id}/helpful`, {
+                method: willVote ? 'POST' : 'DELETE',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            if (!res.ok) {
+                // Roll back on failure
+                setReviews((prev) =>
+                    prev.map((r) =>
+                        r.id === review.id
+                            ? { ...r, userHasVoted: !willVote, helpfulCount: Math.max(0, (r.helpfulCount || 0) + (willVote ? -1 : 1)) }
+                            : r
+                    )
+                );
+            }
+        } catch (err) {
+            console.error('Toggle helpful error:', err);
+        }
+    };
+
     useEffect(() => {
         fetchReviews(1);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [venueId]);
 
     useEffect(() => {
-        if (searchParams.get('writeReview') === '1') {
-            setShowReviewForm(true);
-        }
+        if (searchParams.get('writeReview') === '1') setShowReviewForm(true);
     }, [searchParams]);
 
     const loadMore = () => {
-        if (pagination.hasMore && !isLoading) {
-            fetchReviews(pagination.page + 1);
-        }
+        if (pagination.hasMore && !isLoading) fetchReviews(pagination.page + 1);
     };
 
     const handleSubmitReview = async () => {
         if (!selectedRating || submitLoading) return;
-
         setSubmitLoading(true);
         setSubmitError('');
-
         try {
             const token = document.cookie
                 .split('; ')
-                .find(row => row.startsWith('quickcourt_token='))
+                .find((row) => row.startsWith('quickcourt_token='))
                 ?.split('=')[1];
-
             if (!token) {
                 router.push(`/auth/login?redirect=/venues/${venueId}`);
                 return;
             }
-
             const res = await fetch(`/api/venues/${venueId}/reviews`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    rating: selectedRating,
-                    comment: reviewComment.trim() || null
-                })
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ rating: selectedRating, comment: reviewComment.trim() || null }),
             });
-
             const data = await res.json();
-
             if (!res.ok || !data.success) {
                 setSubmitError(data.message || 'Failed to submit review');
                 return;
             }
-
-            // Reset form
             setShowReviewForm(false);
             setSelectedRating(0);
             setHoverRating(0);
             setReviewComment('');
-
-            // Refresh latest reviews and stats
             await fetchReviews(1);
         } catch (error) {
             console.error('Submit review error:', error);
@@ -152,37 +169,24 @@ export function VenueReviews({ venueId, initialStats }) {
 
     const saveEditedReview = async (review) => {
         if (!editRating || editLoading) return;
-
         setEditLoading(true);
         setEditError('');
-
         try {
             const token = getToken?.();
-
             if (!token) {
                 router.push(`/auth/login?redirect=/venues/${venueId}`);
                 return;
             }
-
             const res = await fetch(`/api/venues/${venueId}/reviews/${review.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    rating: editRating,
-                    comment: editComment.trim() || null
-                })
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ rating: editRating, comment: editComment.trim() || null }),
             });
-
             const data = await res.json();
-
             if (!res.ok || !data.success) {
                 setEditError(data.message || 'Failed to update review');
                 return;
             }
-
             cancelEditReview();
             await fetchReviews(1);
         } catch (error) {
@@ -195,78 +199,89 @@ export function VenueReviews({ venueId, initialStats }) {
 
     if (isError) {
         return (
-            <div className="bg-white rounded-3xl p-8 border border-red-100 shadow-sm text-center">
-                <p className="text-red-500 font-medium tracking-wide">Could not load reviews at this time.</p>
-                <button onClick={() => fetchReviews(1)} className="mt-4 text-slate-500 underline hover:text-slate-800">Try Again</button>
+            <div className="card p-8 border-error/40 text-center">
+                <p className="text-error font-medium">Could not load reviews at this time.</p>
+                <button
+                    onClick={() => fetchReviews(1)}
+                    className="mt-4 text-on-surface-variant underline hover:text-on-surface"
+                >
+                    Try Again
+                </button>
             </div>
         );
     }
 
-    // Calculate percentages for the distribution bars
-    const totalReviews = stats.total > 0 ? stats.total : 1; // Prevent division by zero
+    const totalReviews = stats.total > 0 ? stats.total : 1;
 
     return (
-        <div className="bg-white rounded-3xl p-8 lg:p-10 border border-slate-100 shadow-xl" id="reviews-section">
+        <div
+            className="card p-8 lg:p-10"
+            id="reviews-section"
+        >
             <div className="flex flex-col md:flex-row gap-12 items-start">
-
-                {/* Left Stats Column */}
+                {/* Left stats column */}
                 <div className="w-full md:w-1/3 shrink-0">
-                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Reviews</h2>
-                    <p className="text-slate-500 mb-8">Real opinions from athletes like you.</p>
+                    <h2 className="font-display text-3xl text-on-surface tracking-tight mb-2">Reviews</h2>
+                    <p className="text-on-surface-variant mb-8">Real opinions from athletes like you.</p>
 
                     <div className="flex items-center gap-4 mb-8">
-                        <div className="w-20 h-20 bg-green-50 rounded-2xl flex items-center justify-center text-4xl font-black text-green-600 shadow-inner">
+                        <div className="w-20 h-20 bg-primary-container rounded-2xl flex items-center justify-center font-display text-4xl text-on-primary-container">
                             {stats.averageRating ? stats.averageRating.toFixed(1) : '—'}
                         </div>
                         <div>
                             <div className="flex gap-1 mb-1">
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
+                                    <Icon
                                         key={star}
-                                        className={`w-5 h-5 ${star <= (stats.averageRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'}`}
+                                        name="star"
+                                        filled={star <= (stats.averageRating || 0)}
+                                        size={20}
+                                        className={star <= (stats.averageRating || 0) ? 'text-secondary-container' : 'text-outline-variant'}
                                     />
                                 ))}
                             </div>
-                            <p className="text-slate-500 font-medium">Based on {stats.total} reviews</p>
+                            <p className="text-on-surface-variant font-medium">Based on {stats.total} reviews</p>
                         </div>
                     </div>
 
-                    {/* Distribution Bars */}
+                    {/* Distribution bars */}
                     <div className="space-y-3 mb-10">
                         {[5, 4, 3, 2, 1].map((rating) => {
                             const count = stats.distribution[rating] || 0;
                             const percentage = Math.round((count / totalReviews) * 100);
                             return (
                                 <div key={rating} className="flex items-center gap-3">
-                                    <span className="font-bold text-slate-700 w-3">{rating}</span>
-                                    <Star className="w-4 h-4 text-yellow-400 fill-yellow-400 shrink-0" />
-                                    <div className="flex-1 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <span className="font-mono font-bold text-on-surface w-3">{rating}</span>
+                                    <Icon name="star" filled size={16} className="text-secondary-container shrink-0" />
+                                    <div className="flex-1 h-2.5 bg-surface-container rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-yellow-400 rounded-full transition-all duration-1000 ease-out"
+                                            className="h-full bg-secondary-container rounded-full transition-all duration-1000 ease-out"
                                             style={{ width: `${percentage}%` }}
                                         />
                                     </div>
-                                    <span className="text-xs font-medium text-slate-400 w-8 text-right shrink-0">{percentage}%</span>
+                                    <span className="font-mono text-xs font-medium text-on-surface-variant w-8 text-right shrink-0">
+                                        {percentage}%
+                                    </span>
                                 </div>
                             );
                         })}
                     </div>
 
-                    <Button
-                        fullWidth
-                        size="lg"
+                    <button
                         onClick={() => {
                             setShowReviewForm((prev) => !prev);
                             setSubmitError('');
                         }}
+                        className="btn btn-primary w-full"
                     >
+                        <Icon name={showReviewForm ? 'close' : 'edit'} size={18} />
                         {showReviewForm ? 'Close Review Form' : 'Write a Review'}
-                    </Button>
+                    </button>
 
                     {showReviewForm && (
-                        <div className="mt-5 p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-4">
+                        <div className="mt-5 p-4 rounded-[20px] border border-outline-variant bg-surface-container-low space-y-4 anim-fade">
                             <div>
-                                <p className="text-sm font-semibold text-slate-800 mb-2">Your Rating</p>
+                                <p className="text-sm font-semibold text-on-surface mb-2">Your Rating</p>
                                 <div className="flex gap-1">
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <button
@@ -278,12 +293,11 @@ export function VenueReviews({ venueId, initialStats }) {
                                             className="p-1"
                                             aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                                         >
-                                            <Star
-                                                className={`w-7 h-7 transition-colors ${
-                                                    star <= (hoverRating || selectedRating)
-                                                        ? 'text-yellow-400 fill-yellow-400'
-                                                        : 'text-slate-300 fill-slate-300'
-                                                }`}
+                                            <Icon
+                                                name="star"
+                                                filled={star <= (hoverRating || selectedRating)}
+                                                size={28}
+                                                className={star <= (hoverRating || selectedRating) ? 'text-secondary-container' : 'text-outline-variant'}
                                             />
                                         </button>
                                     ))}
@@ -291,54 +305,55 @@ export function VenueReviews({ venueId, initialStats }) {
                             </div>
 
                             <div>
-                                <label className="text-sm font-semibold text-slate-800 mb-2 block">Comment (optional)</label>
+                                <label className="text-sm font-semibold text-on-surface mb-2 block">Comment (optional)</label>
                                 <textarea
                                     value={reviewComment}
                                     onChange={(e) => setReviewComment(e.target.value)}
                                     rows={4}
                                     placeholder="Tell others about your experience..."
-                                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                                 />
                             </div>
 
-                            {submitError && (
-                                <p className="text-sm text-red-600">{submitError}</p>
-                            )}
+                            {submitError && <p className="text-sm text-error">{submitError}</p>}
 
-                            <Button
-                                fullWidth
+                            <button
                                 onClick={handleSubmitReview}
                                 disabled={!selectedRating || submitLoading}
+                                className="btn btn-cta w-full disabled:opacity-50"
                             >
                                 {submitLoading ? 'Submitting...' : 'Submit Review'}
-                            </Button>
+                            </button>
                         </div>
                     )}
                 </div>
 
-                {/* Right Comments Column */}
-                <div className="w-full md:w-2/3 border-t md:border-t-0 md:border-l border-slate-100 pt-10 md:pt-0 md:pl-12">
-
+                {/* Right comments column */}
+                <div className="w-full md:w-2/3 border-t md:border-t-0 md:border-l border-outline-variant pt-10 md:pt-0 md:pl-12">
                     {reviews.length === 0 && !isLoading ? (
                         <div className="h-full flex flex-col items-center justify-center py-20 text-center">
-                            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                                <MessageCircle className="w-8 h-8 text-slate-300" />
+                            <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mb-4">
+                                <Icon name="forum" size={32} className="text-outline" />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">No reviews yet</h3>
-                            <p className="text-slate-500 max-w-sm">Be the first to share your experience exploring this venue.</p>
+                            <h3 className="font-display text-xl text-on-surface mb-2">No reviews yet</h3>
+                            <p className="text-on-surface-variant max-w-sm">
+                                Be the first to share your experience exploring this venue.
+                            </p>
                         </div>
                     ) : (
                         <div className="space-y-8">
                             {reviews.map((review) => (
-                                <div key={review.id} className="pb-8 border-b border-slate-100 last:border-0">
+                                <div key={review.id} className="pb-8 border-b border-outline-variant last:border-0">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-full bg-green-100 text-green-700 font-bold flex items-center justify-center uppercase tracking-wider">
-                                                {review.user?.name ? review.user.name.charAt(0) : <User className="w-6 h-6" />}
+                                            <div className="w-12 h-12 rounded-full bg-primary-container text-on-primary-container font-bold flex items-center justify-center uppercase text-base">
+                                                {review.user?.name ? review.user.name.charAt(0) : <Icon name="person" size={24} />}
                                             </div>
                                             <div>
-                                                <h4 className="font-bold text-slate-900">{review.user?.name || 'Anonymous User'}</h4>
-                                                <span className="text-xs font-medium text-slate-400 tracking-wide uppercase">
+                                                <h4 className="font-semibold text-on-surface">
+                                                    {review.user?.name || 'Anonymous User'}
+                                                </h4>
+                                                <span className="font-mono text-xs font-medium text-on-surface-variant tracking-wider">
                                                     {abbreviateDate(review.createdAt)}
                                                 </span>
                                             </div>
@@ -346,9 +361,12 @@ export function VenueReviews({ venueId, initialStats }) {
                                         <div className="flex items-center gap-3">
                                             <div className="flex gap-0.5">
                                                 {[1, 2, 3, 4, 5].map((star) => (
-                                                    <Star
+                                                    <Icon
                                                         key={star}
-                                                        className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'}`}
+                                                        name="star"
+                                                        filled={star <= review.rating}
+                                                        size={16}
+                                                        className={star <= review.rating ? 'text-secondary-container' : 'text-outline-variant'}
                                                     />
                                                 ))}
                                             </div>
@@ -356,7 +374,7 @@ export function VenueReviews({ venueId, initialStats }) {
                                                 <button
                                                     type="button"
                                                     onClick={() => startEditReview(review)}
-                                                    className="text-xs font-medium text-green-600 hover:text-green-700"
+                                                    className="text-xs font-medium text-primary hover:text-primary-container"
                                                 >
                                                     Edit
                                                 </button>
@@ -377,11 +395,11 @@ export function VenueReviews({ venueId, initialStats }) {
                                                         className="p-1"
                                                         aria-label={`Set rating ${star}`}
                                                     >
-                                                        <Star
-                                                            className={`w-5 h-5 ${star <= (editHoverRating || editRating)
-                                                                ? 'text-yellow-400 fill-yellow-400'
-                                                                : 'text-slate-300 fill-slate-300'
-                                                            }`}
+                                                        <Icon
+                                                            name="star"
+                                                            filled={star <= (editHoverRating || editRating)}
+                                                            size={20}
+                                                            className={star <= (editHoverRating || editRating) ? 'text-secondary-container' : 'text-outline-variant'}
                                                         />
                                                     </button>
                                                 ))}
@@ -391,19 +409,17 @@ export function VenueReviews({ venueId, initialStats }) {
                                                 value={editComment}
                                                 onChange={(e) => setEditComment(e.target.value)}
                                                 rows={3}
-                                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                                             />
 
-                                            {editError && (
-                                                <p className="text-sm text-red-600">{editError}</p>
-                                            )}
+                                            {editError && <p className="text-sm text-error">{editError}</p>}
 
                                             <div className="flex gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => saveEditedReview(review)}
                                                     disabled={!editRating || editLoading}
-                                                    className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+                                                    className="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:bg-primary-container hover:text-on-primary-container disabled:opacity-50"
                                                 >
                                                     {editLoading ? 'Saving...' : 'Save'}
                                                 </button>
@@ -411,41 +427,60 @@ export function VenueReviews({ venueId, initialStats }) {
                                                     type="button"
                                                     onClick={cancelEditReview}
                                                     disabled={editLoading}
-                                                    className="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200"
+                                                    className="px-4 py-2 rounded-lg bg-surface-container text-on-surface text-sm font-medium hover:bg-surface-container-high"
                                                 >
                                                     Cancel
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <p className="text-slate-600 leading-relaxed pl-16">
-                                            {review.comment || 'No written comment supplied.'}
-                                        </p>
+                                        <>
+                                            <p className="text-on-surface-variant leading-relaxed pl-16">
+                                                {review.comment || 'No written comment supplied.'}
+                                            </p>
+                                            <div className="pl-16 mt-3 flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleHelpful(review)}
+                                                    disabled={user && review.user?.id === user.id}
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                                                        review.userHasVoted
+                                                            ? 'bg-primary-container text-on-primary-container border-primary-container'
+                                                            : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:bg-surface-container hover:text-on-surface'
+                                                    } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                                    title={user && review.user?.id === user.id ? "You can't vote on your own review" : 'Mark this review as helpful'}
+                                                >
+                                                    <Icon name="thumb_up" filled={review.userHasVoted} size={14} />
+                                                    <span>Helpful</span>
+                                                    {typeof review.helpfulCount === 'number' && review.helpfulCount > 0 && (
+                                                        <span className="font-mono">{review.helpfulCount}</span>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    {/* Pagination Load More */}
                     {isLoading && (
                         <div className="flex justify-center py-8">
-                            <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-green-500 animate-spin" />
+                            <Icon name="progress_activity" size={32} className="text-primary animate-spin" />
                         </div>
                     )}
 
                     {pagination.hasMore && !isLoading && (
-                        <div className="flex justify-center pt-8 border-t border-slate-100 mt-8">
+                        <div className="flex justify-center pt-8 border-t border-outline-variant mt-8">
                             <button
                                 onClick={loadMore}
-                                className="font-medium text-green-600 hover:text-green-700 transition-colors border border-green-200 hover:border-green-300 hover:bg-green-50 px-6 py-2.5 rounded-full"
+                                className="btn btn-outline btn-sm"
                             >
                                 Read More Reviews
                             </button>
                         </div>
                     )}
                 </div>
-
             </div>
         </div>
     );

@@ -1,454 +1,273 @@
-# QuickCourt - Sports Court Booking Platform
+# QuickCourt
 
-A comprehensive full-stack sports court booking platform built with Next.js 16, React 19, Prisma ORM, and PostgreSQL. Connect players with venue owners through an intuitive booking experience.
+A full-stack sports-venue booking platform — **player booking → owner management → admin moderation** — built on Next.js 16, Prisma 7, PostgreSQL, with real-time slot updates, geospatial search, content-based recommendations, and a match-making feed.
 
-![Next.js](https://img.shields.io/badge/Next.js-16.1.4-black)
-![React](https://img.shields.io/badge/React-19.2-blue)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-blue)
-![Prisma](https://img.shields.io/badge/Prisma-7.3-purple)
-![Tailwind](https://img.shields.io/badge/Tailwind-4.0-cyan)
-
----
-
-## 🏸 Overview
-
-QuickCourt is a full-featured sports facility booking platform that enables users to discover nearby courts, check real-time availability, book slots, make secure payments, and leave reviews. Venue owners get a complete management dashboard, while admins have full platform control.
-
-### ✨ Key Features
-
-#### 👤 For Players
-- **Smart Search** - Find venues by location, sport, price, rating with geolocation support
-- **Real-time Booking** - Interactive calendar with live availability
-- **Secure Payments** - Razorpay integration with multiple payment methods
-- **QR Code Tickets** - Digital booking confirmation with scannable QR codes
-- **Favorites** - Save and manage favorite venues
-- **Coupon System** - Apply discount codes during checkout
-- **Reviews & Ratings** - Share experiences with verified booking badges
-- **Email Confirmations** - Instant booking confirmations via email
-
-#### 🏢 For Venue Owners
-- **Dashboard Analytics** - Revenue charts, booking trends, performance metrics
-- **Facility Management** - Add/edit venues, courts, photos, amenities
-- **Booking Calendar** - Visual calendar view of all reservations
-- **Earnings Tracking** - Detailed revenue reports with period filters
-- **Review Management** - Respond to customer reviews
-- **Court Configuration** - Set pricing, operating hours, sport types
-
-#### 👨‍💼 For Administrators
-- **User Management** - View, manage, and moderate user accounts
-- **Facility Approvals** - Review and approve/reject new venue listings
-- **Revenue Analytics** - Platform-wide financial insights
-- **Content Moderation** - Review flagging and moderation system
-- **Global Bookings** - Monitor all platform bookings
-- **Report Handling** - Manage user reports and disputes
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![React](https://img.shields.io/badge/React-19-blue)
+![Prisma](https://img.shields.io/badge/Prisma-7-purple)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
+![Tests](https://img.shields.io/badge/tests-26%20unit%20%2B%2055%20E2E-green)
 
 ---
 
-## 🏗️ Tech Stack
+## What's inside
 
-### Frontend
-| Technology | Purpose |
-|------------|---------|
-| **Next.js 16** | Full-stack React framework with App Router |
-| **React 19** | UI library with latest features |
-| **Tailwind CSS 4** | Utility-first styling |
-| **Radix UI** | Accessible component primitives |
-| **Lucide React** | Modern icon library |
-| **Recharts** | Data visualization charts |
-| **Framer Motion** | Animations and transitions |
-| **React Hook Form** | Form state management |
-| **React Hot Toast** | Toast notifications |
-
-### Backend
-| Technology | Purpose |
-|------------|---------|
-| **Next.js API Routes** | RESTful API endpoints |
-| **Prisma ORM 7** | Type-safe database access |
-| **PostgreSQL (Neon)** | Cloud-hosted database |
-| **Zod** | Schema validation |
-| **JWT** | Authentication tokens |
-| **Razorpay** | Payment gateway |
-| **Nodemailer** | Email service |
-| **QRCode** | Booking QR generation |
+| Surface              | Capability                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Player**           | Discover venues, filter, map view, book slots, pay via Razorpay, cancel + auto-refund, review, vote helpful, join open matches |
+| **Owner**            | List facilities, manage courts, drag-drop photo upload, block slots for maintenance, see live earnings + per-court analytics + 24×7 heatmap, respond to reviews |
+| **Admin**            | Approve facilities, moderate reviews, manage users/refunds, platform revenue analytics                |
+| **Hero features**    | Live-updating slot availability (SSE), Leaflet map + radius search, content-based "Recommended for you" rail, match-making feed with capacity & skill level |
 
 ---
 
-## 📁 Project Structure
+## Architecture
 
-```
-quickcourt/
-├── src/
-│   ├── app/                      # Next.js App Router
-│   │   ├── api/                  # API Routes
-│   │   │   ├── admin/            # Admin management APIs
-│   │   │   ├── auth/             # Authentication endpoints
-│   │   │   ├── bookings/         # Booking system
-│   │   │   ├── coupons/          # Coupon management
-│   │   │   ├── courts/           # Court management
-│   │   │   ├── favorites/        # User favorites
-│   │   │   ├── notifications/    # Notification system
-│   │   │   ├── owner/            # Owner portal APIs
-│   │   │   ├── payments/         # Payment processing
-│   │   │   ├── reports/          # Report system
-│   │   │   ├── sports/           # Sports data
-│   │   │   ├── upload/           # File uploads
-│   │   │   ├── users/            # User management
-│   │   │   └── venues/           # Venue & search APIs
-│   │   ├── admin/                # Admin pages
-│   │   ├── auth/                 # Auth pages (login, register, verify)
-│   │   ├── booking/              # Booking flow pages
-│   │   ├── dashboard/            # User dashboard
-│   │   ├── owner/                # Owner portal pages
-│   │   └── venues/               # Venue listing & detail pages
-│   ├── components/
-│   │   ├── admin/                # Admin dashboard components
-│   │   ├── auth/                 # Auth guards & forms
-│   │   ├── booking/              # Booking flow components
-│   │   ├── dashboard/            # User dashboard components
-│   │   ├── landing/              # Homepage components
-│   │   ├── layout/               # Navbar, Footer, Sidebar
-│   │   ├── owner/                # Owner portal components
-│   │   ├── ui/                   # Reusable UI components
-│   │   └── venues/               # Venue cards, filters, gallery
-│   ├── contexts/                 # React contexts (Auth)
-│   ├── lib/                      # Utilities (auth, prisma, mail)
-│   ├── prisma/
-│   │   └── schema/               # Database schema
-│   ├── services/                 # Business logic services
-│   └── validations/              # Zod validation schemas
-├── docs/                         # API documentation
-├── scripts/                      # Seed & utility scripts
-└── public/                       # Static assets
+```mermaid
+flowchart LR
+    subgraph Client[Browsers / Mobile Web]
+        UI[Next.js App Router<br/>React 19 client components]
+    end
+
+    subgraph Edge[Next.js 16 server runtime]
+        Pages[Server Components<br/>Pages & layouts]
+        API[/REST API routes<br/>POST/GET/PUT/DELETE/]
+        SSE[/SSE stream<br/>/availability/stream/]
+    end
+
+    subgraph Services[Service & validation layer]
+        AuthSvc[Auth service<br/>JWT HS256]
+        PaymentSvc[Payment service<br/>Razorpay SDK]
+        ReviewSvc[Review service]
+        Validation[Zod schemas]
+    end
+
+    subgraph Data[Persistence]
+        DB[(PostgreSQL<br/>Neon / local)]
+        Prisma[Prisma 7 client<br/>via @prisma/adapter-pg]
+    end
+
+    subgraph Ext[External]
+        Razorpay[Razorpay<br/>checkout & webhooks]
+        Cloud[Cloudinary CDN<br/>avatars & facility photos]
+        SMTP[SMTP / nodemailer]
+        OSM[OpenStreetMap tiles<br/>via Leaflet]
+    end
+
+    UI <--> Pages
+    UI <-->|fetch| API
+    UI <-->|EventSource| SSE
+    Pages --> Services
+    API --> Services
+    SSE --> Prisma
+    Services --> Prisma
+    Prisma --> DB
+    PaymentSvc <--> Razorpay
+    API --> Cloud
+    AuthSvc --> SMTP
+    UI -.-> OSM
 ```
 
+### Request flow examples
+
+- **Book a court** → client opens `EventSource` for live updates → POST `/api/bookings` → POST `/api/bookings/[id]/pay` (Razorpay order) → Razorpay checkout → POST `/api/payments/verify` (HMAC SHA-256) → confirmation.
+- **Open a match** → POST `/api/matches` with bookingId → booking flagged `isPublic` → appears on `/matches` for other players → POST `/api/matches/[id]/join` → upserts `BookingParticipant`.
+- **Live slot updates** → server polls `bookings` + `time_slots` every 3 s, hashes the occupancy set, streams `event: update` only when it changes; client re-fetches REST availability on each update.
+
 ---
 
-## 🚀 Getting Started
+## Tech stack
+
+- **Framework:** Next.js 16 (App Router, Turbopack), React 19, Tailwind v4
+- **Backend:** Next.js route handlers (Node runtime), Prisma 7 + `@prisma/adapter-pg`, PostgreSQL
+- **Auth:** JWT (HS256, `jsonwebtoken`), bcrypt password hashing
+- **Payments:** Razorpay SDK, server-side signature verification
+- **Storage:** Cloudinary (CDN) with local-disk fallback for dev
+- **Map:** `react-leaflet` + OpenStreetMap tiles (no API key)
+- **Email:** nodemailer (SMTP)
+- **Observability:** Pino structured logger, Sentry scaffold (env-gated)
+- **Testing:** Vitest unit tests + standalone Node E2E API suite
+- **Design system:** Material Design 3 tokens, Fraunces (display) + JetBrains Mono + Inter (loaded at runtime, no build-time fetch)
+
+---
+
+## Getting started
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL database (or [Neon](https://neon.tech) account)
-- Razorpay account (for payments)
-- Gmail account with App Password (for emails)
+- Node.js **≥ 20**
+- PostgreSQL (Neon, Supabase, or local)
+- Razorpay test keys (for payment flows)
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Utkarsh-1805/quicksports.git
-   cd quickcourt
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-
-   Configure your `.env` file:
-   ```env
-   # Database (Neon PostgreSQL)
-   DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-
-   # Authentication
-   JWT_SECRET="your-secure-secret-key"
-
-   # Email (Gmail SMTP)
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_USER=your-email@gmail.com
-   SMTP_PASS=your-app-password
-   EMAIL_FROM="QuickCourt <your-email@gmail.com>"
-
-   # Razorpay
-   RAZORPAY_KEY_ID=rzp_test_xxxxx
-   RAZORPAY_KEY_SECRET=your-secret
-   RAZORPAY_WEBHOOK_SECRET=your-webhook-secret
-   ```
-
-4. **Set up the database**
-   ```bash
-   npx prisma db push
-   ```
-
-5. **Seed initial data (optional)**
-   ```bash
-   node scripts/seed-amenities.mjs
-   ```
-
-6. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-   Visit `http://localhost:3000`
-
----
-
-## 📱 Application Pages
-
-| Page | Route | Description |
-|------|-------|-------------|
-| Home | `/` | Landing page with search & featured venues |
-| Login | `/auth/login` | User authentication |
-| Register | `/auth/register` | New user registration |
-| Verify OTP | `/auth/verify-otp` | Email verification |
-| Venues | `/venues` | Browse & search all venues |
-| Venue Detail | `/venues/[id]` | Venue info, courts, reviews |
-| Booking | `/booking/[courtId]` | Multi-step booking flow |
-| User Dashboard | `/dashboard` | User bookings & favorites |
-| Owner Dashboard | `/owner/dashboard` | Owner analytics & management |
-| Owner Facilities | `/owner/facilities` | Manage venues & courts |
-| Owner Bookings | `/owner/bookings` | View facility bookings |
-| Owner Analytics | `/owner/analytics` | Revenue & performance |
-| Admin Dashboard | `/admin` | Platform overview |
-| Admin Users | `/admin/users` | User management |
-| Admin Facilities | `/admin/facilities` | Venue approvals |
-| Admin Moderation | `/admin/moderation` | Content moderation |
-
----
-
-## 🔌 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/verify-otp` | Verify OTP |
-| POST | `/api/auth/resend-otp` | Resend OTP |
-| POST | `/api/auth/login` | User login |
-| GET | `/api/auth/me` | Get current user |
-
-### Venues & Search
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/venues` | List all venues |
-| GET | `/api/venues/[id]` | Get venue details |
-| GET | `/api/venues/search` | Advanced search |
-| POST | `/api/venues/search/available` | Search with availability |
-| GET | `/api/venues/nearby` | Find nearby venues |
-| GET | `/api/venues/suggestions` | Autocomplete |
-| GET | `/api/venues/trending` | Trending venues |
-| GET | `/api/venues/cities` | Featured cities |
-
-### Bookings
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/bookings` | User's bookings |
-| POST | `/api/bookings` | Create booking |
-| GET | `/api/bookings/[id]` | Booking details |
-| POST | `/api/bookings/[id]/cancel` | Cancel booking |
-| POST | `/api/bookings/[id]/pay` | Initiate payment |
-
-### Payments
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/payments/verify` | Verify Razorpay payment |
-| POST | `/api/payments/webhook` | Razorpay webhook |
-| GET | `/api/payments/history` | Payment history |
-
-### Favorites
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/favorites` | Get user favorites |
-| POST | `/api/favorites` | Add/remove favorite |
-
-### Coupons
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/coupons` | List available coupons |
-| POST | `/api/coupons/apply` | Apply coupon to booking |
-
-### Reviews
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/venues/[id]/reviews` | Venue reviews |
-| POST | `/api/venues/[id]/reviews` | Add review |
-| PUT | `/api/venues/[id]/reviews/[reviewId]` | Update review |
-| DELETE | `/api/venues/[id]/reviews/[reviewId]` | Delete review |
-| POST | `/api/venues/[id]/reviews/[reviewId]/response` | Owner response |
-
-### Owner APIs
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/owner/dashboard` | Dashboard stats |
-| GET | `/api/owner/earnings` | Revenue data |
-| GET | `/api/owner/courts` | Manage courts |
-| GET | `/api/owner/reviews` | Facility reviews |
-
-### Admin APIs
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/users` | List users |
-| PUT | `/api/admin/users/[id]/role` | Update role |
-| GET | `/api/admin/venues` | Manage venues |
-| PUT | `/api/admin/venues/[id]` | Approve/reject |
-| GET | `/api/admin/reviews` | Moderate reviews |
-
----
-
-## 💳 Payment Flow
-
-```
-1. Select Time Slots → User picks date & time
-2. Enter Details → Confirm booking info
-3. Apply Coupon → Optional discount
-4. Initiate Payment → POST /api/bookings/[id]/pay
-5. Razorpay Checkout → Client-side payment
-6. Verify Payment → POST /api/payments/verify
-7. Confirmation → Email + QR code generated
-```
-
-### Fee Structure
-- **Convenience Fee**: 2% of booking amount
-- **GST**: 18% on (booking + convenience fee)
-
----
-
-## 👥 User Roles
-
-| Role | Capabilities |
-|------|-------------|
-| **USER** | Browse, search, book, pay, review, favorites |
-| **FACILITY_OWNER** | All USER + manage venues, courts, respond to reviews, view earnings |
-| **ADMIN** | Full platform access, user management, moderation, analytics |
-
----
-
-## 🏟️ Supported Sports
-
-- 🏸 Badminton
-- 🎾 Tennis
-- 🏀 Basketball
-- ⚽ Football
-- 🏓 Table Tennis
-- 🏊 Swimming
-- 🏏 Cricket
-- 🏐 Volleyball
-- 🎱 Squash
-
----
-
-## 📊 Database Models
-
-| Model | Description |
-|-------|-------------|
-| **User** | Users with roles, preferences, auth |
-| **Facility** | Venues with location, amenities, photos |
-| **Court** | Courts with sport type, pricing, hours |
-| **TimeSlot** | Bookable time slots |
-| **Booking** | Reservations linking user, court, slot |
-| **Payment** | Transaction records with Razorpay data |
-| **Review** | Ratings with owner responses |
-| **Favorite** | User saved venues |
-| **Coupon** | Discount codes with rules |
-| **Notification** | In-app & email notifications |
-| **Report** | User reports for moderation |
-| **Refund** | Refund tracking |
-
----
-
-## 🔍 Search Features
-
-### Query Parameters
-```
-GET /api/venues/search?
-  search=badminton        # Text search
-  &city=Delhi             # City filter
-  &sportType=BADMINTON    # Sport filter
-  &minPrice=200           # Min price/hour
-  &maxPrice=500           # Max price/hour
-  &minRating=4            # Min rating (1-5)
-  &amenities=wifi,parking # Amenity IDs
-  &latitude=28.6139       # User latitude
-  &longitude=77.2090      # User longitude
-  &radius=5               # Search radius (km)
-  &sortBy=rating          # Sort: relevance, price_low, price_high, rating, distance
-  &page=1                 # Pagination
-  &limit=10
-```
-
-### Geolocation
-Uses **Haversine formula** for accurate distance calculation between coordinates.
-
----
-
-## ⭐ Review System
-
-- **Wilson Score Ranking** - Statistically fair review ordering
-- **Verified Booking Badge** - Shows if reviewer has booked
-- **Owner Responses** - Venue owners can respond publicly
-- **Helpful Votes** - Community can upvote reviews
-- **Flagging System** - Report inappropriate content
-- **Admin Moderation** - Review approval workflow
-
----
-
-## 📝 Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `JWT_SECRET` | ✅ | JWT signing secret |
-| `SMTP_HOST` | ✅ | Email server (smtp.gmail.com) |
-| `SMTP_PORT` | ✅ | Email port (587) |
-| `SMTP_USER` | ✅ | Email address |
-| `SMTP_PASS` | ✅ | Email app password |
-| `EMAIL_FROM` | ✅ | Sender name & email |
-| `RAZORPAY_KEY_ID` | ✅ | Razorpay key ID |
-| `RAZORPAY_KEY_SECRET` | ✅ | Razorpay secret |
-| `RAZORPAY_WEBHOOK_SECRET` | ✅ | Webhook verification |
-
----
-
-## 🧪 Development
+### Local setup
 
 ```bash
-# Development server
-npm run dev
+git clone <repo>
+cd quickcourt
+npm install
 
-# Build for production
-npm run build
+cp .env.example .env       # then edit values — see "Environment variables" below
+npx prisma generate
+npx prisma db push          # syncs schema to DB
 
-# Start production server
-npm start
+npm run dev                 # http://localhost:3000
+```
 
-# Lint code
-npm run lint
+### Docker (everything in one command)
 
-# Database operations
-npx prisma db push      # Push schema changes
-npx prisma studio       # Open Prisma Studio
-npx prisma generate     # Generate client
+```bash
+docker compose up --build
+# app at http://localhost:3000, Postgres on :5432
+```
+
+The compose file boots Postgres, waits for it, runs `prisma db push`, then starts the production-built Next.js server. Set the same env vars in `.env` and Docker Compose will read them.
+
+---
+
+## Environment variables
+
+| Variable                                       | Required | Purpose                                                                |
+| ---------------------------------------------- | -------- | ---------------------------------------------------------------------- |
+| `DATABASE_URL`                                 | **yes**  | Postgres connection string                                             |
+| `JWT_SECRET`                                   | **yes**  | HS256 signing secret                                                   |
+| `JWT_EXPIRES_IN`                               | no       | Token TTL (default `7d`)                                               |
+| `NEXT_PUBLIC_APP_URL`                          | **yes**  | Used in metadata, OG, payment callbacks                                |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`      | **yes**  | Razorpay server credentials                                            |
+| `RAZORPAY_WEBHOOK_SECRET`                      | **yes**  | Verifies webhook signatures                                            |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | **yes**  | OTP + cancellation + receipt emails |
+| `CLOUDINARY_CLOUD_NAME` / `_API_KEY` / `_API_SECRET` | optional | When set, images upload to Cloudinary CDN; otherwise disk fallback   |
+| `SENTRY_DSN`                                   | optional | Enables error tracking (install `@sentry/nextjs` separately)           |
+| `LOG_LEVEL`                                    | optional | `trace`/`debug`/`info`/`warn`/`error` (default `info` in prod)         |
+
+---
+
+## Scripts
+
+```bash
+npm run dev          # start Turbopack dev server
+npm run build        # production build (verifies all routes compile)
+npm start            # serve the built app
+npm run lint         # ESLint
+npm test             # Vitest unit tests
+npm run test:watch   # Vitest in watch mode
+npm run test:coverage
+npm run test:e2e     # full API E2E suite (needs dev server up + DB)
 ```
 
 ---
 
-## 📄 License
+## Testing
 
-This project is licensed under the MIT License.
+### Unit (Vitest) — 26 tests across 3 files
+
+```
+src/__tests__/payment.test.js        # processing fees, refund tiers, order-id format
+src/__tests__/slot-overlap.test.js   # half-open-interval booking-conflict math
+src/__tests__/validation.test.js     # facility/review/deactivation Zod schemas
+```
+
+Run with `npm test`. Coverage report: `npm run test:coverage` → `coverage/index.html`.
+
+### E2E API (Node) — 55 checks
+
+[scripts/api-e2e-test.mjs](scripts/api-e2e-test.mjs) mints a JWT per role from real DB users and exercises every major endpoint:
+
+- All public reads (home, search, cities, filters, nearby, sports, amenities, matches)
+- Player flows (profile, dashboard, recommendations, helpful vote, match validation)
+- Owner full CRUD lifecycle: create facility → view own PENDING → update → create court → update court → block slots → unblock → delete court → delete facility
+- Admin reads + RBAC denial
+- Destructive deactivation on a throwaway user (wrong password → 401, correct → 200, DB flag flipped, user cleaned up)
+
+Run with `npm run test:e2e` while `npm run dev` is up.
+
+### CI
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs lint, unit tests, and a production build on every push and pull request to `main`.
 
 ---
 
-## 👨‍💻 Author
+## Project layout
 
-**Utkarsh Pandey**
+```
+src/
+├── app/                     # Next.js App Router
+│   ├── api/                 # Route handlers (REST + SSE)
+│   ├── (player routes)      # /, /venues, /matches, /booking/...
+│   ├── auth/                # login, register, verify-otp
+│   ├── dashboard/           # player dashboard
+│   ├── owner/               # owner dashboard, facilities, earnings, analytics
+│   └── admin/               # admin console
+├── components/
+│   ├── booking/             # TimeSlotPicker (SSE-backed), DatePicker, PaymentForm, …
+│   ├── dashboard/           # Player bookings/reviews/profile, BookingCard, RecommendedForYou
+│   ├── owner/               # FacilityDetail, BlockSlotsManager, FacilityPhotosManager, …
+│   ├── admin/               # Approvals, Users, Revenue, Moderation
+│   ├── layout/              # Navbar, Footer
+│   ├── venues/              # listing, filters, map, reviews
+│   └── ui/                  # Icon (Material Symbols), Button, ToastProvider, …
+├── contexts/                # AuthContext, ApiContext, ThemeContext
+├── services/                # auth, payment, review service classes
+├── validations/             # Zod schemas (input contracts)
+├── lib/                     # prisma client, logger, sentry, cloudinary, auth helpers
+├── prisma/schema/           # schema.prisma
+└── __tests__/               # Vitest unit tests
 
-- GitHub: [@Utkarsh-1805](https://github.com/Utkarsh-1805)
+scripts/
+├── api-e2e-test.mjs         # end-to-end API smoke test
+└── debug-admin-400.mjs      # one-off debugging
+```
 
 ---
 
-## 🙏 Acknowledgments
+## Design system
 
-- [Next.js](https://nextjs.org) - React framework
-- [Prisma](https://prisma.io) - Database ORM
-- [Razorpay](https://razorpay.com) - Payment gateway
-- [Neon](https://neon.tech) - PostgreSQL hosting
-- [Radix UI](https://radix-ui.com) - UI primitives
-- [Tailwind CSS](https://tailwindcss.com) - Styling
-- [Lucide](https://lucide.dev) - Icons
+Material Design 3 — colors, typography, surfaces, motion.
+
+- **Palette:** primary green `#006B2C` (turf), mint primary-container `#B4F0C1`, warm orange secondary-container `#FD761A`, blue tertiary `#0058BE`, full dark-mode variant via `.dark` token swap.
+- **Type:** Fraunces (display serif), JetBrains Mono (numbers/labels/eyebrows), Inter (body). Loaded at runtime via Google Fonts `<link>` so build never depends on the network.
+- **Components:** `.card`, `.btn-primary/.btn-cta/.btn-outline/.btn-ghost`, `.pill` (4 colour variants), `.eyebrow`, `.slot` (booked/blocked/past states), `.tab`, `.avatar`, `.live-dot`, `.stripe-divider`, `.court-tile`. All wrapped in `@layer components` so Tailwind utilities reliably override.
+
+---
+
+## Deployment
+
+### Vercel
+
+1. Import the repo.
+2. Set the env vars from the table above.
+3. Build command: `next build` · output: `.next`. Vercel handles the rest.
+
+### Docker / VPS
+
+```bash
+docker compose up -d --build
+```
+
+For a stand-alone container with an external DB, build the image with `docker build -t quickcourt .` and run with `-e DATABASE_URL=…` etc.
+
+### Database migrations
+
+The project currently uses `prisma db push` (schema-first) because the production DB drifted from the migration history early on. To rebuild a clean migration baseline:
+
+```bash
+npx prisma migrate diff --from-empty --to-schema-datamodel src/prisma/schema/schema.prisma --script > prisma/migrations/init.sql
+```
+
+Then `prisma migrate deploy` in CI.
+
+---
+
+## Roadmap
+
+See [TODO.md](TODO.md) for the live punch list. The remaining nice-to-haves:
+
+- Playwright browser E2E (Razorpay test-mode payment, SSE pulse, map interaction)
+- Migrate `<img>` → `next/image` (35 pre-existing lint warnings)
+- PostHog / Plausible product analytics
+- Consolidate Prisma migration history
+
+---
+
+## License
+
+Private project. All rights reserved.

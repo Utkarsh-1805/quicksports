@@ -81,9 +81,9 @@ export function validateRequest(data, schema) {
       data: validatedData
     };
   } catch (error) {
-    if (error instanceof z.ZodError && Array.isArray(error.errors)) {
-      const errors = error.errors.map(err => {
-        const path = err.path.join('.');
+    if (error instanceof z.ZodError && Array.isArray(error.issues || error.errors)) {
+      const errors = (error.issues || error.errors || []).map(err => {
+        const path = (err.path || []).join('.');
         return path ? `${path}: ${err.message}` : err.message;
       });
       return {

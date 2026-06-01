@@ -25,8 +25,8 @@ import { z } from "zod";
 // ==========================================
 
 const adminBookingQuerySchema = z.object({
-  page: z.string().transform(v => Math.max(1, parseInt(v) || 1)),
-  limit: z.string().transform(v => Math.min(100, Math.max(1, parseInt(v) || 20))),
+  page: z.string().optional().default('1').transform(v => Math.max(1, parseInt(v) || 1)),
+  limit: z.string().optional().default('20').transform(v => Math.min(100, Math.max(1, parseInt(v) || 20))),
   status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED']).optional(),
   userId: z.string().optional(),
   venueId: z.string().optional(),
@@ -88,23 +88,23 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     
     const validationResult = adminBookingQuerySchema.safeParse({
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      status: searchParams.get('status'),
-      userId: searchParams.get('userId'),
-      venueId: searchParams.get('venueId'),
-      startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate'),
-      search: searchParams.get('search'),
-      sortBy: searchParams.get('sortBy'),
-      sortOrder: searchParams.get('sortOrder')
+      page: searchParams.get('page') || undefined,
+      limit: searchParams.get('limit') || undefined,
+      status: searchParams.get('status') || undefined,
+      userId: searchParams.get('userId') || undefined,
+      venueId: searchParams.get('venueId') || undefined,
+      startDate: searchParams.get('startDate') || undefined,
+      endDate: searchParams.get('endDate') || undefined,
+      search: searchParams.get('search') || undefined,
+      sortBy: searchParams.get('sortBy') || undefined,
+      sortOrder: searchParams.get('sortOrder') || undefined
     });
 
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
+        {
           error: 'Invalid query parameters',
-          details: validationResult.error.errors
+          details: validationResult.error.issues
         },
         { status: 400 }
       );

@@ -34,6 +34,7 @@ model User {
   reports            Report[]
   favorites          Favorite[]
   couponUsages       CouponUsage[]
+  matchParticipations BookingParticipant[]
 
   @@map("users")
 }
@@ -162,13 +163,42 @@ model Booking {
   cancelledAt        DateTime?
   confirmedAt        DateTime?
   duration           Int           @default(60)
+  // Match-making fields. `isPublic=true` opens the booking up to other players.
+  isPublic           Boolean       @default(false)
+  maxPlayers         Int           @default(1)
+  skillLevel         String?       // 'beginner' | 'intermediate' | 'advanced'
+  matchNotes         String?
   court              Court         @relation(fields: [courtId], references: [id], onDelete: Cascade)
   timeSlot           TimeSlot?     @relation(fields: [timeSlotId], references: [id])
   user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   payment            Payment?
   refunds            Refund[]
+  participants       BookingParticipant[]
 
   @@map("bookings")
+}
+
+model BookingParticipant {
+  id        String            @id @default(cuid())
+  bookingId String
+  userId    String
+  status    ParticipantStatus @default(ACCEPTED)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  booking   Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, userId])
+  @@index([bookingId])
+  @@index([userId])
+  @@map("booking_participants")
+}
+
+enum ParticipantStatus {
+  REQUESTED
+  ACCEPTED
+  DECLINED
+  LEFT
 }
 
 model Review {

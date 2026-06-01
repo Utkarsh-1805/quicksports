@@ -152,8 +152,8 @@ export function validateTimeSlot(data) {
   } catch (error) {
     return {
       success: false,
-      errors: error.errors.map(err => ({
-        field: err.path.join('.'),
+      errors: (error.issues || error.errors || []).map(err => ({
+        field: (err.path || []).join('.'),
         message: err.message
       }))
     };
@@ -169,8 +169,8 @@ export function validateBulkTimeSlots(data) {
   } catch (error) {
     return {
       success: false,
-      errors: error.errors.map(err => ({
-        field: err.path.join('.'),
+      errors: (error.issues || error.errors || []).map(err => ({
+        field: (err.path || []).join('.'),
         message: err.message
       }))
     };
@@ -186,8 +186,8 @@ export function validateTimeSlotQuery(params) {
   } catch (error) {
     return {
       success: false,
-      errors: error.errors.map(err => ({
-        field: err.path.join('.'),
+      errors: (error.issues || error.errors || []).map(err => ({
+        field: (err.path || []).join('.'),
         message: err.message
       }))
     };

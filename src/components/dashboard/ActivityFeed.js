@@ -1,14 +1,6 @@
 'use client';
 
-import { 
-    Calendar, 
-    CreditCard, 
-    CheckCircle, 
-    XCircle, 
-    Star, 
-    Bell,
-    User
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * ActivityFeed Component
@@ -18,21 +10,21 @@ export function ActivityFeed({ activities = [], loading = false }) {
     const getActivityIcon = (type) => {
         switch (type) {
             case 'BOOKING_CREATED':
-                return { icon: Calendar, color: 'bg-blue-100 text-blue-600' };
+                return { name: 'calendar_today', tone: 'bg-primary text-on-primary' };
             case 'BOOKING_CONFIRMED':
-                return { icon: CheckCircle, color: 'bg-green-100 text-green-600' };
+                return { name: 'check_circle', tone: 'bg-primary text-on-primary' };
             case 'BOOKING_CANCELLED':
-                return { icon: XCircle, color: 'bg-red-100 text-red-600' };
+                return { name: 'cancel', tone: 'bg-error text-on-error' };
             case 'PAYMENT_SUCCESS':
-                return { icon: CreditCard, color: 'bg-green-100 text-green-600' };
+                return { name: 'credit_card', tone: 'bg-primary text-on-primary' };
             case 'PAYMENT_FAILED':
-                return { icon: CreditCard, color: 'bg-red-100 text-red-600' };
+                return { name: 'credit_card', tone: 'bg-error text-on-error' };
             case 'REVIEW_POSTED':
-                return { icon: Star, color: 'bg-yellow-100 text-yellow-600' };
+                return { name: 'star', tone: 'bg-secondary-container text-on-secondary-container', filled: true };
             case 'PROFILE_UPDATED':
-                return { icon: User, color: 'bg-purple-100 text-purple-600' };
+                return { name: 'person', tone: 'bg-tertiary text-on-tertiary' };
             default:
-                return { icon: Bell, color: 'bg-slate-100 text-slate-600' };
+                return { name: 'notifications', tone: 'bg-surface-container-high text-on-surface-variant' };
         }
     };
 
@@ -56,10 +48,10 @@ export function ActivityFeed({ activities = [], loading = false }) {
             <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="flex gap-4 animate-pulse">
-                        <div className="w-10 h-10 rounded-full bg-slate-200"></div>
+                        <div className="w-9 h-9 rounded-full bg-surface-container-high"></div>
                         <div className="flex-1">
-                            <div className="h-4 w-3/4 bg-slate-200 rounded mb-2"></div>
-                            <div className="h-3 w-1/4 bg-slate-100 rounded"></div>
+                            <div className="h-4 w-3/4 bg-surface-container-high rounded mb-2"></div>
+                            <div className="h-3 w-1/4 bg-surface-container rounded"></div>
                         </div>
                     </div>
                 ))}
@@ -70,29 +62,34 @@ export function ActivityFeed({ activities = [], loading = false }) {
     if (!activities.length) {
         return (
             <div className="text-center py-8">
-                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                    <Bell className="w-8 h-8 text-slate-400" />
+                <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-4">
+                    <Icon name="notifications" size={32} className="text-on-surface-variant" />
                 </div>
-                <p className="text-slate-500">No recent activity</p>
+                <p className="text-on-surface-variant">No recent activity</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-1">
+        <div className="relative flex flex-col gap-[18px]">
+            {/* Spine */}
+            <div className="absolute left-[11px] top-2 bottom-2 w-px bg-outline-variant" />
             {activities.map((activity, index) => {
-                const { icon: Icon, color } = getActivityIcon(activity.type);
+                const { name, tone, filled } = getActivityIcon(activity.type);
                 return (
-                    <div 
-                        key={activity.id || index} 
-                        className="flex gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors"
+                    <div
+                        key={activity.id || index}
+                        className="relative z-10 flex gap-3 items-start"
                     >
-                        <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center shrink-0`}>
-                            <Icon className="w-5 h-5" />
+                        {/* Dot/icon */}
+                        <div className={`relative w-6 h-6 rounded-full ${tone} flex items-center justify-center shrink-0 border-[3px] border-surface-container-lowest box-content -ml-px`}>
+                            <Icon name={name} filled={!!filled} size={14} />
                         </div>
+
+                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm text-slate-700">{activity.message}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">{formatTimeAgo(activity.createdAt)}</p>
+                            <p className="text-sm font-semibold text-on-surface">{activity.message}</p>
+                            <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-on-surface-variant mt-1">{formatTimeAgo(activity.createdAt)}</p>
                         </div>
                     </div>
                 );

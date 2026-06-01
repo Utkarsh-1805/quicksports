@@ -3,29 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-    Users, 
-    Building2, 
-    Calendar, 
-    DollarSign,
-    TrendingUp,
-    TrendingDown,
-    AlertTriangle,
-    CheckCircle,
-    Clock,
-    Activity,
-    BarChart3,
-    PieChart,
-    RefreshCw,
-    AlertCircle,
-    ArrowRight,
-    Shield,
-    FileText,
-    UserCheck,
-    Loader2
-} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * AdminDashboardContent Component
@@ -34,7 +14,7 @@ import { Button } from '@/components/ui/Button';
 export default function AdminDashboardContent() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    
+
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -42,7 +22,7 @@ export default function AdminDashboardContent() {
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/admin');
             return;
@@ -121,19 +101,18 @@ export default function AdminDashboardContent() {
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20">
+            <div className="min-h-screen bg-surface pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="animate-pulse">
-                        <div className="h-8 w-48 bg-slate-200 rounded mb-6"></div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div className="h-10 w-64 bg-surface-container rounded mb-8"></div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                             {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="h-32 bg-white rounded-xl border border-slate-200"></div>
+                                <div key={i} className="h-36 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                             ))}
                         </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {[1, 2].map((i) => (
-                                <div key={i} className="h-64 bg-white rounded-xl border border-slate-200"></div>
-                            ))}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div className="lg:col-span-2 h-80 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
+                            <div className="h-80 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                         </div>
                     </div>
                 </div>
@@ -143,15 +122,15 @@ export default function AdminDashboardContent() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center p-4">
+                <div className="card p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="error" className="text-on-error-container" size={32} />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Dashboard</h2>
-                    <p className="text-slate-500 mb-6">{error}</p>
+                    <h2 className="font-display text-xl text-on-surface mb-2">Error Loading Dashboard</h2>
+                    <p className="text-on-surface-variant mb-6">{error}</p>
                     <Button onClick={fetchDashboard}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                        <Icon name="refresh" size={16} className="mr-2" />
                         Try Again
                     </Button>
                 </div>
@@ -162,19 +141,26 @@ export default function AdminDashboardContent() {
     const { overview, userMetrics, venueMetrics, bookingMetrics, revenueMetrics, recentActivity } = data || {};
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20">
+        <div className="min-h-screen bg-surface pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                {/* Header Section */}
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-                        <p className="text-slate-500 mt-1">Platform overview and analytics</p>
+                        <div className="eyebrow mb-3">Admin Console</div>
+                        <h1 className="font-display text-4xl sm:text-5xl tracking-tight text-on-surface">Platform overview</h1>
+                        <p className="text-base text-on-surface-variant mt-2 max-w-2xl">
+                            Monitor real-time platform metrics, manage venue approvals, and track high-level system performance.
+                        </p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <span className="pill" style={{ textTransform: 'none', letterSpacing: 0, fontFamily: 'inherit', background: 'color-mix(in oklab, var(--primary) 12%, transparent)', color: 'var(--primary)' }}>
+                            <span className="live-dot"></span> All systems normal
+                        </span>
                         <select
                             value={period}
                             onChange={(e) => setPeriod(e.target.value)}
-                            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                            className="input font-mono"
+                            style={{ width: 'auto', padding: '8px 14px', fontSize: 13 }}
                         >
                             <option value="day">Today</option>
                             <option value="week">This Week</option>
@@ -184,216 +170,242 @@ export default function AdminDashboardContent() {
                         </select>
                         <button
                             onClick={fetchDashboard}
-                            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
+                            className="btn btn-primary btn-sm"
                         >
-                            <RefreshCw className="w-5 h-5" />
+                            <Icon name="refresh" size={18} />
+                            Refresh
                         </button>
                     </div>
-                </div>
+                </header>
 
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {/* KPI Bento Grid */}
+                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
                     {/* Total Users */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                <Users className="w-5 h-5 text-blue-600" />
+                    <div className="card card-hover p-6 flex flex-col justify-between">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+                                <Icon name="group" size={20} />
                             </div>
-                            <div className={`flex items-center gap-1 text-xs font-medium ${(overview?.userGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {(overview?.userGrowth || 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span className={`flex items-center gap-1 text-xs font-mono font-semibold ${(overview?.userGrowth || 0) >= 0 ? 'text-primary' : 'text-error'}`}>
+                                <Icon name={(overview?.userGrowth || 0) >= 0 ? 'trending_up' : 'trending_down'} size={14} />
                                 {formatPercentage(overview?.userGrowth)}
-                            </div>
+                            </span>
                         </div>
-                        <p className="text-sm text-slate-500 mb-1">Total Users</p>
-                        <p className="text-2xl font-bold text-slate-900">{overview?.totalUsers?.toLocaleString() || 0}</p>
+                        <div>
+                            <p className="text-sm text-on-surface-variant mb-1">Total Active Users</p>
+                            <p className="font-display text-4xl tracking-tight text-on-surface">{overview?.totalUsers?.toLocaleString() || 0}</p>
+                        </div>
                     </div>
 
                     {/* Active Venues */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                                <Building2 className="w-5 h-5 text-green-600" />
+                    <div className="card card-hover p-6 flex flex-col justify-between">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+                                <Icon name="storefront" size={20} />
                             </div>
-                            <div className={`flex items-center gap-1 text-xs font-medium ${(overview?.venueGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {(overview?.venueGrowth || 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span className={`flex items-center gap-1 text-xs font-mono font-semibold ${(overview?.venueGrowth || 0) >= 0 ? 'text-primary' : 'text-error'}`}>
+                                <Icon name={(overview?.venueGrowth || 0) >= 0 ? 'trending_up' : 'trending_down'} size={14} />
                                 {formatPercentage(overview?.venueGrowth)}
-                            </div>
+                            </span>
                         </div>
-                        <p className="text-sm text-slate-500 mb-1">Active Venues</p>
-                        <p className="text-2xl font-bold text-slate-900">{overview?.totalVenues?.toLocaleString() || 0}</p>
+                        <div>
+                            <p className="text-sm text-on-surface-variant mb-1">Registered Venues</p>
+                            <p className="font-display text-4xl tracking-tight text-on-surface">{overview?.totalVenues?.toLocaleString() || 0}</p>
+                        </div>
                     </div>
 
-                    {/* Total Bookings */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-purple-600" />
+                    {/* Pending Approvals - Action Required */}
+                    <Link href="/admin/approvals" className="card card-hover p-6 flex flex-col justify-between relative overflow-hidden" style={{ borderColor: 'color-mix(in oklab, var(--secondary-container) 40%, var(--outline-variant))' }}>
+                        <div className="relative flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--secondary-fixed)', color: '#5c2400' }}>
+                                <Icon name="assignment_late" size={20} />
                             </div>
-                            <div className={`flex items-center gap-1 text-xs font-medium ${(overview?.bookingGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {(overview?.bookingGrowth || 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                {formatPercentage(overview?.bookingGrowth)}
+                            <span className="pill secondary" style={{ fontFamily: 'inherit', textTransform: 'none', letterSpacing: 0 }}>
+                                Action Required
+                            </span>
+                        </div>
+                        <div className="relative">
+                            <p className="text-sm text-on-surface-variant mb-1">Pending Approvals</p>
+                            <div className="flex items-end justify-between">
+                                <p className="font-display text-4xl tracking-tight text-on-surface">{data?.pendingApprovals || 0}</p>
+                                <span className="text-primary text-sm font-medium flex items-center gap-1">
+                                    Review Now <Icon name="arrow_forward" size={16} />
+                                </span>
                             </div>
                         </div>
-                        <p className="text-sm text-slate-500 mb-1">Total Bookings</p>
-                        <p className="text-2xl font-bold text-slate-900">{overview?.totalBookings?.toLocaleString() || 0}</p>
-                    </div>
+                    </Link>
 
                     {/* Total Revenue */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                                <DollarSign className="w-5 h-5 text-orange-600" />
+                    <div className="card card-hover p-6 flex flex-col justify-between">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--secondary-fixed)', color: '#5c2400' }}>
+                                <Icon name="payments" size={20} />
                             </div>
-                            <div className={`flex items-center gap-1 text-xs font-medium ${(overview?.revenueGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {(overview?.revenueGrowth || 0) >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            <span className={`flex items-center gap-1 text-xs font-mono font-semibold ${(overview?.revenueGrowth || 0) >= 0 ? 'text-primary' : 'text-error'}`}>
+                                <Icon name={(overview?.revenueGrowth || 0) >= 0 ? 'trending_up' : 'trending_down'} size={14} />
                                 {formatPercentage(overview?.revenueGrowth)}
-                            </div>
+                            </span>
                         </div>
-                        <p className="text-sm text-slate-500 mb-1">Total Revenue</p>
-                        <p className="text-2xl font-bold text-slate-900">{formatCurrency(overview?.totalRevenue)}</p>
+                        <div>
+                            <p className="text-sm text-on-surface-variant mb-1">Total Revenue</p>
+                            <p className="font-display font-mono text-4xl tracking-tight text-on-surface">{formatCurrency(overview?.totalRevenue)}</p>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    <Link href="/admin/approvals" className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white hover:shadow-lg transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <Clock className="w-6 h-6" />
-                            <span className="text-2xl font-bold">{data?.pendingApprovals || 0}</span>
+                {/* Quick Action Tiles */}
+                <section className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+                    <Link href="/admin/moderation" className="card card-hover p-5 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-error-container text-on-error-container flex items-center justify-center shrink-0">
+                            <Icon name="warning" />
                         </div>
-                        <p className="text-sm font-medium text-white/90">Pending Approvals</p>
+                        <div className="flex-1">
+                            <p className="font-display text-2xl text-on-surface">{data?.pendingReports || 0}</p>
+                            <p className="text-sm text-on-surface-variant">Open Reports</p>
+                        </div>
                     </Link>
 
-                    <Link href="/admin/moderation" className="bg-gradient-to-br from-red-500 to-rose-600 rounded-xl p-4 text-white hover:shadow-lg transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <AlertTriangle className="w-6 h-6" />
-                            <span className="text-2xl font-bold">{data?.pendingReports || 0}</span>
+                    <Link href="/admin/users" className="card card-hover p-5 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+                            <Icon name="person_add" />
                         </div>
-                        <p className="text-sm font-medium text-white/90">Open Reports</p>
+                        <div className="flex-1">
+                            <p className="font-display text-2xl text-on-surface">{data?.newUsersToday || 0}</p>
+                            <p className="text-sm text-on-surface-variant">New Users Today</p>
+                        </div>
                     </Link>
 
-                    <Link href="/admin/users" className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-white hover:shadow-lg transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <UserCheck className="w-6 h-6" />
-                            <span className="text-2xl font-bold">{data?.newUsersToday || 0}</span>
+                    <Link href="/admin/bookings" className="card card-hover p-5 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0">
+                            <Icon name="event_available" />
                         </div>
-                        <p className="text-sm font-medium text-white/90">New Users Today</p>
+                        <div className="flex-1">
+                            <p className="font-display text-2xl text-on-surface">{data?.bookingsToday || 0}</p>
+                            <p className="text-sm text-on-surface-variant">Bookings Today</p>
+                        </div>
                     </Link>
+                </section>
 
-                    <Link href="/admin/revenue" className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white hover:shadow-lg transition-shadow">
-                        <div className="flex items-center justify-between mb-2">
-                            <Activity className="w-6 h-6" />
-                            <span className="text-2xl font-bold">{data?.bookingsToday || 0}</span>
+                {/* Charts & Activity Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-12">
+                    {/* Platform Growth Chart - 2 cols */}
+                    <div className="lg:col-span-2 card p-6 flex flex-col">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-display text-2xl text-on-surface">Platform Growth</h3>
+                            <Icon name="bar_chart" className="text-on-surface-variant" />
                         </div>
-                        <p className="text-sm font-medium text-white/90">Bookings Today</p>
-                    </Link>
-                </div>
-
-                {/* Charts Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Revenue Trend */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-slate-900">Revenue Trend</h3>
-                            <BarChart3 className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="h-48">
+                        <div className="flex-1 min-h-[300px]">
                             {revenueMetrics?.trend?.length > 0 ? (
-                                <div className="flex items-end justify-between h-full gap-2">
+                                <div className="flex items-end justify-between h-full gap-2 border-b border-l border-outline-variant/40 pb-2 pl-2">
                                     {revenueMetrics.trend.slice(-7).map((item, index) => {
                                         const maxRevenue = Math.max(...revenueMetrics.trend.map(t => t.revenue || 0));
                                         const height = maxRevenue > 0 ? ((item.revenue || 0) / maxRevenue) * 100 : 0;
-                                        
+                                        const isLatest = index === Math.min(revenueMetrics.trend.length, 7) - 1;
+
                                         return (
-                                            <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                                                <div 
-                                                    className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-500 hover:from-blue-700 hover:to-blue-500"
-                                                    style={{ height: `${Math.max(height, 5)}%` }}
-                                                    title={`₹${item.revenue?.toLocaleString() || 0}`}
-                                                />
-                                                <span className="text-xs text-slate-500 truncate">{item.label || index + 1}</span>
+                                            <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
+                                                <div className="relative w-full flex-1 flex items-end">
+                                                    <div
+                                                        className={`w-full rounded-t-sm transition-all duration-500 ${isLatest ? 'bg-primary shadow-[0_-4px_12px_rgba(0,107,44,0.2)]' : 'bg-primary-container/40 hover:bg-primary-container/60'}`}
+                                                        style={{ height: `${Math.max(height, 5)}%` }}
+                                                        title={`₹${item.revenue?.toLocaleString() || 0}`}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-mono text-on-surface-variant truncate">{item.label || index + 1}</span>
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <div className="h-full flex items-center justify-center">
-                                    <p className="text-slate-400">No trend data available</p>
+                                <div className="h-full flex items-center justify-center min-h-[300px]">
+                                    <p className="text-on-surface-variant">No trend data available</p>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* User Distribution */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-slate-900">User Distribution</h3>
-                            <PieChart className="w-5 h-5 text-slate-400" />
+                    {/* Live Activity Feed */}
+                    <div className="card p-6 flex flex-col h-[500px]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-display text-2xl text-on-surface">Live Activity</h3>
+                            <button
+                                onClick={fetchDashboard}
+                                className="text-primary hover:text-primary-container transition-colors"
+                            >
+                                <Icon name="refresh" />
+                            </button>
                         </div>
-                        <div className="space-y-4">
-                            {[
-                                { label: 'Regular Users', value: userMetrics?.byRole?.USER || 0, color: 'bg-blue-500' },
-                                { label: 'Facility Owners', value: userMetrics?.byRole?.FACILITY_OWNER || 0, color: 'bg-purple-500' },
-                                { label: 'Admins', value: userMetrics?.byRole?.ADMIN || 0, color: 'bg-orange-500' }
-                            ].map(item => {
-                                const total = (userMetrics?.byRole?.USER || 0) + (userMetrics?.byRole?.FACILITY_OWNER || 0) + (userMetrics?.byRole?.ADMIN || 0);
-                                const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
-                                
-                                return (
-                                    <div key={item.label}>
-                                        <div className="flex items-center justify-between mb-1">
-                                            <span className="text-sm text-slate-600">{item.label}</span>
-                                            <span className="text-sm font-medium text-slate-900">{item.value} ({percentage}%)</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div 
-                                                className={`h-full ${item.color} rounded-full transition-all duration-500`}
-                                                style={{ width: `${percentage}%` }}
+                        <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                            {recentActivity?.length > 0 ? (
+                                recentActivity.slice(0, 10).map((activity, index) => (
+                                    <div key={index} className="flex gap-4 items-start relative group">
+                                        <div className="absolute left-[15px] top-8 bottom-[-16px] w-[2px] bg-outline-variant/30 group-last:hidden"></div>
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-surface-container-lowest ${
+                                            activity.type === 'booking' ? 'bg-primary-container/20 text-primary' :
+                                            activity.type === 'user' ? 'bg-secondary-container text-on-secondary-container' :
+                                            activity.type === 'venue' ? 'bg-tertiary-container/20 text-tertiary' :
+                                            'bg-surface-container-highest text-on-surface-variant'
+                                        }`}>
+                                            <Icon
+                                                name={
+                                                    activity.type === 'booking' ? 'event_available' :
+                                                    activity.type === 'user' ? 'person_add' :
+                                                    activity.type === 'venue' ? 'verified' :
+                                                    'info'
+                                                }
+                                                size={16}
                                             />
                                         </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-medium text-on-surface truncate">{activity.title}</p>
+                                            <p className="text-sm text-on-surface-variant">{activity.description}</p>
+                                            <p className="text-xs font-mono text-outline mt-1">{activity.time}</p>
+                                        </div>
                                     </div>
-                                );
-                            })}
+                                ))
+                            ) : (
+                                <div className="text-center py-8">
+                                    <p className="text-on-surface-variant">No recent activity</p>
+                                </div>
+                            )}
                         </div>
+                        <Link href="/admin/bookings" className="block w-full mt-4 py-2 text-center text-primary text-sm font-bold hover:bg-surface-container rounded-lg transition-colors">
+                            View All Activity
+                        </Link>
                     </div>
                 </div>
 
-                {/* Recent Activity */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                {/* User Distribution */}
+                <div className="card p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h3 className="font-semibold text-slate-900">Recent Activity</h3>
-                        <Link href="/admin/bookings" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                            View All <ArrowRight className="w-4 h-4" />
-                        </Link>
+                        <h3 className="font-display text-2xl text-on-surface">User Distribution</h3>
+                        <Icon name="pie_chart" className="text-on-surface-variant" />
                     </div>
-                    
-                    {recentActivity?.length > 0 ? (
-                        <div className="space-y-4">
-                            {recentActivity.slice(0, 10).map((activity, index) => (
-                                <div key={index} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                                        activity.type === 'booking' ? 'bg-green-50 text-green-600' :
-                                        activity.type === 'user' ? 'bg-blue-50 text-blue-600' :
-                                        activity.type === 'venue' ? 'bg-purple-50 text-purple-600' :
-                                        'bg-slate-50 text-slate-600'
-                                    }`}>
-                                        {activity.type === 'booking' && <Calendar className="w-5 h-5" />}
-                                        {activity.type === 'user' && <Users className="w-5 h-5" />}
-                                        {activity.type === 'venue' && <Building2 className="w-5 h-5" />}
+                    <div className="space-y-4">
+                        {[
+                            { label: 'Regular Users', value: userMetrics?.byRole?.USER || 0, color: 'bg-primary' },
+                            { label: 'Facility Owners', value: userMetrics?.byRole?.FACILITY_OWNER || 0, color: 'bg-secondary-container' },
+                            { label: 'Admins', value: userMetrics?.byRole?.ADMIN || 0, color: 'bg-tertiary' }
+                        ].map(item => {
+                            const total = (userMetrics?.byRole?.USER || 0) + (userMetrics?.byRole?.FACILITY_OWNER || 0) + (userMetrics?.byRole?.ADMIN || 0);
+                            const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+
+                            return (
+                                <div key={item.label}>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-sm font-medium text-on-surface">{item.label}</span>
+                                        <span className="text-sm font-mono text-on-surface-variant">{item.value} ({percentage}%)</span>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-slate-900 truncate">{activity.title}</p>
-                                        <p className="text-sm text-slate-500">{activity.description}</p>
-                                        <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
+                                    <div className="h-2 bg-surface-variant rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                                            style={{ width: `${percentage}%` }}
+                                        />
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-8">
-                            <p className="text-slate-400">No recent activity</p>
-                        </div>
-                    )}
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         </div>

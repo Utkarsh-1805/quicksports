@@ -1,25 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { 
-    Calendar, 
-    Clock, 
-    MapPin, 
-    ChevronRight,
-    Ticket,
-    XCircle,
-    Download,
-    Star,
-    MoreVertical
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { useState } from 'react';
 
 /**
  * BookingCard Component
  * Displays booking information with actions
  */
-export function BookingCard({ 
-    booking, 
+export function BookingCard({
+    booking,
     variant = 'default', // 'default' | 'compact' | 'detailed'
     onCancel,
     onDownload,
@@ -61,18 +51,18 @@ export function BookingCard({
         return `${hour12}:${minutes} ${ampm}`;
     };
 
-    const getStatusStyles = (status) => {
+    const getStatusPillClass = (status) => {
         switch (status) {
             case 'CONFIRMED':
-                return 'bg-green-100 text-green-700 border-green-200';
+                return 'pill';
             case 'PENDING':
-                return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                return 'pill secondary';
             case 'CANCELLED':
-                return 'bg-red-100 text-red-700 border-red-200';
+                return 'pill error';
             case 'COMPLETED':
-                return 'bg-blue-100 text-blue-700 border-blue-200';
+                return 'pill tertiary';
             default:
-                return 'bg-slate-100 text-slate-700 border-slate-200';
+                return 'pill neutral';
         }
     };
 
@@ -94,48 +84,48 @@ export function BookingCard({
     // Compact variant for dashboard
     if (variant === 'compact') {
         return (
-            <Link 
+            <Link
                 href={booking.status === 'CONFIRMED' ? `/booking/confirmation/${booking.id}` : `/bookings`}
-                className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-200 hover:border-green-300 hover:shadow-md transition-all"
+                className="card card-hover flex items-center gap-4 p-4"
             >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-green-50 flex items-center justify-center text-2xl shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-primary-container flex items-center justify-center text-2xl shrink-0">
                     {getSportIcon(booking.court?.sportType)}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-slate-900 truncate">{booking.court?.name}</h4>
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{formatDate(booking.date || booking.bookingDate)}</span>
-                        <span>•</span>
-                        <span>{formatTime(booking.startTime)}</span>
+                    <h4 className="font-display font-semibold text-on-surface truncate">{booking.court?.name}</h4>
+                    <div className="flex items-center gap-2 text-sm text-on-surface-variant mt-0.5">
+                        <Icon name="event" size={14} />
+                        <span className="font-mono">{formatDate(booking.date || booking.bookingDate)}</span>
+                        <span>·</span>
+                        <span className="font-mono">{formatTime(booking.startTime)}</span>
                     </div>
                 </div>
-                <div className={`px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyles(booking.status)}`}>
+                <span className={getStatusPillClass(booking.status)}>
                     {booking.status}
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-400" />
+                </span>
+                <Icon name="chevron_right" size={20} className="text-on-surface-variant" />
             </Link>
         );
     }
 
     // Default/detailed variant
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:border-green-200 hover:shadow-lg transition-all">
-            {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-xl backdrop-blur-sm">
+        <div className="card card-hover overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-outline-variant">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-[10px] bg-primary-container text-on-primary-container flex items-center justify-center text-xl shrink-0">
                             {getSportIcon(booking.court?.sportType)}
                         </div>
-                        <div>
-                            <h3 className="font-bold text-white">{booking.court?.name}</h3>
-                            <p className="text-sm text-white/80">{booking.venue?.name || booking.court?.facility?.name}</p>
+                        <div className="min-w-0">
+                            <h3 className="font-display font-semibold text-lg text-on-surface truncate">{booking.court?.name}</h3>
+                            <p className="text-sm text-on-surface-variant truncate">{booking.venue?.name || booking.court?.facility?.name}</p>
                         </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusStyles(booking.status)}`}>
+                    <span className={getStatusPillClass(booking.status)}>
                         {booking.status}
-                    </div>
+                    </span>
                 </div>
             </div>
 
@@ -143,45 +133,45 @@ export function BookingCard({
             <div className="p-6">
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                            <Calendar className="w-5 h-5 text-green-600" />
+                        <div className="w-10 h-10 rounded-[10px] bg-surface-container flex items-center justify-center shrink-0">
+                            <Icon name="event" size={20} className="text-on-surface-variant" />
                         </div>
                         <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wide">Date</p>
-                            <p className="font-semibold text-slate-900">{formatDate(booking.date || booking.bookingDate)}</p>
+                            <p className="text-[11px] text-on-surface-variant uppercase tracking-[0.1em] font-mono">Date</p>
+                            <p className="font-mono font-semibold text-on-surface">{formatDate(booking.date || booking.bookingDate)}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-green-600" />
+                        <div className="w-10 h-10 rounded-[10px] bg-surface-container flex items-center justify-center shrink-0">
+                            <Icon name="schedule" size={20} className="text-on-surface-variant" />
                         </div>
                         <div>
-                            <p className="text-xs text-slate-500 uppercase tracking-wide">Time</p>
-                            <p className="font-semibold text-slate-900">{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</p>
+                            <p className="text-[11px] text-on-surface-variant uppercase tracking-[0.1em] font-mono">Time</p>
+                            <p className="font-mono font-semibold text-on-surface">{formatTime(booking.startTime)} - {formatTime(booking.endTime)}</p>
                         </div>
                     </div>
                 </div>
 
                 {(booking.venue?.address || booking.court?.facility?.address) && (
-                    <div className="flex items-start gap-3 mb-4 p-3 bg-slate-50 rounded-lg">
-                        <MapPin className="w-5 h-5 text-slate-400 mt-0.5 shrink-0" />
+                    <div className="flex items-start gap-3 mb-4 p-3 bg-surface-container-low rounded-xl">
+                        <Icon name="location_on" size={20} className="text-on-surface-variant mt-0.5 shrink-0" />
                         <div>
-                            <p className="text-sm text-slate-600">
+                            <p className="text-sm text-on-surface">
                                 {booking.venue?.address || booking.court?.facility?.address}
                             </p>
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-on-surface-variant">
                                 {booking.venue?.city || booking.court?.facility?.city}
                             </p>
                         </div>
                     </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                <div className="flex items-center justify-between pt-4 border-t border-outline-variant">
                     <div>
-                        <p className="text-xs text-slate-500">Total Paid</p>
-                        <p className="text-xl font-bold text-green-600">₹{(booking.paidAmount || booking.payment?.totalAmount || booking.totalAmount || booking.amount)?.toLocaleString()}</p>
+                        <p className="text-[11px] text-on-surface-variant uppercase tracking-[0.1em] font-mono">Total Paid</p>
+                        <p className="font-display text-2xl font-semibold text-primary">₹{(booking.paidAmount || booking.payment?.totalAmount || booking.totalAmount || booking.amount)?.toLocaleString()}</p>
                         {booking.paidAmount && booking.paidAmount !== booking.totalAmount && (
-                            <p className="text-xs text-slate-400">Includes GST & fees</p>
+                            <p className="text-xs text-on-surface-variant/70">Includes GST & fees</p>
                         )}
                     </div>
 
@@ -190,9 +180,9 @@ export function BookingCard({
                             {booking.status === 'CONFIRMED' && (
                                 <Link
                                     href={`/booking/confirmation/${booking.id}`}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                                    className="btn btn-cta btn-sm"
                                 >
-                                    <Ticket className="w-4 h-4" />
+                                    <Icon name="confirmation_number" size={16} />
                                     View Ticket
                                 </Link>
                             )}
@@ -200,9 +190,9 @@ export function BookingCard({
                             {canCancel() && onCancel && (
                                 <button
                                     onClick={() => onCancel(booking)}
-                                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center gap-2"
+                                    className="btn btn-outline btn-sm"
                                 >
-                                    <XCircle className="w-4 h-4" />
+                                    <Icon name="cancel" size={16} />
                                     Cancel
                                 </button>
                             )}
@@ -210,9 +200,9 @@ export function BookingCard({
                             {canReview() && onReview && (
                                 <button
                                     onClick={() => onReview(booking)}
-                                    className="px-4 py-2 bg-yellow-50 text-yellow-600 rounded-lg text-sm font-medium hover:bg-yellow-100 transition-colors flex items-center gap-2"
+                                    className="btn btn-cta btn-sm"
                                 >
-                                    <Star className="w-4 h-4" />
+                                    <Icon name="star" filled size={16} />
                                     Review
                                 </button>
                             )}
@@ -220,10 +210,10 @@ export function BookingCard({
                             {booking.status === 'COMPLETED' && onDownload && (
                                 <button
                                     onClick={() => onDownload(booking.id)}
-                                    className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
+                                    className="btn btn-outline btn-sm"
                                     title="Download Receipt"
                                 >
-                                    <Download className="w-4 h-4" />
+                                    <Icon name="download" size={16} />
                                 </button>
                             )}
                         </div>

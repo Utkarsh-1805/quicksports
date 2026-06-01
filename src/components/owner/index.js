@@ -12,3 +12,6 @@ export { default as AddFacilityForm } from './AddFacilityForm';
 export { default as FacilityDetailContent } from './FacilityDetailContent';
 export { default as OwnerBookingsContent } from './OwnerBookingsContent';
 export { default as OwnerAnalyticsContent } from './OwnerAnalyticsContent';
+export { default as OwnerEarningsContent } from './OwnerEarningsContent';
+export { default as OwnerReviewsContent } from './OwnerReviewsContent';
+export { default as FacilityPhotosManager } from './FacilityPhotosManager';

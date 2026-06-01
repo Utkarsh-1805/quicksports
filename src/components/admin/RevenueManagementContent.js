@@ -2,27 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    DollarSign,
-    TrendingUp,
-    TrendingDown,
-    Building2,
-    Calendar,
-    BarChart3,
-    PieChart,
-    ArrowUpRight,
-    ArrowDownRight,
-    AlertCircle,
-    RefreshCw,
-    Download,
-    Target,
-    Percent,
-    Wallet,
-    CreditCard,
-    Loader2
-} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * RevenueManagementContent Component
@@ -31,7 +13,7 @@ import { Button } from '@/components/ui/Button';
 export default function RevenueManagementContent() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    
+
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -39,7 +21,7 @@ export default function RevenueManagementContent() {
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/admin/revenue');
             return;
@@ -75,15 +57,19 @@ export default function RevenueManagementContent() {
                 const overview = analytics.overview || {};
                 const growth = analytics.growth || {};
                 const breakdown = analytics.breakdown || {};
-                
+
+                const refundAmount = overview.totalRefunds || 0;
+                const refundCount = overview.refundCount || 0;
+                const totalRevenue = overview.totalRevenue || 0;
+
                 setData({
                     summary: {
-                        totalRevenue: overview.totalRevenue || 0,
+                        totalRevenue,
                         totalBookings: overview.totalBookings || 0,
                         avgBookingValue: overview.avgBookingValue || 0,
                         netRevenue: overview.netRevenue || 0,
-                        totalRefunds: overview.totalRefunds || 0,
-                        platformCommission: Math.round((overview.totalRevenue || 0) * 0.1), // 10% commission estimate
+                        totalRefunds: refundAmount,
+                        platformCommission: Math.round(totalRevenue * 0.1), // 10% commission estimate
                         growth: growth.revenueGrowth || 0,
                         bookingsGrowth: growth.bookingsGrowth || 0,
                         previousPeriod: growth.previousPeriod || {}
@@ -97,6 +83,12 @@ export default function RevenueManagementContent() {
                         byVenue: breakdown.byVenue || [],
                         bySport: breakdown.bySport || [],
                         byPaymentMethod: breakdown.byPaymentMethod || []
+                    },
+                    refunds: {
+                        count: refundCount,
+                        amount: refundAmount,
+                        rate: totalRevenue > 0 ? Math.round((refundAmount / totalRevenue) * 1000) / 10 : 0,
+                        avgAmount: refundCount > 0 ? Math.round((refundAmount / refundCount) * 100) / 100 : 0,
                     },
                     projections: analytics.projections || null
                 });
@@ -127,19 +119,18 @@ export default function RevenueManagementContent() {
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20">
+            <div className="min-h-screen bg-surface pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="animate-pulse">
-                        <div className="h-8 w-48 bg-slate-200 rounded mb-6"></div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="h-32 bg-white rounded-xl"></div>
+                        <div className="h-10 w-64 bg-surface-container rounded mb-8"></div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-36 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                             ))}
                         </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {[1, 2].map(i => (
-                                <div key={i} className="h-80 bg-white rounded-xl"></div>
-                            ))}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 h-80 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
+                            <div className="h-80 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                         </div>
                     </div>
                 </div>
@@ -149,15 +140,15 @@ export default function RevenueManagementContent() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center p-4">
+                <div className="card p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="error" className="text-on-error-container" size={32} />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Revenue</h2>
-                    <p className="text-slate-500 mb-6">{error}</p>
+                    <h2 className="font-display text-xl text-on-surface mb-2">Error Loading Revenue</h2>
+                    <p className="text-on-surface-variant mb-6">{error}</p>
                     <Button onClick={fetchRevenue}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                        <Icon name="refresh" size={16} className="mr-2" />
                         Try Again
                     </Button>
                 </div>
@@ -168,147 +159,177 @@ export default function RevenueManagementContent() {
     const { summary, trends, breakdown, refunds, projections } = data || {};
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20">
+        <div className="min-h-screen bg-surface pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 pb-6 border-b border-outline-variant">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Revenue Management</h1>
-                        <p className="text-slate-500 mt-1">Financial analytics and insights</p>
+                        <div className="eyebrow mb-3">Admin Console</div>
+                        <h1 className="font-display text-3xl sm:text-4xl tracking-tight text-on-surface">Platform revenue</h1>
+                        <p className="text-sm text-on-surface-variant mt-1">High-level financial breakdown and performance metrics.</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex gap-3">
                         <select
                             value={period}
                             onChange={(e) => setPeriod(e.target.value)}
-                            className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
+                            className="input font-mono cursor-pointer"
+                            style={{ width: 'auto', padding: '10px 14px', fontSize: 13 }}
                         >
                             <option value="day">Today</option>
                             <option value="week">This Week</option>
-                            <option value="month">This Month</option>
+                            <option value="month">Last 30 Days</option>
                             <option value="quarter">This Quarter</option>
                             <option value="year">This Year</option>
                         </select>
                         <button
                             onClick={fetchRevenue}
-                            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50"
+                            className="btn btn-primary btn-sm"
                         >
-                            <RefreshCw className="w-5 h-5" />
+                            <Icon name="download" size={20} />
+                            Export Report
                         </button>
                     </div>
-                </div>
+                </header>
 
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                    {/* Total Revenue */}
-                    <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl p-5 text-white">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-                                <DollarSign className="w-5 h-5" />
+                {/* Key Metrics Bento Grid */}
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    {/* Gross Revenue */}
+                    <div className="card card-hover p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+                                <Icon name="payments" size={20} />
                             </div>
-                            <div className={`flex items-center gap-1 text-xs font-medium ${(summary?.growth || 0) >= 0 ? 'text-green-200' : 'text-red-200'}`}>
-                                {(summary?.growth || 0) >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                            <span className={`inline-flex items-center gap-1 text-xs font-mono font-semibold ${(summary?.growth || 0) >= 0 ? 'text-primary' : 'text-error'}`}>
+                                <Icon name={(summary?.growth || 0) >= 0 ? 'trending_up' : 'trending_down'} size={14} />
                                 {formatPercentage(summary?.growth)}
-                            </div>
+                            </span>
                         </div>
-                        <p className="text-sm text-white/80 mb-1">Total Revenue</p>
-                        <p className="text-2xl font-bold">{formatCurrency(summary?.totalRevenue)}</p>
+                        <p className="text-sm text-on-surface-variant">Gross Booking Volume</p>
+                        <p className="font-display font-mono text-4xl tracking-tight text-on-surface mt-2">{formatCurrency(summary?.totalRevenue)}</p>
                     </div>
 
-                    {/* Platform Commission */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                                <Percent className="w-5 h-5 text-blue-600" />
+                    {/* Platform Fees */}
+                    <div className="card card-hover p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--secondary-fixed)', color: '#5c2400' }}>
+                                <Icon name="account_balance" size={20} />
                             </div>
+                            <span className="inline-flex items-center gap-1 text-xs font-mono font-semibold text-primary">
+                                <Icon name="trending_up" size={14} /> 10%
+                            </span>
                         </div>
-                        <p className="text-sm text-slate-500 mb-1">Platform Commission</p>
-                        <p className="text-2xl font-bold text-slate-900">{formatCurrency(summary?.platformCommission)}</p>
+                        <p className="text-sm text-on-surface-variant">Platform Commission</p>
+                        <p className="font-display font-mono text-4xl tracking-tight text-on-surface mt-2">{formatCurrency(summary?.platformCommission)}</p>
                     </div>
 
-                    {/* Total Bookings */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-purple-600" />
+                    {/* Net Revenue / Avg Booking Value */}
+                    <div className="card card-hover p-6 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary-container/10 to-transparent pointer-events-none"></div>
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                            <div className="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+                                <Icon name="savings" size={20} />
+                            </div>
+                            <span className={`inline-flex items-center gap-1 text-xs font-mono font-semibold ${(summary?.bookingsGrowth || 0) >= 0 ? 'text-primary' : 'text-error'}`}>
+                                <Icon name={(summary?.bookingsGrowth || 0) >= 0 ? 'trending_up' : 'trending_down'} size={14} />
+                                {formatPercentage(summary?.bookingsGrowth)}
+                            </span>
+                        </div>
+                        <p className="text-sm text-on-surface-variant relative z-10">Net Revenue</p>
+                        <p className="font-display font-mono text-4xl tracking-tight text-on-surface mt-2 relative z-10">{formatCurrency(summary?.netRevenue || summary?.totalRevenue)}</p>
+                    </div>
+                </section>
+
+                {/* Sub-metrics row */}
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                    <div className="card p-6 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-tertiary-container text-on-tertiary-container rounded-xl flex items-center justify-center">
+                            <Icon name="event_available" size={24} />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm text-on-surface-variant">Paid Bookings</p>
+                            <p className="font-display font-mono text-2xl text-on-surface">{summary?.totalBookings?.toLocaleString() || 0}</p>
+                        </div>
+                    </div>
+                    <div className="card p-6 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--secondary-fixed)', color: '#5c2400' }}>
+                            <Icon name="track_changes" size={24} />
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm text-on-surface-variant">Avg. Booking Value</p>
+                            <p className="font-display font-mono text-2xl text-on-surface">{formatCurrency(summary?.avgBookingValue)}</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Charts Section */}
+                <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+                    {/* Revenue Growth Chart */}
+                    <div className="lg:col-span-2 card p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-display text-2xl text-on-surface">Platform Growth</h3>
+                            <div className="flex gap-2">
+                                <button className="px-3 py-1 bg-primary text-on-primary text-xs font-mono rounded-lg shadow-sm">
+                                    {period === 'day' ? 'Daily' : period === 'week' ? 'Weekly' : 'Monthly'}
+                                </button>
                             </div>
                         </div>
-                        <p className="text-sm text-slate-500 mb-1">Paid Bookings</p>
-                        <p className="text-2xl font-bold text-slate-900">{summary?.totalBookings?.toLocaleString() || 0}</p>
-                    </div>
 
-                    {/* Avg Booking Value */}
-                    <div className="bg-white rounded-xl border border-slate-200 p-5">
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
-                                <Target className="w-5 h-5 text-orange-600" />
-                            </div>
-                        </div>
-                        <p className="text-sm text-slate-500 mb-1">Avg. Booking Value</p>
-                        <p className="text-2xl font-bold text-slate-900">{formatCurrency(summary?.avgBookingValue)}</p>
-                    </div>
-                </div>
-
-                {/* Revenue Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Revenue Trend */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-slate-900">Revenue Trend</h3>
-                            <BarChart3 className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="h-56">
-                            {trends?.length > 0 ? (
-                                <div className="flex items-end justify-between h-full gap-2">
+                        {trends?.length > 0 ? (
+                            <>
+                                <div className="h-64 relative w-full flex items-end justify-between gap-2 border-b border-l border-outline-variant/40 pb-2 pl-2">
                                     {trends.slice(-12).map((item, index) => {
                                         const maxRevenue = Math.max(...trends.map(t => t.revenue || 0));
                                         const height = maxRevenue > 0 ? ((item.revenue || 0) / maxRevenue) * 100 : 0;
-                                        
+                                        const isLatest = index === Math.min(trends.length, 12) - 1;
+
                                         return (
-                                            <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                                                <div className="relative w-full group">
-                                                    <div 
-                                                        className="w-full bg-gradient-to-t from-green-600 to-emerald-400 rounded-t-lg transition-all duration-500 hover:from-green-700 hover:to-emerald-500"
-                                                        style={{ height: `${Math.max(height, 5)}%`, minHeight: '4px' }}
-                                                    />
-                                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                            <div key={index} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                                                <div
+                                                    className={`w-full rounded-t-sm transition-colors relative ${
+                                                        isLatest ? 'bg-primary shadow-[0_-4px_12px_rgba(0,107,44,0.2)]' : 'bg-primary-container/40 hover:bg-primary-container/60'
+                                                    }`}
+                                                    style={{ height: `${Math.max(height, 5)}%`, minHeight: '4px' }}
+                                                >
+                                                    <div className="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface font-mono text-xs px-2 py-1 rounded whitespace-nowrap z-10">
                                                         {formatCurrency(item.revenue)}
                                                     </div>
                                                 </div>
-                                                <span className="text-xs text-slate-500 truncate max-w-full">{item.label}</span>
                                             </div>
                                         );
                                     })}
                                 </div>
-                            ) : (
-                                <div className="h-full flex items-center justify-center">
-                                    <p className="text-slate-400">No trend data available</p>
+                                <div className="flex justify-between mt-2 text-xs font-mono text-on-surface-variant/70 pl-2">
+                                    {trends.slice(-12).map((item, index) => (
+                                        <span key={index} className="flex-1 text-center truncate">{item.label}</span>
+                                    ))}
                                 </div>
-                            )}
-                        </div>
+                            </>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center">
+                                <p className="text-on-surface-variant">No trend data available</p>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Revenue by Sport */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-slate-900">Revenue by Sport</h3>
-                            <PieChart className="w-5 h-5 text-slate-400" />
-                        </div>
-                        <div className="space-y-4">
+                    {/* Top Sport / Performance Breakdown */}
+                    <div className="card p-6 flex flex-col">
+                        <h3 className="font-display text-2xl text-on-surface mb-6">Top Sports</h3>
+                        <div className="flex-1 space-y-4">
                             {breakdown?.bySport?.length > 0 ? (
                                 breakdown.bySport.slice(0, 5).map((item, index) => {
-                                    const colors = ['bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500', 'bg-pink-500'];
+                                    const colors = ['bg-primary', 'bg-secondary', 'bg-tertiary', 'bg-outline', 'bg-secondary-container'];
                                     const totalRevenue = breakdown.bySport.reduce((sum, s) => sum + (s.revenue || 0), 0);
                                     const percentage = totalRevenue > 0 ? Math.round((item.revenue / totalRevenue) * 100) : 0;
-                                    
+
                                     return (
                                         <div key={index}>
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-medium text-slate-700">{item.sport}</span>
-                                                <span className="text-sm text-slate-500">{formatCurrency(item.revenue)} ({percentage}%)</span>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-sm font-medium text-on-surface">{item.sport}</span>
+                                                <span className="text-xs font-mono text-on-surface-variant">{formatCurrency(item.revenue)}</span>
                                             </div>
-                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div 
-                                                    className={`h-full ${colors[index % colors.length]} rounded-full transition-all duration-500`}
+                                            <div className="w-full bg-surface-variant rounded-full h-2 overflow-hidden">
+                                                <div
+                                                    className={`${colors[index % colors.length]} h-full rounded-full transition-all duration-500`}
                                                     style={{ width: `${percentage}%` }}
                                                 />
                                             </div>
@@ -316,102 +337,99 @@ export default function RevenueManagementContent() {
                                     );
                                 })
                             ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-slate-400">No sport data available</p>
-                                </div>
+                                <p className="text-on-surface-variant text-center py-8">No sport data available</p>
                             )}
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {/* Top Venues & Refunds */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Top Revenue Venues */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+                    <div className="card p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-slate-900">Top Revenue Venues</h3>
-                            <Building2 className="w-5 h-5 text-slate-400" />
+                            <h3 className="font-display text-2xl text-on-surface">Top Revenue Venues</h3>
+                            <Icon name="domain" className="text-on-surface-variant" />
                         </div>
                         {breakdown?.byVenue?.length > 0 ? (
                             <div className="space-y-4">
                                 {breakdown.byVenue.slice(0, 5).map((venue, index) => (
                                     <div key={index} className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center font-semibold text-slate-600 text-sm">
-                                            {index + 1}
+                                        <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-mono font-bold text-on-surface-variant text-sm">
+                                            {String(index + 1).padStart(2, '0')}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-slate-900 truncate">{venue.name}</p>
-                                            <p className="text-sm text-slate-500">{venue.bookings} bookings</p>
+                                            <p className="font-medium text-on-surface truncate">{venue.name}</p>
+                                            <p className="text-sm font-mono text-on-surface-variant">{venue.bookings} bookings</p>
                                         </div>
-                                        <p className="font-semibold text-slate-900">{formatCurrency(venue.revenue)}</p>
+                                        <p className="font-mono font-semibold text-primary">{formatCurrency(venue.revenue)}</p>
                                     </div>
                                 ))}
                             </div>
                         ) : (
                             <div className="text-center py-8">
-                                <Building2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                <p className="text-slate-400">No venue data available</p>
+                                <Icon name="domain" className="text-outline mx-auto mb-2" size={32} />
+                                <p className="text-on-surface-variant">No venue data available</p>
                             </div>
                         )}
                     </div>
 
-                    {/* Refunds Overview */}
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                    <div className="card p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold text-slate-900">Refunds Overview</h3>
-                            <CreditCard className="w-5 h-5 text-slate-400" />
+                            <h3 className="font-display text-2xl text-on-surface">Refunds Overview</h3>
+                            <Icon name="credit_card" className="text-on-surface-variant" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-slate-50 rounded-xl p-4">
-                                <p className="text-sm text-slate-500 mb-1">Total Refunds</p>
-                                <p className="text-xl font-bold text-slate-900">{refunds?.count || 0}</p>
+                            <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant">
+                                <p className="text-sm text-on-surface-variant mb-1">Total Refunds</p>
+                                <p className="font-display font-mono text-xl text-on-surface">{refunds?.count || 0}</p>
                             </div>
-                            <div className="bg-red-50 rounded-xl p-4">
-                                <p className="text-sm text-red-600 mb-1">Refund Amount</p>
-                                <p className="text-xl font-bold text-red-700">{formatCurrency(refunds?.amount)}</p>
+                            <div className="bg-error-container rounded-xl p-4">
+                                <p className="text-sm text-on-error-container mb-1">Refund Amount</p>
+                                <p className="font-display font-mono text-xl text-on-error-container">{formatCurrency(refunds?.amount || summary?.totalRefunds)}</p>
                             </div>
-                            <div className="col-span-2 bg-amber-50 rounded-xl p-4">
+                            <div className="col-span-2 rounded-xl p-4" style={{ background: 'var(--secondary-fixed)', border: '1px solid var(--secondary-fixed-dim)' }}>
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-sm text-amber-600 mb-1">Refund Rate</p>
-                                        <p className="text-xl font-bold text-amber-700">{refunds?.rate || 0}%</p>
+                                        <p className="text-sm mb-1" style={{ color: '#5c2400' }}>Refund Rate</p>
+                                        <p className="font-display font-mono text-xl" style={{ color: '#5c2400' }}>{refunds?.rate || 0}%</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm text-slate-500 mb-1">Avg. Refund</p>
-                                        <p className="text-lg font-semibold text-slate-700">{formatCurrency(refunds?.avgAmount)}</p>
+                                        <p className="text-sm mb-1" style={{ color: '#5c2400' }}>Avg. Refund</p>
+                                        <p className="font-mono text-lg font-semibold" style={{ color: '#5c2400' }}>{formatCurrency(refunds?.avgAmount)}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {/* Projections */}
                 {projections && (
-                    <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-6 text-white">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="font-semibold">Revenue Projections</h3>
-                            <TrendingUp className="w-5 h-5 text-slate-400" />
+                    <section className="card p-6 relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary-container/10 to-transparent pointer-events-none"></div>
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <h3 className="font-display text-2xl text-on-surface">Revenue Projections</h3>
+                            <Icon name="trending_up" className="text-primary" />
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">This Month (Est.)</p>
-                                <p className="text-2xl font-bold">{formatCurrency(projections?.thisMonth)}</p>
+                                <p className="text-sm text-on-surface-variant mb-1">This Month (Est.)</p>
+                                <p className="font-display font-mono text-2xl text-on-surface">{formatCurrency(projections?.thisMonth)}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">Next Month (Est.)</p>
-                                <p className="text-2xl font-bold">{formatCurrency(projections?.nextMonth)}</p>
+                                <p className="text-sm text-on-surface-variant mb-1">Next Month (Est.)</p>
+                                <p className="font-display font-mono text-2xl text-on-surface">{formatCurrency(projections?.nextMonth)}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">This Quarter (Est.)</p>
-                                <p className="text-2xl font-bold">{formatCurrency(projections?.thisQuarter)}</p>
+                                <p className="text-sm text-on-surface-variant mb-1">This Quarter (Est.)</p>
+                                <p className="font-display font-mono text-2xl text-on-surface">{formatCurrency(projections?.thisQuarter)}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-slate-400 mb-1">This Year (Est.)</p>
-                                <p className="text-2xl font-bold">{formatCurrency(projections?.thisYear)}</p>
+                                <p className="text-sm text-on-surface-variant mb-1">This Year (Est.)</p>
+                                <p className="font-display font-mono text-2xl text-on-surface">{formatCurrency(projections?.thisYear)}</p>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 )}
             </div>
         </div>

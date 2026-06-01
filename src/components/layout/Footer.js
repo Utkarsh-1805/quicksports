@@ -1,60 +1,88 @@
 'use client';
 
 import Link from 'next/link';
-import { Zap } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Icon } from '@/components/ui/Icon';
+
+const FOOTER_COLUMNS = [
+    { title: 'Product', items: [
+        { label: 'Find a Court', href: '/venues' },
+        { label: 'Open Matches', href: '/matches' },
+        { label: 'Map View', href: '/venues/map' },
+        { label: 'Mobile App', href: '#' },
+    ]},
+    { title: 'For Owners', items: [
+        { label: 'List your venue', href: '/owner/facilities/new' },
+        { label: 'Owner dashboard', href: '/owner/dashboard' },
+        { label: 'Pricing', href: '#' },
+        { label: 'Partner program', href: '#' },
+    ]},
+    { title: 'Resources', items: [
+        { label: 'Help center', href: '#' },
+        { label: 'Contact', href: '#' },
+        { label: 'Community guidelines', href: '#' },
+        { label: 'Refund policy', href: '#' },
+    ]},
+    { title: 'Company', items: [
+        { label: 'About', href: '/about' },
+        { label: 'Careers', href: '#' },
+        { label: 'Press', href: '#' },
+        { label: 'Terms · Privacy', href: '#' },
+    ]},
+];
 
 export function Footer() {
+    const pathname = usePathname();
+
+    if (pathname?.startsWith('/auth')) return null;
+
     return (
-        <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-900 mt-auto">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
-                    <div className="col-span-2 lg:col-span-2 pr-8">
-                        <Link href="/" className="flex items-center gap-2 mb-6 group">
-                            <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center group-hover:bg-green-400 transition-colors">
-                                <Zap className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-2xl font-bold text-white tracking-tight group-hover:text-green-50 transition-colors">QuickCourt</span>
+        <footer className="mt-16 border-t border-outline-variant bg-surface-container-low">
+            <div className="max-w-7xl mx-auto px-6 py-12 lg:py-14">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-12 gap-x-8 gap-y-10">
+                    {/* Brand column — wider */}
+                    <div className="col-span-2 sm:col-span-3 lg:col-span-4 lg:pr-8">
+                        <Link href="/" className="inline-flex items-center gap-2.5 mb-4 text-on-surface">
+                            <span className="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center font-display text-base font-bold">
+                                Q
+                            </span>
+                            <span className="font-display text-xl font-bold">QuickCourt</span>
                         </Link>
-                        <p className="text-sm leading-relaxed mb-6 max-w-sm">
-                            The modern platform for sports enthusiasts to discover, book, and play at premium facilities everywhere.
+                        <p className="text-sm leading-relaxed text-on-surface-variant max-w-[260px]">
+                            Book premium sports venues in seconds. Built for athletes.
                         </p>
                     </div>
 
-                    <div>
-                        <h4 className="text-white font-bold mb-6">Discover</h4>
-                        <ul className="space-y-4 text-sm">
-                            <li><Link href="/venues" className="hover:text-green-400 transition-colors block">Venues</Link></li>
-                            <li><Link href="/sports" className="hover:text-green-400 transition-colors block">Sports</Link></li>
-                            <li><Link href="/cities" className="hover:text-green-400 transition-colors block">Cities</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-white font-bold mb-6">Company</h4>
-                        <ul className="space-y-4 text-sm">
-                            <li><Link href="/about" className="hover:text-green-400 transition-colors block">About Us</Link></li>
-                            <li><Link href="/careers" className="hover:text-green-400 transition-colors block">Careers</Link></li>
-                            <li><Link href="/blog" className="hover:text-green-400 transition-colors block">Blog</Link></li>
-                            <li><Link href="/contact" className="hover:text-green-400 transition-colors block">Contact</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-white font-bold mb-6">Partners</h4>
-                        <ul className="space-y-4 text-sm">
-                            <li><Link href="/partners" className="hover:text-green-400 transition-colors block">List Your Court</Link></li>
-                            <li><Link href="/auth/register" className="hover:text-green-400 transition-colors block">Owner App</Link></li>
-                            <li><Link href="/pricing" className="hover:text-green-400 transition-colors block">Pricing</Link></li>
-                        </ul>
-                    </div>
+                    {/* Link columns — each 2/12 on desktop */}
+                    {FOOTER_COLUMNS.map((col) => (
+                        <div key={col.title} className="lg:col-span-2">
+                            <div className="text-xs font-semibold uppercase tracking-[0.08em] text-on-surface-variant mb-4">
+                                {col.title}
+                            </div>
+                            <ul className="flex flex-col gap-3 list-none p-0 m-0">
+                                {col.items.map((item) => (
+                                    <li key={item.label}>
+                                        <Link
+                                            href={item.href}
+                                            className="text-sm text-on-surface hover:text-primary transition-colors"
+                                        >
+                                            {item.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
 
-                <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm">
-                    <p>© {new Date().getFullYear()} QuickCourt Technologies. All rights reserved.</p>
-                    <div className="flex gap-6">
-                        <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-                    </div>
+                <div className="flex items-center justify-between gap-4 flex-wrap mt-12 pt-6 border-t border-outline-variant">
+                    <span className="font-mono text-xs text-on-surface-variant">
+                        © {new Date().getFullYear()} QuickCourt Sports · Built for athletes
+                    </span>
+                    <span className="font-mono text-xs text-on-surface-variant flex items-center gap-1.5">
+                        <Icon name="sports_score" size={14} className="text-primary" />
+                        10,247 matches played this week
+                    </span>
                 </div>
             </div>
         </footer>

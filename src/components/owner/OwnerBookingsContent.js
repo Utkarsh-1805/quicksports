@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-    Calendar, 
+import {
+    Calendar,
     Search,
     Filter,
     ChevronLeft,
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * OwnerBookingsContent Component
@@ -33,7 +34,7 @@ import { Button } from '@/components/ui/Button';
 export default function OwnerBookingsContent() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    
+
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -43,14 +44,14 @@ export default function OwnerBookingsContent() {
     const [dateFilter, setDateFilter] = useState('all');
     const [venues, setVenues] = useState([]);
     const [showFilters, setShowFilters] = useState(false);
-    
+
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 20;
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/owner/bookings');
             return;
@@ -106,22 +107,21 @@ export default function OwnerBookingsContent() {
     const getStatusConfig = (status) => {
         switch (status) {
             case 'CONFIRMED':
-                return { color: 'bg-green-50 text-green-700 border-green-200', label: 'Confirmed' };
+                return { pill: 'pill', dot: 'bg-current', label: 'Confirmed' };
             case 'PENDING':
-                return { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', label: 'Pending' };
+                return { pill: 'pill secondary', dot: 'bg-current', label: 'Pending' };
             case 'CANCELLED':
-                return { color: 'bg-red-50 text-red-700 border-red-200', label: 'Cancelled' };
+                return { pill: 'pill error', dot: 'bg-current', label: 'Cancelled' };
             case 'COMPLETED':
-                return { color: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Completed' };
+                return { pill: 'pill tertiary', dot: 'bg-current', label: 'Completed' };
             default:
-                return { color: 'bg-slate-50 text-slate-700 border-slate-200', label: status };
+                return { pill: 'pill neutral', dot: 'bg-current', label: status };
         }
     };
 
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-US', {
-            weekday: 'short',
             month: 'short',
             day: 'numeric',
             year: 'numeric'
@@ -151,11 +151,17 @@ export default function OwnerBookingsContent() {
         return icons[sportType] || '🏆';
     };
 
+    const getInitials = (name) => {
+        if (!name) return 'G';
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    };
+
     // Filter bookings
     const filteredBookings = bookings.filter(booking => {
-        const matchesSearch = 
+        const matchesSearch =
             booking.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            booking.courtName?.toLowerCase().includes(searchQuery.toLowerCase());
+            booking.courtName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booking.id?.toString().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -178,19 +184,19 @@ export default function OwnerBookingsContent() {
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20">
+            <div className="min-h-screen bg-surface pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="animate-pulse">
-                        <div className="h-8 w-48 bg-slate-200 rounded mb-6"></div>
-                        <div className="grid grid-cols-4 gap-4 mb-6">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="h-20 bg-white rounded-xl border border-slate-200"></div>
+                        <div className="h-10 w-48 bg-surface-container rounded mb-6"></div>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className="h-24 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                             ))}
                         </div>
-                        <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                            <div className="h-12 w-full bg-slate-200 rounded mb-4"></div>
+                        <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/30 p-6">
+                            <div className="h-12 w-full bg-surface-container rounded mb-4"></div>
                             {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className="h-16 w-full bg-slate-100 rounded mb-2"></div>
+                                <div key={i} className="h-16 w-full bg-surface-container/50 rounded mb-2"></div>
                             ))}
                         </div>
                     </div>
@@ -201,70 +207,82 @@ export default function OwnerBookingsContent() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center p-4">
+                <div className="card p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="error" size={32} className="text-error" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Bookings</h2>
-                    <p className="text-slate-500 mb-6">{error}</p>
-                    <Button onClick={fetchBookings}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                    <h2 className="font-display text-xl font-semibold text-on-surface mb-2">Error Loading Bookings</h2>
+                    <p className="text-on-surface-variant mb-6">{error}</p>
+                    <button
+                        onClick={fetchBookings}
+                        className="btn btn-cta"
+                    >
+                        <Icon name="refresh" size={18} />
                         Try Again
-                    </Button>
+                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20">
+        <div className="min-h-screen bg-surface pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Bookings</h1>
-                        <p className="text-slate-500 mt-1">Manage all bookings across your facilities</p>
+                        <p className="eyebrow mb-2">Bookings</p>
+                        <h1 className="font-display text-3xl sm:text-4xl font-semibold text-on-surface tracking-tight">Bookings</h1>
+                        <p className="text-on-surface-variant mt-2">Manage all bookings across your facilities</p>
                     </div>
-                    <button
-                        onClick={fetchBookings}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 transition-colors"
-                    >
-                        <RefreshCw className="w-4 h-4" />
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={fetchBookings}
+                            className="btn btn-outline btn-sm"
+                        >
+                            <Icon name="refresh" size={18} />
+                            Refresh
+                        </button>
+                        <button className="btn btn-outline btn-sm">
+                            <Icon name="download" size={18} />
+                            Export CSV
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <p className="text-sm text-slate-500">Total</p>
-                        <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
+                    <div className="card p-5">
+                        <p className="text-[11px] uppercase tracking-[0.08em] text-on-surface-variant font-mono mb-2">Total</p>
+                        <p className="font-display font-mono text-3xl font-semibold text-on-surface">{stats.total}</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <p className="text-sm text-green-600">Confirmed</p>
-                        <p className="text-2xl font-bold text-green-700">{stats.confirmed}</p>
+                    <div className="card p-5">
+                        <p className="text-[11px] uppercase tracking-[0.08em] text-primary font-mono mb-2 font-semibold">Confirmed</p>
+                        <p className="font-display font-mono text-3xl font-semibold text-on-surface">{stats.confirmed}</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <p className="text-sm text-yellow-600">Pending</p>
-                        <p className="text-2xl font-bold text-yellow-700">{stats.pending}</p>
+                    <div className="card p-5">
+                        <p className="text-[11px] uppercase tracking-[0.08em] text-on-secondary-container font-mono mb-2 font-semibold">Pending</p>
+                        <p className="font-display font-mono text-3xl font-semibold text-on-surface">{stats.pending}</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <p className="text-sm text-blue-600">Completed</p>
-                        <p className="text-2xl font-bold text-blue-700">{stats.completed}</p>
+                    <div className="card p-5">
+                        <p className="text-[11px] uppercase tracking-[0.08em] text-tertiary font-mono mb-2 font-semibold">Completed</p>
+                        <p className="font-display font-mono text-3xl font-semibold text-on-surface">{stats.completed}</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <p className="text-sm text-red-600">Cancelled</p>
-                        <p className="text-2xl font-bold text-red-700">{stats.cancelled}</p>
+                    <div className="card p-5">
+                        <p className="text-[11px] uppercase tracking-[0.08em] text-error font-mono mb-2 font-semibold">Cancelled</p>
+                        <p className="font-display font-mono text-3xl font-semibold text-on-surface">{stats.cancelled}</p>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6">
+                <div className="card p-4 mb-6">
                     <div className="flex flex-col md:flex-row gap-4">
                         {/* Search */}
                         <div className="flex-1 relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant z-10">
+                                <Icon name="search" size={20} />
+                            </span>
                             <input
                                 type="text"
                                 value={searchQuery}
@@ -272,120 +290,136 @@ export default function OwnerBookingsContent() {
                                     setSearchQuery(e.target.value);
                                     setCurrentPage(1);
                                 }}
-                                placeholder="Search by customer or court name..."
-                                className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                                placeholder="Search by ID, customer or court name..."
+                                className="input pl-12"
                             />
                         </div>
 
                         {/* Status Filter */}
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                setCurrentPage(1);
-                            }}
-                            className="px-4 py-2.5 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all bg-white"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="CONFIRMED">Confirmed</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="CANCELLED">Cancelled</option>
-                        </select>
+                        <div className="relative">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="input appearance-none pr-10 w-auto"
+                            >
+                                <option value="all">All Statuses</option>
+                                <option value="CONFIRMED">Confirmed</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
+                            </select>
+                            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" aria-hidden="true">expand_more</span>
+                        </div>
                     </div>
                 </div>
 
                 {/* Bookings Table */}
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="card overflow-hidden">
                     {paginatedBookings.length > 0 ? (
                         <>
-                            {/* Table Header */}
-                            <div className="hidden md:grid md:grid-cols-6 gap-4 p-4 bg-slate-50 border-b border-slate-200 text-sm font-medium text-slate-600">
-                                <div>Customer</div>
-                                <div>Court</div>
-                                <div>Date & Time</div>
-                                <div>Amount</div>
-                                <div>Status</div>
-                                <div className="text-right">Actions</div>
+                            {/* Desktop Table */}
+                            <div className="hidden md:block overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-surface-container-low border-b border-outline-variant">
+                                        <tr>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono">Booking ID</th>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono">User</th>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono">Court / Facility</th>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono">Date &amp; Time</th>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono text-right">Amount</th>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono">Status</th>
+                                            <th className="py-3 px-6 text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold font-mono text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-outline-variant/50">
+                                        {paginatedBookings.map((booking) => {
+                                            const statusConfig = getStatusConfig(booking.status);
+
+                                            return (
+                                                <tr
+                                                    key={booking.id}
+                                                    className="hover:bg-surface-container-low transition-colors group"
+                                                >
+                                                    <td className="py-4 px-6 font-mono text-sm text-on-surface-variant">#BK-{String(booking.id).slice(-6)}</td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="avatar w-9 h-9 bg-primary-container text-on-primary-container shrink-0">
+                                                                {getInitials(booking.userName)}
+                                                            </div>
+                                                            <span className="text-on-surface font-medium">{booking.userName || 'Guest'}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-lg">{getSportIcon(booking.sportType)}</span>
+                                                            <div>
+                                                                <p className="text-on-surface">{booking.courtName}</p>
+                                                                {booking.venueName && (
+                                                                    <p className="text-sm text-on-surface-variant">{booking.venueName}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-4 px-6">
+                                                        <p className="text-on-surface">{formatDate(booking.createdAt)}</p>
+                                                        {booking.startTime && (
+                                                            <p className="font-mono text-sm text-on-surface-variant">{formatTime(booking.startTime)}</p>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-4 px-6 font-mono text-on-surface text-right font-semibold">₹{(booking.amount || 0).toLocaleString()}</td>
+                                                    <td className="py-4 px-6">
+                                                        <span className={statusConfig.pill}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} opacity-70`}></span>
+                                                            {statusConfig.label}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-4 px-6 text-center">
+                                                        <Link
+                                                            href={`/booking/confirmation/${booking.id}`}
+                                                            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-on-surface-variant group-hover:text-primary hover:bg-surface-container-high transition-colors"
+                                                            title="View Details"
+                                                        >
+                                                            <Icon name="visibility" size={20} />
+                                                        </Link>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
 
-                            {/* Table Body */}
-                            <div className="divide-y divide-slate-100">
+                            {/* Mobile Cards */}
+                            <div className="md:hidden divide-y divide-outline-variant/50">
                                 {paginatedBookings.map((booking) => {
                                     const statusConfig = getStatusConfig(booking.status);
-                                    
-                                    return (
-                                        <div
-                                            key={booking.id}
-                                            className="p-4 hover:bg-slate-50 transition-colors"
-                                        >
-                                            {/* Mobile View */}
-                                            <div className="md:hidden space-y-3">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                                                            {booking.userName?.charAt(0).toUpperCase() || 'G'}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-slate-900">{booking.userName}</p>
-                                                            <p className="text-sm text-slate-500">{booking.courtName}</p>
-                                                        </div>
-                                                    </div>
-                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
-                                                        {statusConfig.label}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <div className="flex items-center gap-2 text-slate-500">
-                                                        <Calendar className="w-4 h-4" />
-                                                        <span>{formatDate(booking.createdAt)}</span>
-                                                    </div>
-                                                    <p className="font-semibold text-purple-600">₹{(booking.amount || 0).toLocaleString()}</p>
-                                                </div>
-                                            </div>
 
-                                            {/* Desktop View */}
-                                            <div className="hidden md:grid md:grid-cols-6 gap-4 items-center">
+                                    return (
+                                        <div key={booking.id} className="p-4 hover:bg-surface-container-low transition-colors">
+                                            <div className="flex items-start justify-between mb-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                                                        {booking.userName?.charAt(0).toUpperCase() || 'G'}
+                                                    <div className="avatar w-10 h-10 bg-primary-container text-on-primary-container">
+                                                        {getInitials(booking.userName)}
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <p className="font-medium text-slate-900 truncate">{booking.userName}</p>
+                                                    <div>
+                                                        <p className="font-medium text-on-surface">{booking.userName || 'Guest'}</p>
+                                                        <p className="text-sm text-on-surface-variant">{booking.courtName}</p>
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <span className="text-lg">{getSportIcon(booking.sportType)}</span>
-                                                    <p className="text-slate-700 truncate">{booking.courtName}</p>
+                                                <span className={statusConfig.pill}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${statusConfig.dot} opacity-70`}></span>
+                                                    {statusConfig.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-2 text-on-surface-variant">
+                                                    <Icon name="calendar_today" size={16} />
+                                                    <span>{formatDate(booking.createdAt)}</span>
                                                 </div>
-                                                
-                                                <div className="text-sm text-slate-600">
-                                                    <p>{formatDate(booking.createdAt)}</p>
-                                                    {booking.startTime && (
-                                                        <p className="text-slate-400">{formatTime(booking.startTime)}</p>
-                                                    )}
-                                                </div>
-                                                
-                                                <div>
-                                                    <p className="font-semibold text-slate-900">₹{(booking.amount || 0).toLocaleString()}</p>
-                                                </div>
-                                                
-                                                <div>
-                                                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
-                                                        {statusConfig.label}
-                                                    </span>
-                                                </div>
-                                                
-                                                <div className="text-right">
-                                                    <Link
-                                                        href={`/booking/confirmation/${booking.id}`}
-                                                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                        View
-                                                    </Link>
-                                                </div>
+                                                <p className="font-mono font-bold text-on-surface">₹{(booking.amount || 0).toLocaleString()}</p>
                                             </div>
                                         </div>
                                     );
@@ -394,17 +428,17 @@ export default function OwnerBookingsContent() {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="flex items-center justify-between p-4 border-t border-slate-200">
-                                    <p className="text-sm text-slate-500">
-                                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} bookings
+                                <div className="p-4 border-t border-outline-variant flex justify-between items-center bg-surface-container-low">
+                                    <p className="text-sm text-on-surface-variant font-mono">
+                                        Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredBookings.length)} of {filteredBookings.length} entries
                                     </p>
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-1 items-center">
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                             disabled={currentPage === 1}
-                                            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="btn btn-outline btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <ChevronLeft className="w-5 h-5" />
+                                            Prev
                                         </button>
                                         <div className="flex items-center gap-1">
                                             {[...Array(Math.min(5, totalPages))].map((_, idx) => {
@@ -413,10 +447,10 @@ export default function OwnerBookingsContent() {
                                                     <button
                                                         key={page}
                                                         onClick={() => setCurrentPage(page)}
-                                                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                                                        className={`min-w-[36px] h-9 rounded-lg text-sm font-semibold font-mono transition-colors ${
                                                             currentPage === page
-                                                                ? 'bg-purple-600 text-white'
-                                                                : 'hover:bg-slate-100'
+                                                                ? 'bg-primary text-on-primary'
+                                                                : 'border border-outline-variant text-on-surface hover:bg-surface-container-high'
                                                         }`}
                                                     >
                                                         {page}
@@ -427,21 +461,21 @@ export default function OwnerBookingsContent() {
                                         <button
                                             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                             disabled={currentPage === totalPages}
-                                            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="btn btn-outline btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <ChevronRight className="w-5 h-5" />
+                                            Next
                                         </button>
                                     </div>
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className="p-12 text-center">
-                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                                <Calendar className="w-8 h-8 text-slate-400" />
+                        <div className="p-16 text-center">
+                            <div className="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-4">
+                                <Icon name="calendar_today" size={36} className="text-outline" />
                             </div>
-                            <h3 className="font-medium text-slate-900 mb-1">No Bookings Found</h3>
-                            <p className="text-sm text-slate-500">
+                            <h3 className="font-display font-semibold text-on-surface mb-1">No Bookings Found</h3>
+                            <p className="text-sm text-on-surface-variant">
                                 {searchQuery || statusFilter !== 'all'
                                     ? 'Try adjusting your filters'
                                     : 'Bookings will appear here once customers start booking your courts.'}

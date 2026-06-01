@@ -19,12 +19,12 @@ export async function GET(request) {
     
     // Validate and sanitize query parameters
     const queryValidation = adminVenueQuerySchema.safeParse({
-      status: url.searchParams.get('status'),
-      page: url.searchParams.get('page'),
-      limit: url.searchParams.get('limit'),
-      search: url.searchParams.get('search'),
-      city: url.searchParams.get('city'),
-      ownerId: url.searchParams.get('ownerId')
+      status: url.searchParams.get('status') || undefined,
+      page: url.searchParams.get('page') || undefined,
+      limit: url.searchParams.get('limit') || undefined,
+      search: url.searchParams.get('search') || undefined,
+      city: url.searchParams.get('city') || undefined,
+      ownerId: url.searchParams.get('ownerId') || undefined
     });
     
     if (!queryValidation.success) {

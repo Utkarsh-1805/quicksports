@@ -1,19 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { 
-    ChevronLeft, 
-    ChevronRight, 
-    Calendar as CalendarIcon,
-    Clock,
-    MapPin,
-    User,
-    Loader2,
-    Sparkles,
-    TrendingUp,
-    CircleDot,
-    Zap
-} from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * BookingCalendar Component
@@ -27,19 +15,19 @@ export function BookingCalendar({ bookings = [], loading = false }) {
     // Get the start of the month
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    
+
     // Get day of week for the first day (0 = Sunday)
     const startDay = startOfMonth.getDay();
-    
+
     // Generate calendar days
     const calendarDays = useMemo(() => {
         const days = [];
-        
+
         // Add empty cells for days before the month starts
         for (let i = 0; i < startDay; i++) {
             days.push({ date: null, isCurrentMonth: false });
         }
-        
+
         // Add each day of the month
         for (let day = 1; day <= endOfMonth.getDate(); day++) {
             const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
@@ -51,15 +39,16 @@ export function BookingCalendar({ bookings = [], loading = false }) {
                 isPast: date < new Date(new Date().setHours(0,0,0,0))
             });
         }
-        
+
         // Fill the remaining cells
         const remaining = 42 - days.length; // 6 rows * 7 days
         for (let i = 0; i < remaining; i++) {
             days.push({ date: null, isCurrentMonth: false });
         }
-        
+
         return days;
-    }, [currentDate.getMonth(), currentDate.getFullYear()]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentDate]);
 
     // Get bookings for a specific date
     const getBookingsForDate = (date) => {
@@ -106,53 +95,33 @@ export function BookingCalendar({ bookings = [], loading = false }) {
 
     const selectedBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
 
-    // Status configurations with gradients
+    // Status configurations using M3 tokens
     const statusConfig = {
-        CONFIRMED: { 
-            bg: 'bg-emerald-500', 
-            light: 'bg-emerald-100', 
-            text: 'text-emerald-700',
-            gradient: 'from-emerald-500 to-green-400',
-            glow: 'shadow-emerald-200'
+        CONFIRMED: {
+            pill: 'pill',
+            chip: 'bg-primary-container text-on-primary-container'
         },
-        PENDING: { 
-            bg: 'bg-amber-500', 
-            light: 'bg-amber-100', 
-            text: 'text-amber-700',
-            gradient: 'from-amber-500 to-yellow-400',
-            glow: 'shadow-amber-200'
+        PENDING: {
+            pill: 'pill secondary',
+            chip: 'bg-secondary-container/40 text-on-secondary-container'
         },
-        CANCELLED: { 
-            bg: 'bg-rose-500', 
-            light: 'bg-rose-100', 
-            text: 'text-rose-700',
-            gradient: 'from-rose-500 to-red-400',
-            glow: 'shadow-rose-200'
+        CANCELLED: {
+            pill: 'pill error',
+            chip: 'bg-error-container text-on-error-container'
         },
-        COMPLETED: { 
-            bg: 'bg-blue-500', 
-            light: 'bg-blue-100', 
-            text: 'text-blue-700',
-            gradient: 'from-blue-500 to-cyan-400',
-            glow: 'shadow-blue-200'
+        COMPLETED: {
+            pill: 'pill tertiary',
+            chip: 'bg-tertiary-container text-on-tertiary-container'
         }
-    };
-
-    // Get booking intensity (for visual feedback)
-    const getBookingIntensity = (count) => {
-        if (count === 0) return '';
-        if (count <= 2) return 'bg-gradient-to-br from-purple-50 to-violet-50';
-        if (count <= 4) return 'bg-gradient-to-br from-purple-100 to-violet-100';
-        return 'bg-gradient-to-br from-purple-200 to-violet-200';
     };
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg">
+            <div className="card p-6">
                 <div className="flex items-center justify-center h-96">
                     <div className="text-center">
-                        <Loader2 className="w-10 h-10 text-purple-600 animate-spin mx-auto mb-3" />
-                        <p className="text-sm text-slate-500">Loading calendar...</p>
+                        <Icon name="progress_activity" size={40} className="text-primary animate-spin mx-auto mb-3" />
+                        <p className="text-sm text-on-surface-variant">Loading calendar...</p>
                     </div>
                 </div>
             </div>
@@ -160,40 +129,42 @@ export function BookingCalendar({ bookings = [], loading = false }) {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-lg">
-            {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600 p-4 sm:p-6">
-                <div className="flex items-center justify-between">
+        <div className="card overflow-hidden">
+            {/* Header */}
+            <div className="bg-inverse-surface p-4 sm:p-6">
+                <div className="flex items-center justify-between flex-wrap gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                            <CalendarIcon className="w-6 h-6 text-white" />
+                        <div className="w-12 h-12 rounded-2xl bg-inverse-on-surface/15 backdrop-blur-sm flex items-center justify-center">
+                            <Icon name="calendar_today" size={24} className="text-inverse-on-surface" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">Booking Calendar</h2>
-                            <p className="text-purple-200">
+                            <h2 className="font-display text-xl font-semibold text-inverse-on-surface">Booking calendar</h2>
+                            <p className="text-inverse-on-surface/80 text-sm font-mono">
                                 {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                             </p>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                         <button
                             onClick={goToToday}
-                            className="px-4 py-2 text-sm font-semibold text-purple-600 bg-white hover:bg-purple-50 rounded-xl transition-all shadow-lg hover:shadow-xl"
+                            className="px-4 py-2 text-sm font-semibold text-inverse-surface bg-inverse-on-surface hover:opacity-90 rounded-full transition-all shadow-sm"
                         >
                             Today
                         </button>
                         <button
                             onClick={goToPreviousMonth}
-                            className="p-2.5 hover:bg-white/20 rounded-xl transition-colors"
+                            className="p-2.5 hover:bg-inverse-on-surface/15 rounded-full transition-colors"
+                            aria-label="Previous month"
                         >
-                            <ChevronLeft className="w-5 h-5 text-white" />
+                            <Icon name="chevron_left" size={20} className="text-inverse-on-surface" />
                         </button>
                         <button
                             onClick={goToNextMonth}
-                            className="p-2.5 hover:bg-white/20 rounded-xl transition-colors"
+                            className="p-2.5 hover:bg-inverse-on-surface/15 rounded-full transition-colors"
+                            aria-label="Next month"
                         >
-                            <ChevronRight className="w-5 h-5 text-white" />
+                            <Icon name="chevron_right" size={20} className="text-inverse-on-surface" />
                         </button>
                     </div>
                 </div>
@@ -205,10 +176,10 @@ export function BookingCalendar({ bookings = [], loading = false }) {
                     {/* Day Names */}
                     <div className="grid grid-cols-7 mb-3">
                         {dayNames.map((day, i) => (
-                            <div 
-                                key={day} 
+                            <div
+                                key={day}
                                 className={`text-center py-3 text-xs font-bold uppercase tracking-wider ${
-                                    i === 0 || i === 6 ? 'text-purple-500' : 'text-slate-500'
+                                    i === 0 || i === 6 ? 'text-primary' : 'text-on-surface-variant'
                                 }`}
                             >
                                 {day}
@@ -227,9 +198,29 @@ export function BookingCalendar({ bookings = [], loading = false }) {
                             const isSelected = selectedDate && isSameDay(dayObj.date, selectedDate);
                             const isHovered = hoveredDate && isSameDay(dayObj.date, hoveredDate);
                             const hasBookings = dayBookings.length > 0;
-                            const confirmedCount = dayBookings.filter(b => b.status === 'CONFIRMED').length;
-                            const pendingCount = dayBookings.filter(b => b.status === 'PENDING').length;
                             const dayRevenue = getRevenueForDate(dayObj.date);
+
+                            // Cell base classes per state
+                            let cellClasses = 'bg-surface-container-lowest border border-outline-variant';
+                            let dayNumClasses = 'text-on-surface';
+
+                            if (isSelected) {
+                                cellClasses = 'bg-primary text-on-primary border-primary shadow-md scale-[1.02]';
+                                dayNumClasses = 'text-on-primary';
+                            } else if (dayObj.isToday) {
+                                cellClasses = 'bg-primary-container/30 border-primary text-primary';
+                                dayNumClasses = 'text-primary font-bold';
+                            } else if (hasBookings) {
+                                cellClasses = 'bg-surface-container-low border-outline-variant hover:border-primary/40';
+                            } else {
+                                cellClasses = 'bg-surface-container-lowest border-outline-variant/60 hover:bg-surface-container-low';
+                            }
+
+                            if (!dayObj.isCurrentMonth) {
+                                dayNumClasses = 'text-on-surface-variant/40';
+                            } else if (dayObj.isPast && !hasBookings && !isSelected && !dayObj.isToday) {
+                                dayNumClasses = 'text-on-surface-variant/60';
+                            }
 
                             return (
                                 <button
@@ -237,70 +228,59 @@ export function BookingCalendar({ bookings = [], loading = false }) {
                                     onClick={() => setSelectedDate(dayObj.date)}
                                     onMouseEnter={() => setHoveredDate(dayObj.date)}
                                     onMouseLeave={() => setHoveredDate(null)}
-                                    className={`h-24 sm:h-28 p-1.5 sm:p-2 rounded-xl border-2 transition-all duration-200 text-left relative overflow-hidden group ${
-                                        isSelected
-                                            ? 'border-purple-500 bg-purple-50 shadow-lg shadow-purple-100 scale-[1.02]'
-                                            : dayObj.isToday
-                                            ? 'border-purple-300 bg-gradient-to-br from-purple-50 to-violet-50'
-                                            : hasBookings
-                                            ? `border-slate-200 ${getBookingIntensity(dayBookings.length)} hover:border-purple-300 hover:shadow-md`
-                                            : 'border-transparent hover:border-slate-200 hover:bg-slate-50'
-                                    } ${dayObj.isPast && !hasBookings ? 'opacity-50' : ''}`}
+                                    className={`h-24 sm:h-28 p-1.5 sm:p-2 rounded-xl transition-all duration-200 text-left relative overflow-hidden group ${cellClasses}`}
                                 >
-                                    {/* Date number with badge for today */}
+                                    {/* Date number */}
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className={`text-sm font-bold ${
-                                            dayObj.isToday 
-                                                ? 'w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center' 
-                                                : isSelected 
-                                                ? 'text-purple-700'
-                                                : dayObj.isPast
-                                                ? 'text-slate-400'
-                                                : 'text-slate-700'
+                                        <span className={`text-sm font-bold ${dayNumClasses} ${
+                                            dayObj.isToday && !isSelected ? 'w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center' : ''
                                         }`}>
                                             {dayObj.day}
                                         </span>
                                         {hasBookings && (
-                                            <span className="flex items-center gap-0.5">
-                                                <Zap className="w-3 h-3 text-amber-500" />
-                                                <span className="text-[10px] font-bold text-slate-600">{dayBookings.length}</span>
+                                            <span className={`flex items-center gap-0.5 ${isSelected ? 'text-on-primary' : 'text-on-surface-variant'}`}>
+                                                <Icon name="bolt" size={12} className={isSelected ? 'text-on-primary' : 'text-secondary'} />
+                                                <span className="text-[10px] font-bold font-mono">{dayBookings.length}</span>
                                             </span>
                                         )}
                                     </div>
-                                    
+
                                     {/* Booking chips */}
                                     {hasBookings && (
                                         <div className="space-y-1">
-                                            {/* Show mini booking pills */}
-                                            {dayBookings.slice(0, 2).map((booking, i) => (
-                                                <div 
-                                                    key={i}
-                                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium truncate bg-gradient-to-r ${statusConfig[booking.status]?.gradient || 'from-slate-400 to-slate-300'} text-white shadow-sm`}
-                                                >
-                                                    <Clock className="w-2.5 h-2.5 flex-shrink-0" />
-                                                    <span className="truncate">{booking.startTime}</span>
-                                                </div>
-                                            ))}
-                                            
+                                            {dayBookings.slice(0, 2).map((booking, i) => {
+                                                const chipClass = isSelected
+                                                    ? 'bg-on-primary/20 text-on-primary'
+                                                    : 'bg-secondary-container/40 text-on-secondary-container';
+                                                return (
+                                                    <div
+                                                        key={i}
+                                                        className={`flex items-center gap-1 rounded-md text-xs px-1 py-0.5 truncate font-medium ${chipClass}`}
+                                                    >
+                                                        <Icon name="schedule" size={10} className="flex-shrink-0" />
+                                                        <span className="truncate">{booking.startTime}</span>
+                                                    </div>
+                                                );
+                                            })}
+
                                             {/* Show count if more bookings */}
                                             {dayBookings.length > 2 && (
-                                                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-600 text-white text-[10px] font-semibold">
+                                                <div className={`flex items-center gap-1 rounded-md px-1 py-0.5 text-xs font-semibold ${
+                                                    isSelected ? 'bg-on-primary/30 text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+                                                }`}>
                                                     <span>+{dayBookings.length - 2} more</span>
                                                 </div>
                                             )}
 
                                             {/* Revenue badge on hover */}
                                             {dayRevenue > 0 && (isHovered || isSelected) && (
-                                                <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-bold shadow-sm animate-in fade-in duration-200">
+                                                <div className={`absolute bottom-1 right-1 px-1.5 py-0.5 rounded font-mono text-[9px] font-bold shadow-sm ${
+                                                    isSelected ? 'bg-on-primary text-primary' : 'bg-primary text-on-primary'
+                                                }`}>
                                                     ₹{dayRevenue >= 1000 ? `${(dayRevenue/1000).toFixed(1)}k` : dayRevenue}
                                                 </div>
                                             )}
                                         </div>
-                                    )}
-
-                                    {/* Decorative corner for today */}
-                                    {dayObj.isToday && (
-                                        <div className="absolute top-0 right-0 w-0 h-0 border-t-[20px] border-t-purple-500 border-l-[20px] border-l-transparent" />
                                     )}
                                 </button>
                             );
@@ -308,51 +288,51 @@ export function BookingCalendar({ bookings = [], loading = false }) {
                     </div>
 
                     {/* Legend */}
-                    <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-4 border-t border-slate-100">
+                    <div className="flex flex-wrap items-center justify-center gap-2 mt-6 pt-4 border-t border-outline-variant/40">
                         {Object.entries(statusConfig).map(([status, config]) => (
-                            <div key={status} className="flex items-center gap-2">
-                                <div className={`w-4 h-4 rounded-md bg-gradient-to-r ${config.gradient} shadow-sm`} />
-                                <span className="text-xs font-medium text-slate-600 capitalize">{status.toLowerCase()}</span>
-                            </div>
+                            <span key={status} className={config.pill}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+                                {status.toLowerCase()}
+                            </span>
                         ))}
                     </div>
                 </div>
 
-                {/* Selected Day Details - Enhanced */}
-                <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-slate-200 bg-gradient-to-b from-slate-50 to-white">
+                {/* Selected Day Details */}
+                <div className="w-full lg:w-96 border-t lg:border-t-0 lg:border-l border-outline-variant/40 bg-surface-container-low/40">
                     {/* Selected date header */}
-                    <div className="p-4 sm:p-6 border-b border-slate-200 bg-white">
+                    <div className="p-4 sm:p-6 border-b border-outline-variant/40 bg-surface-container-lowest">
                         {selectedDate ? (
                             <div>
-                                <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Selected Date</p>
-                                <h3 className="text-xl font-bold text-slate-900">
-                                    {selectedDate.toLocaleDateString('en-US', { 
-                                        weekday: 'long', 
-                                        month: 'short', 
-                                        day: 'numeric' 
+                                <p className="eyebrow mb-1">Selected Date</p>
+                                <h3 className="font-display text-xl font-semibold text-on-surface">
+                                    {selectedDate.toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        month: 'short',
+                                        day: 'numeric'
                                     })}
                                 </h3>
                                 {selectedBookings.length > 0 && (
                                     <div className="flex items-center gap-3 mt-2">
-                                        <span className="flex items-center gap-1 text-sm text-slate-600">
-                                            <CalendarIcon className="w-4 h-4" />
-                                            {selectedBookings.length} booking{selectedBookings.length > 1 ? 's' : ''}
+                                        <span className="flex items-center gap-1 text-sm text-on-surface-variant">
+                                            <Icon name="calendar_today" size={16} />
+                                            <span className="font-mono">{selectedBookings.length}</span> booking{selectedBookings.length > 1 ? 's' : ''}
                                         </span>
-                                        <span className="flex items-center gap-1 text-sm text-emerald-600 font-semibold">
-                                            <TrendingUp className="w-4 h-4" />
-                                            ₹{getRevenueForDate(selectedDate).toLocaleString()}
+                                        <span className="flex items-center gap-1 text-sm text-primary font-semibold">
+                                            <Icon name="trending_up" size={16} />
+                                            <span className="font-mono">₹{getRevenueForDate(selectedDate).toLocaleString()}</span>
                                         </span>
                                     </div>
                                 )}
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                                    <Sparkles className="w-5 h-5 text-purple-600" />
+                                <div className="w-10 h-10 rounded-full bg-primary-container/30 flex items-center justify-center">
+                                    <Icon name="auto_awesome" size={20} className="text-primary" />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-slate-900">Select a date</p>
-                                    <p className="text-sm text-slate-500">Click to view bookings</p>
+                                    <p className="font-display font-semibold text-on-surface">Select a date</p>
+                                    <p className="text-sm text-on-surface-variant">Click to view bookings</p>
                                 </div>
                             </div>
                         )}
@@ -362,68 +342,65 @@ export function BookingCalendar({ bookings = [], loading = false }) {
                     <div className="p-4 sm:p-6">
                         {!selectedDate ? (
                             <div className="text-center py-12">
-                                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                                    <CalendarIcon className="w-8 h-8 text-slate-300" />
+                                <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-4">
+                                    <Icon name="calendar_today" size={32} className="text-on-surface-variant/60" />
                                 </div>
-                                <p className="text-slate-500">Select a date from the calendar</p>
+                                <p className="text-on-surface-variant">Select a date from the calendar</p>
                             </div>
                         ) : selectedBookings.length === 0 ? (
                             <div className="text-center py-12">
-                                <div className="w-16 h-16 rounded-full bg-purple-50 flex items-center justify-center mx-auto mb-4">
-                                    <CircleDot className="w-8 h-8 text-purple-300" />
+                                <div className="w-16 h-16 rounded-full bg-primary-container/30 flex items-center justify-center mx-auto mb-4">
+                                    <Icon name="circle" size={32} className="text-primary/60" />
                                 </div>
-                                <p className="font-medium text-slate-700 mb-1">No bookings</p>
-                                <p className="text-sm text-slate-500">This date has no scheduled bookings</p>
+                                <p className="font-display font-semibold text-on-surface mb-1">No bookings</p>
+                                <p className="text-sm text-on-surface-variant">This date has no scheduled bookings</p>
                             </div>
                         ) : (
                             <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                                 {selectedBookings.map((booking, index) => (
-                                    <div 
+                                    <div
                                         key={index}
-                                        className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                                        className="card overflow-hidden"
                                     >
-                                        {/* Status bar */}
-                                        <div className={`h-1 bg-gradient-to-r ${statusConfig[booking.status]?.gradient || 'from-slate-400 to-slate-300'}`} />
-                                        
                                         <div className="p-4">
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${statusConfig[booking.status]?.light} ${statusConfig[booking.status]?.text}`}>
-                                                    <CircleDot className="w-3 h-3" />
+                                                <span className={statusConfig[booking.status]?.pill || 'pill neutral'}>
+                                                    <Icon name="circle" size={10} />
                                                     {booking.status}
                                                 </span>
-                                                <span className="text-lg font-bold text-slate-900">
+                                                <span className="font-display text-lg font-semibold text-on-surface font-mono">
                                                     ₹{(booking.totalAmount || booking.amount || 0).toLocaleString()}
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="space-y-2">
                                                 <div className="flex items-center gap-3 text-sm">
-                                                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                                                        <MapPin className="w-4 h-4 text-purple-600" />
+                                                    <div className="w-8 h-8 rounded-full bg-primary-container/30 flex items-center justify-center flex-shrink-0">
+                                                        <Icon name="location_on" size={16} className="text-primary" />
                                                     </div>
-                                                    <div>
-                                                        <p className="font-medium text-slate-900">{booking.courtName}</p>
-                                                        <p className="text-slate-500 text-xs">{booking.facilityName}</p>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="flex items-center gap-3 text-sm">
-                                                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                                        <Clock className="w-4 h-4 text-blue-600" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-slate-900">{booking.startTime} - {booking.endTime}</p>
-                                                        <p className="text-slate-500 text-xs">{booking.duration || 60} minutes</p>
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-on-surface truncate">{booking.courtName}</p>
+                                                        <p className="text-on-surface-variant text-xs truncate">{booking.facilityName}</p>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="flex items-center gap-3 text-sm">
-                                                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                                                        <User className="w-4 h-4 text-emerald-600" />
+                                                    <div className="w-8 h-8 rounded-full bg-tertiary-container/30 flex items-center justify-center flex-shrink-0">
+                                                        <Icon name="schedule" size={16} className="text-tertiary" />
                                                     </div>
                                                     <div>
-                                                        <p className="font-medium text-slate-900">{booking.userName}</p>
-                                                        <p className="text-slate-500 text-xs">{booking.userPhone || booking.userEmail || 'Customer'}</p>
+                                                        <p className="font-medium text-on-surface font-mono">{booking.startTime} - {booking.endTime}</p>
+                                                        <p className="text-on-surface-variant text-xs">{booking.duration || 60} minutes</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <div className="w-8 h-8 rounded-full bg-secondary-container/30 flex items-center justify-center flex-shrink-0">
+                                                        <Icon name="group" size={16} className="text-secondary" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-on-surface truncate">{booking.userName}</p>
+                                                        <p className="text-on-surface-variant text-xs truncate">{booking.userPhone || booking.userEmail || 'Customer'}</p>
                                                     </div>
                                                 </div>
                                             </div>

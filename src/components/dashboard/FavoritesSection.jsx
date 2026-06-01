@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Heart, MapPin, Star, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function FavoritesSection() {
@@ -56,14 +56,11 @@ export function FavoritesSection() {
 
     if (!user) {
         return (
-            <div className="bg-white rounded-2xl p-8 text-center border border-slate-200">
-                <Heart className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">Login to view favorites</h3>
-                <p className="text-slate-500 mb-4">Save your favorite venues for quick access</p>
-                <Link 
-                    href="/auth/login"
-                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
+            <div className="card p-8 text-center">
+                <Icon name="favorite_border" size={48} className="text-on-surface-variant mx-auto mb-4" />
+                <h3 className="font-display text-lg font-semibold text-on-surface mb-2">Login to view favorites</h3>
+                <p className="text-on-surface-variant mb-4">Save your favorite venues for quick access</p>
+                <Link href="/auth/login" className="btn btn-cta btn-sm">
                     Login
                 </Link>
             </div>
@@ -72,14 +69,14 @@ export function FavoritesSection() {
 
     if (loading) {
         return (
-            <div className="space-y-4">
+            <div className="card p-6 space-y-4">
                 {[1, 2, 3].map(i => (
-                    <div key={i} className="bg-white rounded-xl p-4 animate-pulse">
+                    <div key={i} className="rounded-xl p-4 animate-pulse">
                         <div className="flex gap-4">
-                            <div className="w-24 h-24 bg-slate-200 rounded-lg" />
+                            <div className="w-24 h-24 bg-surface-container-high rounded-lg" />
                             <div className="flex-1">
-                                <div className="h-5 bg-slate-200 rounded w-3/4 mb-2" />
-                                <div className="h-4 bg-slate-100 rounded w-1/2" />
+                                <div className="h-5 bg-surface-container-high rounded w-3/4 mb-2" />
+                                <div className="h-4 bg-surface-container rounded w-1/2" />
                             </div>
                         </div>
                     </div>
@@ -90,7 +87,7 @@ export function FavoritesSection() {
 
     if (error) {
         return (
-            <div className="bg-red-50 text-red-600 rounded-xl p-4 text-center">
+            <div className="bg-error-container text-on-error-container rounded-xl p-4 text-center">
                 {error}
             </div>
         );
@@ -98,14 +95,11 @@ export function FavoritesSection() {
 
     if (favorites.length === 0) {
         return (
-            <div className="bg-white rounded-2xl p-8 text-center border border-slate-200">
-                <Heart className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">No favorites yet</h3>
-                <p className="text-slate-500 mb-4">Browse venues and click the heart to save them</p>
-                <Link 
-                    href="/venues"
-                    className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
+            <div className="card p-8 text-center">
+                <Icon name="favorite_border" size={48} className="text-on-surface-variant mx-auto mb-4" />
+                <h3 className="font-display text-lg font-semibold text-on-surface mb-2">No favorites yet</h3>
+                <p className="text-on-surface-variant mb-4">Browse venues and click the heart to save them</p>
+                <Link href="/venues" className="btn btn-cta btn-sm">
                     Explore Venues
                 </Link>
             </div>
@@ -113,68 +107,77 @@ export function FavoritesSection() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="card p-[22px]">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                    My Favorites ({favorites.length})
-                </h2>
+                <h3 className="font-display text-base font-semibold text-on-surface">Your favorites</h3>
+                <Icon name="favorite" filled className="text-secondary-container" size={16} />
             </div>
 
-            {favorites.map((fav) => (
-                <div 
-                    key={fav.id} 
-                    className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow"
-                >
-                    <div className="flex">
-                        {/* Image */}
-                        <Link href={`/venues/${fav.venue.id}`} className="w-32 h-28 flex-shrink-0">
-                            <img 
-                                src={fav.venue.thumbnail || '/placeholder-venue.jpg'} 
-                                alt={fav.venue.name}
-                                className="w-full h-full object-cover"
-                            />
-                        </Link>
+            <div className="flex flex-col gap-3">
+                {favorites.map((fav) => (
+                    <div
+                        key={fav.id}
+                        className="card card-hover overflow-hidden"
+                    >
+                        <div className="flex">
+                            {/* Image */}
+                            <Link href={`/venues/${fav.venue.id}`} className="w-32 h-28 flex-shrink-0">
+                                <img
+                                    src={fav.venue.thumbnail || '/placeholder-venue.jpg'}
+                                    alt={fav.venue.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </Link>
 
-                        {/* Content */}
-                        <div className="flex-1 p-4">
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <Link 
-                                        href={`/venues/${fav.venue.id}`}
-                                        className="font-semibold text-slate-800 hover:text-green-600 transition-colors"
-                                    >
-                                        {fav.venue.name}
-                                    </Link>
-                                    <div className="flex items-center gap-1 text-slate-500 text-sm mt-1">
-                                        <MapPin className="w-3.5 h-3.5" />
-                                        {fav.venue.city}
+                            {/* Content */}
+                            <div className="flex-1 p-4">
+                                <div className="flex items-start justify-between">
+                                    <div>
+                                        <Link
+                                            href={`/venues/${fav.venue.id}`}
+                                            className="font-display font-semibold text-on-surface hover:text-primary transition-colors"
+                                        >
+                                            {fav.venue.name}
+                                        </Link>
+                                        <div className="flex items-center gap-1 text-on-surface-variant text-sm mt-1">
+                                            <Icon name="location_on" size={14} />
+                                            {fav.venue.city}
+                                        </div>
+                                        {fav.venue.sportType && (
+                                            <span className="pill neutral mt-2" style={{ textTransform: 'none', letterSpacing: 0 }}>
+                                                {fav.venue.sportType}
+                                            </span>
+                                        )}
                                     </div>
+                                    <button
+                                        onClick={() => removeFavorite(fav.venue.id)}
+                                        className="p-2 text-on-surface-variant hover:text-error hover:bg-error-container rounded-lg transition-colors"
+                                        title="Remove from favorites"
+                                    >
+                                        <Icon name="delete" size={16} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => removeFavorite(fav.venue.id)}
-                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Remove from favorites"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
 
-                            <div className="flex items-center gap-4 mt-3">
-                                <div className="flex items-center gap-1 text-sm">
-                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                    <span className="font-medium">{fav.venue.averageRating?.toFixed(1) || '-'}</span>
+                                <div className="flex items-center gap-4 mt-3">
+                                    <div className="flex items-center gap-1 text-sm">
+                                        <Icon name="star" filled className="text-secondary-container" size={16} />
+                                        <span className="font-mono font-medium text-on-surface">{fav.venue.averageRating?.toFixed(1) || '-'}</span>
+                                    </div>
+                                    {fav.venue.minPrice && (
+                                        <span className="text-sm text-on-surface-variant">
+                                            From <span className="font-mono font-semibold text-primary">₹{fav.venue.minPrice}/hr</span>
+                                        </span>
+                                    )}
                                 </div>
-                                {fav.venue.minPrice && (
-                                    <span className="text-sm text-slate-600">
-                                        From <span className="font-semibold">₹{fav.venue.minPrice}/hr</span>
-                                    </span>
-                                )}
                             </div>
                         </div>
                     </div>
-                </div>
-            ))}
+                ))}
+            </div>
+
+            <Link href="/venues" className="btn btn-outline btn-sm w-full mt-4">
+                Explore venues
+            </Link>
         </div>
     );
 }

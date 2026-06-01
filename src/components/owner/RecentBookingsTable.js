@@ -1,16 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { 
-    Calendar, 
-    Clock, 
-    User, 
-    ChevronRight,
-    CheckCircle,
-    XCircle,
-    AlertCircle,
-    Loader2
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * RecentBookingsTable Component
@@ -20,38 +11,33 @@ export function RecentBookingsTable({ bookings = [], loading = false }) {
     const getStatusConfig = (status) => {
         switch (status) {
             case 'CONFIRMED':
-                return { 
-                    icon: CheckCircle, 
-                    color: 'text-green-600', 
-                    bg: 'bg-green-50',
+                return {
+                    iconName: 'check_circle',
+                    pill: 'pill',
                     label: 'Confirmed'
                 };
             case 'PENDING':
-                return { 
-                    icon: Loader2, 
-                    color: 'text-yellow-600', 
-                    bg: 'bg-yellow-50',
+                return {
+                    iconName: 'schedule',
+                    pill: 'pill secondary',
                     label: 'Pending'
                 };
             case 'CANCELLED':
-                return { 
-                    icon: XCircle, 
-                    color: 'text-red-600', 
-                    bg: 'bg-red-50',
+                return {
+                    iconName: 'cancel',
+                    pill: 'pill error',
                     label: 'Cancelled'
                 };
             case 'COMPLETED':
-                return { 
-                    icon: CheckCircle, 
-                    color: 'text-blue-600', 
-                    bg: 'bg-blue-50',
+                return {
+                    iconName: 'task_alt',
+                    pill: 'pill tertiary',
                     label: 'Completed'
                 };
             default:
-                return { 
-                    icon: AlertCircle, 
-                    color: 'text-slate-600', 
-                    bg: 'bg-slate-50',
+                return {
+                    iconName: 'info',
+                    pill: 'pill neutral',
                     label: status
                 };
         }
@@ -92,19 +78,19 @@ export function RecentBookingsTable({ bookings = [], loading = false }) {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-100">
-                    <div className="h-6 w-40 bg-slate-200 rounded animate-pulse"></div>
+            <div className="card overflow-hidden">
+                <div className="p-6 border-b border-outline-variant/40">
+                    <div className="h-6 w-40 bg-surface-container-high rounded animate-pulse"></div>
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-outline-variant/40">
                     {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="p-4 flex items-center gap-4">
-                            <div className="w-10 h-10 bg-slate-200 rounded-full animate-pulse"></div>
+                            <div className="w-10 h-10 bg-surface-container-high rounded-full animate-pulse"></div>
                             <div className="flex-1 space-y-2">
-                                <div className="h-4 w-32 bg-slate-200 rounded animate-pulse"></div>
-                                <div className="h-3 w-48 bg-slate-100 rounded animate-pulse"></div>
+                                <div className="h-4 w-32 bg-surface-container-high rounded animate-pulse"></div>
+                                <div className="h-3 w-48 bg-surface-container rounded animate-pulse"></div>
                             </div>
-                            <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse"></div>
+                            <div className="h-6 w-20 bg-surface-container-high rounded-full animate-pulse"></div>
                         </div>
                     ))}
                 </div>
@@ -113,85 +99,88 @@ export function RecentBookingsTable({ bookings = [], loading = false }) {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="card overflow-hidden">
             {/* Header */}
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                        <Calendar className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-slate-900">Recent Bookings</h3>
-                        <p className="text-sm text-slate-500">Latest customer bookings</p>
-                    </div>
-                </div>
+            <div className="p-5 border-b border-outline-variant/40 flex items-center justify-between">
+                <h3 className="font-display text-base font-semibold text-on-surface">Recent bookings</h3>
                 <Link
                     href="/owner/bookings"
-                    className="text-sm text-purple-600 font-medium hover:text-purple-700 flex items-center gap-1"
+                    className="text-sm text-primary font-semibold hover:opacity-80 flex items-center gap-1"
                 >
-                    View All
-                    <ChevronRight className="w-4 h-4" />
+                    View all
+                    <Icon name="arrow_forward" size={14} />
                 </Link>
             </div>
 
-            {/* Table */}
+            {/* Table headers (visible on md+) */}
+            {bookings.length > 0 && (
+                <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto] gap-4 px-6 py-3 bg-surface-container-low text-on-surface-variant text-[11px] uppercase tracking-[0.08em] font-semibold border-b border-outline-variant/40 font-mono">
+                    <span className="w-10"></span>
+                    <span>Customer / Court</span>
+                    <span className="text-right">Amount</span>
+                    <span>Status</span>
+                </div>
+            )}
+
+            {/* Body */}
             {bookings.length > 0 ? (
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-outline-variant/40">
                     {bookings.map((booking) => {
                         const statusConfig = getStatusConfig(booking.status);
-                        const StatusIcon = statusConfig.icon;
-                        
+
                         return (
                             <div
                                 key={booking.id}
-                                className="p-4 hover:bg-slate-50 transition-colors"
+                                className="p-4 hover:bg-surface-container-low/50 transition-colors text-on-surface text-sm"
                             >
                                 <div className="flex items-center gap-4">
                                     {/* User Avatar */}
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                                        {booking.userName?.charAt(0).toUpperCase() || <User className="w-5 h-5" />}
+                                    <div className="avatar w-9 h-9 shrink-0 bg-primary-container text-on-primary-container">
+                                        {booking.userName?.charAt(0).toUpperCase() || (
+                                            <Icon name="person" size={18} />
+                                        )}
                                     </div>
-                                    
+
                                     {/* Booking Details */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <p className="font-medium text-slate-900 truncate">
+                                            <p className="font-semibold text-on-surface truncate">
                                                 {booking.userName || 'Guest'}
                                             </p>
-                                            <span className="text-slate-300">•</span>
-                                            <span className="text-sm text-slate-500 truncate">
+                                            <span className="text-on-surface-variant/40">•</span>
+                                            <span className="text-sm text-on-surface-variant truncate">
                                                 {booking.courtName}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+                                        <div className="flex items-center gap-3 mt-1 text-xs text-on-surface-variant font-mono">
                                             <div className="flex items-center gap-1">
-                                                <Calendar className="w-3.5 h-3.5" />
+                                                <Icon name="calendar_today" size={14} />
                                                 <span>{formatDate(booking.bookingDate || booking.createdAt)}</span>
                                             </div>
                                             {booking.startTime && (
                                                 <div className="flex items-center gap-1">
-                                                    <Clock className="w-3.5 h-3.5" />
+                                                    <Icon name="schedule" size={14} />
                                                     <span>{formatTime(booking.startTime)}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     {/* Amount */}
                                     <div className="text-right shrink-0">
-                                        <p className="font-semibold text-slate-900">
+                                        <p className="font-mono font-semibold text-on-surface">
                                             ₹{(booking.totalAmount || 0).toLocaleString()}
                                         </p>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-on-surface-variant/70 font-mono">
                                             {formatTimeAgo(booking.createdAt)}
                                         </p>
                                     </div>
-                                    
+
                                     {/* Status Badge */}
-                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.color} shrink-0`}>
-                                        <StatusIcon className="w-3.5 h-3.5" />
+                                    <span className={`${statusConfig.pill} shrink-0`}>
+                                        <Icon name={statusConfig.iconName} size={12} />
                                         {statusConfig.label}
-                                    </div>
+                                    </span>
                                 </div>
                             </div>
                         );
@@ -199,11 +188,11 @@ export function RecentBookingsTable({ bookings = [], loading = false }) {
                 </div>
             ) : (
                 <div className="p-12 text-center">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                        <Calendar className="w-8 h-8 text-slate-400" />
+                    <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="calendar_today" size={32} className="text-on-surface-variant/60" />
                     </div>
-                    <h3 className="font-medium text-slate-900 mb-1">No Bookings Yet</h3>
-                    <p className="text-sm text-slate-500">
+                    <h3 className="font-display font-semibold text-on-surface mb-1">No Bookings Yet</h3>
+                    <p className="text-sm text-on-surface-variant">
                         Bookings will appear here once customers start booking your courts.
                     </p>
                 </div>

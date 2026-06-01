@@ -420,8 +420,9 @@ export async function GET(request) {
         totalBookings: currentRevenue._count.id,
         avgBookingValue: Math.round((avgBookingValue._avg.totalAmount || 0) * 100) / 100,
         totalRefunds: includeRefunds ? Math.round((totalRefunds._sum.amount || 0) * 100) / 100 : null,
-        netRevenue: includeRefunds 
-          ? Math.round(((currentRevenue._sum.totalAmount || 0) - (totalRefunds._sum.amount || 0)) * 100) / 100 
+        refundCount: includeRefunds ? (totalRefunds._count.id || 0) : null,
+        netRevenue: includeRefunds
+          ? Math.round(((currentRevenue._sum.totalAmount || 0) - (totalRefunds._sum.amount || 0)) * 100) / 100
           : Math.round((currentRevenue._sum.totalAmount || 0) * 100) / 100
       },
 

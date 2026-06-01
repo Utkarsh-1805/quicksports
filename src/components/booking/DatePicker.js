@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * DatePicker Component
@@ -16,7 +16,7 @@ export function DatePicker({ selectedDate, onDateSelect, minDate = new Date() })
         const dates = [];
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         for (let i = 0; i < 7; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
@@ -50,68 +50,91 @@ export function DatePicker({ selectedDate, onDateSelect, minDate = new Date() })
         return selectedDate && formatDate(date) === formatDate(new Date(selectedDate));
     };
 
+    const monthLabel = availableDates[0]?.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-green-600" />
-                </div>
+        <div className="card p-7">
+            <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="font-bold text-slate-900">Select Date</h3>
-                    <p className="text-sm text-slate-500">Choose from available dates</p>
+                    <span className="eyebrow">Date</span>
+                    <h3 className="font-display text-lg font-semibold text-on-surface">Select Date</h3>
+                </div>
+
+                {/* Month nav (visual only — kept for parity with viewMonth state) */}
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1))}
+                        className="bg-surface-container hover:bg-surface-container-high rounded-lg p-2 text-on-surface transition-colors"
+                        aria-label="Previous month"
+                    >
+                        <Icon name="chevron_left" size={18} />
+                    </button>
+                    <span className="font-mono text-sm text-on-surface-variant min-w-[8ch] text-center">{monthLabel}</span>
+                    <button
+                        type="button"
+                        onClick={() => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1))}
+                        className="bg-surface-container hover:bg-surface-container-high rounded-lg p-2 text-on-surface transition-colors"
+                        aria-label="Next month"
+                    >
+                        <Icon name="chevron_right" size={18} />
+                    </button>
                 </div>
             </div>
 
             {/* Quick Date Selection - Next 7 Days */}
             <div className="grid grid-cols-7 gap-2">
-                {availableDates.map((date, index) => (
-                    <button
-                        key={formatDate(date)}
-                        onClick={() => onDateSelect(formatDate(date))}
-                        className={`
-                            relative flex flex-col items-center justify-center p-3 rounded-xl transition-all duration-200
-                            ${isSelected(date)
-                                ? 'bg-green-600 text-white shadow-lg shadow-green-500/30 scale-105'
-                                : 'bg-slate-50 text-slate-700 hover:bg-green-50 hover:text-green-700 hover:scale-102'
-                            }
-                            ${isToday(date) && !isSelected(date) ? 'ring-2 ring-green-500 ring-offset-2' : ''}
-                        `}
-                    >
-                        <span className={`text-[10px] uppercase font-bold tracking-wider mb-1
-                            ${isSelected(date) ? 'text-green-100' : 'text-slate-400'}
-                        `}>
-                            {getDayName(date)}
-                        </span>
-                        <span className={`text-xl font-bold
-                            ${isSelected(date) ? 'text-white' : 'text-slate-800'}
-                        `}>
-                            {getDayNumber(date)}
-                        </span>
-                        <span className={`text-[10px] font-medium
-                            ${isSelected(date) ? 'text-green-100' : 'text-slate-500'}
-                        `}>
-                            {getMonthName(date)}
-                        </span>
-                        {isToday(date) && (
-                            <span className={`absolute -top-1 left-1/2 -translate-x-1/2 text-[8px] font-bold px-1.5 py-0.5 rounded-full
-                                ${isSelected(date) ? 'bg-white text-green-600' : 'bg-green-500 text-white'}
+                {availableDates.map((date, index) => {
+                    const selected = isSelected(date);
+                    const today = isToday(date);
+                    return (
+                        <button
+                            key={formatDate(date)}
+                            onClick={() => onDateSelect(formatDate(date))}
+                            className={`
+                                relative flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-150
+                                ${selected
+                                    ? 'bg-primary text-on-primary border-primary font-bold'
+                                    : today
+                                        ? 'bg-primary-container border-primary text-on-primary-container font-bold hover:bg-primary-container'
+                                        : 'bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container hover:border-primary'
+                                }
+                            `}
+                        >
+                            <span className={`text-[10px] uppercase font-bold tracking-wider mb-1 font-mono
+                                ${selected ? 'text-on-primary/80' : 'text-on-surface-variant'}
                             `}>
-                                TODAY
+                                {getDayName(date)}
                             </span>
-                        )}
-                    </button>
-                ))}
+                            <span className="font-mono text-xl font-bold">
+                                {getDayNumber(date)}
+                            </span>
+                            <span className={`text-[10px] font-mono font-medium
+                                ${selected ? 'text-on-primary/80' : 'text-on-surface-variant'}
+                            `}>
+                                {getMonthName(date)}
+                            </span>
+                            {today && (
+                                <span className={`absolute -top-1 left-1/2 -translate-x-1/2 text-[8px] font-bold px-1.5 py-0.5 rounded-full font-mono
+                                    ${selected ? 'bg-on-primary text-primary' : 'bg-primary text-on-primary'}
+                                `}>
+                                    TODAY
+                                </span>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Selected Date Display */}
             {selectedDate && (
-                <div className="mt-6 pt-4 border-t border-slate-100">
+                <div className="mt-6 pt-4 border-t border-outline-variant/40">
                     <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-500">Selected Date:</span>
-                        <span className="text-sm font-bold text-slate-900">
-                            {new Date(selectedDate).toLocaleDateString('en-US', { 
-                                weekday: 'long', 
-                                month: 'long', 
+                        <span className="text-sm text-on-surface-variant font-mono uppercase tracking-[0.12em]">Selected:</span>
+                        <span className="font-mono text-sm font-bold text-on-surface">
+                            {new Date(selectedDate).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                month: 'long',
                                 day: 'numeric',
                                 year: 'numeric'
                             })}

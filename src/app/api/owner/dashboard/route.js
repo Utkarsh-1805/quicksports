@@ -177,6 +177,7 @@ export async function GET(request) {
           status: true,
           totalAmount: true,
           bookingDate: true,
+          startTime: true,
           courtId: true
         }
       }),
@@ -317,6 +318,21 @@ export async function GET(request) {
     });
 
     // ==========================================
+    // STEP 8b: Peak hours heatmap (24h × 7d)
+    // Returns a 2D array [day-of-week][hour] = booking count.
+    // Day index: 0=Sunday … 6=Saturday. Hour: 0–23.
+    // ==========================================
+    const peakHoursByDay = Array.from({ length: 7 }, () => Array(24).fill(0));
+    for (const b of allBookings) {
+      if (!b.bookingDate || !b.startTime) continue;
+      const dow = new Date(b.bookingDate).getUTCDay();
+      const hour = parseInt(String(b.startTime).split(':')[0], 10);
+      if (!Number.isNaN(hour) && hour >= 0 && hour < 24 && dow >= 0 && dow < 7) {
+        peakHoursByDay[dow][hour] += 1;
+      }
+    }
+
+    // ==========================================
     // STEP 9: Recent Activity Summary
     // ==========================================
     const recentActivity = recentBookings.map(booking => ({
@@ -351,6 +367,7 @@ export async function GET(request) {
         venues: venuePerformance,
         topCourts,
         bookingTrends,
+        peakHoursByDay,
         recentActivity,
         period: period,
         dateRange: {

@@ -2,28 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-    Users, 
-    Search,
-    Filter,
-    Mail,
-    Phone,
-    Calendar,
-    MoreVertical,
-    Shield,
-    ShieldOff,
-    BadgeCheck,
-    Building2,
-    AlertCircle,
-    RefreshCw,
-    ChevronDown,
-    Clock,
-    Loader2,
-    UserX,
-    UserCheck
-} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * UserManagementContent Component
@@ -32,16 +13,16 @@ import { Button } from '@/components/ui/Button';
 export default function UserManagementContent() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    
+
     const [users, setUsers] = useState([]);
     const [pagination, setPagination] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     const [selectedUser, setSelectedUser] = useState(null);
     const [actionMenu, setActionMenu] = useState(null);
     const [processing, setProcessing] = useState(false);
-    
+
     const [filters, setFilters] = useState({
         role: '',
         status: '',
@@ -51,7 +32,7 @@ export default function UserManagementContent() {
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/admin/users');
             return;
@@ -147,29 +128,21 @@ export default function UserManagementContent() {
         });
     };
 
-    const getRoleBadgeClass = (role) => {
-        switch (role) {
-            case 'ADMIN':
-                return 'bg-purple-50 text-purple-700';
-            case 'FACILITY_OWNER':
-                return 'bg-blue-50 text-blue-700';
-            default:
-                return 'bg-slate-100 text-slate-700';
-        }
-    };
+    const roleChips = [
+        { key: '', label: 'All' },
+        { key: 'USER', label: 'User' },
+        { key: 'FACILITY_OWNER', label: 'Owner' },
+        { key: 'ADMIN', label: 'Admin' }
+    ];
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20">
+            <div className="min-h-screen bg-surface pt-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="animate-pulse">
-                        <div className="h-8 w-48 bg-slate-200 rounded mb-6"></div>
-                        <div className="h-16 bg-white rounded-xl mb-6"></div>
-                        <div className="space-y-2">
-                            {[...Array(10)].map((_, i) => (
-                                <div key={i} className="h-16 bg-white rounded-xl"></div>
-                            ))}
-                        </div>
+                        <div className="h-10 w-64 bg-surface-container rounded mb-8"></div>
+                        <div className="h-16 bg-surface-container-lowest rounded-xl mb-6"></div>
+                        <div className="h-96 bg-surface-container-lowest rounded-xl border border-outline-variant/30"></div>
                     </div>
                 </div>
             </div>
@@ -178,15 +151,15 @@ export default function UserManagementContent() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center p-4">
+                <div className="card p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="error" className="text-on-error-container" size={32} />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Users</h2>
-                    <p className="text-slate-500 mb-6">{error}</p>
+                    <h2 className="font-display text-xl text-on-surface mb-2">Error Loading Users</h2>
+                    <p className="text-on-surface-variant mb-6">{error}</p>
                     <Button onClick={fetchUsers}>
-                        <RefreshCw className="w-4 h-4 mr-2" />
+                        <Icon name="refresh" size={16} className="mr-2" />
                         Try Again
                     </Button>
                 </div>
@@ -195,182 +168,168 @@ export default function UserManagementContent() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20">
+        <div className="min-h-screen bg-surface pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">User Management</h1>
-                        <p className="text-slate-500 mt-1">Manage platform users and permissions</p>
+                        <div className="eyebrow mb-3">Admin Console</div>
+                        <h1 className="font-display text-4xl sm:text-5xl tracking-tight text-on-surface mb-2">User management</h1>
+                        <p className="text-base text-on-surface-variant max-w-2xl">
+                            Manage accounts, roles, and administrative access for the QuickCourt platform.
+                        </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="text-sm text-slate-500">
-                            {pagination?.total || 0} total users
+                        <span className="text-sm font-mono text-on-surface-variant">
+                            {pagination?.total || 0} users
                         </span>
                         <button
                             onClick={fetchUsers}
-                            className="p-2 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50"
+                            className="btn btn-primary btn-sm"
                         >
-                            <RefreshCw className="w-5 h-5" />
+                            <Icon name="refresh" size={18} />
+                            Refresh
                         </button>
                     </div>
                 </div>
 
-                {/* Filters */}
-                <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
-                    <div className="flex flex-wrap gap-4">
-                        {/* Search */}
-                        <div className="relative flex-1 min-w-[200px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Search by name, email, or phone..."
-                                value={filters.search}
-                                onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 1 }))}
-                                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
-                            />
-                        </div>
-
-                        {/* Role Filter */}
-                        <select
-                            value={filters.role}
-                            onChange={(e) => setFilters(f => ({ ...f, role: e.target.value, page: 1 }))}
-                            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
-                        >
-                            <option value="">All Roles</option>
-                            <option value="USER">Users</option>
-                            <option value="FACILITY_OWNER">Facility Owners</option>
-                            <option value="ADMIN">Admins</option>
-                        </select>
-
-                        {/* Status Filter */}
-                        <select
-                            value={filters.status}
-                            onChange={(e) => setFilters(f => ({ ...f, status: e.target.value, page: 1 }))}
-                            className="px-4 py-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none"
-                        >
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="banned">Banned</option>
-                            <option value="verified">Verified</option>
-                            <option value="unverified">Unverified</option>
-                        </select>
+                {/* Filters Toolbar */}
+                <div className="card p-4 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    {/* Search */}
+                    <div className="relative w-full md:w-96">
+                        <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant z-10" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search users by name or email..."
+                            value={filters.search}
+                            onChange={(e) => setFilters(f => ({ ...f, search: e.target.value, page: 1 }))}
+                            className="input"
+                            style={{ paddingLeft: 40 }}
+                        />
                     </div>
+
+                    {/* Role Chips */}
+                    <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                        {roleChips.map(chip => (
+                            <button
+                                key={chip.key}
+                                onClick={() => setFilters(f => ({ ...f, role: chip.key, page: 1 }))}
+                                className={`whitespace-nowrap px-4 py-1.5 text-sm font-medium rounded-full border transition-colors ${
+                                    filters.role === chip.key
+                                        ? 'bg-secondary-container text-on-secondary-container border-transparent'
+                                        : 'bg-surface-container text-on-surface-variant border-outline-variant hover:bg-surface-container-high'
+                                }`}
+                            >
+                                {chip.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Status Filter */}
+                    <select
+                        value={filters.status}
+                        onChange={(e) => setFilters(f => ({ ...f, status: e.target.value, page: 1 }))}
+                        className="input"
+                        style={{ width: 'auto', padding: '10px 14px', fontSize: 13 }}
+                    >
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="banned">Banned</option>
+                        <option value="verified">Verified</option>
+                        <option value="unverified">Unverified</option>
+                    </select>
                 </div>
 
                 {/* Users Table */}
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                <div className="card overflow-hidden">
                     {/* Desktop Table */}
                     <div className="hidden lg:block overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
                             <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200">
-                                    <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">User</th>
-                                    <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Contact</th>
-                                    <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Role</th>
-                                    <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Status</th>
-                                    <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Stats</th>
-                                    <th className="text-left py-4 px-6 font-semibold text-slate-600 text-sm">Joined</th>
-                                    <th className="text-right py-4 px-6 font-semibold text-slate-600 text-sm">Actions</th>
+                                <tr className="bg-surface-container-low border-b border-outline-variant text-on-surface-variant text-xs uppercase tracking-wider font-semibold">
+                                    <th className="p-4 font-mono">Name</th>
+                                    <th className="p-4 font-mono">Role</th>
+                                    <th className="p-4 font-mono">Status</th>
+                                    <th className="p-4 font-mono">Joined</th>
+                                    <th className="p-4 font-mono text-right">Bookings / Venues</th>
+                                    <th className="p-4 font-mono w-12 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-outline-variant">
                                 {users.map((userItem) => (
-                                    <tr key={userItem.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                                        <td className="py-4 px-6">
+                                    <tr key={userItem.id} className="hover:bg-surface-container-low transition-colors group">
+                                        <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-on-secondary-container font-bold border border-outline-variant ${
+                                                    userItem.role === 'ADMIN' ? 'bg-primary-container/20 text-primary' :
+                                                    userItem.role === 'FACILITY_OWNER' ? 'bg-secondary-container' :
+                                                    'bg-tertiary-fixed text-on-tertiary-fixed'
+                                                }`}>
                                                     {userItem.name?.[0]?.toUpperCase() || '?'}
                                                 </div>
                                                 <div>
-                                                    <p className="font-medium text-slate-900">{userItem.name}</p>
-                                                    <p className="text-sm text-slate-500">#{userItem.id.slice(0, 8)}</p>
+                                                    <p className="text-sm font-semibold text-on-surface">{userItem.name}</p>
+                                                    <p className="text-sm text-on-surface-variant">{userItem.email}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
-                                            <p className="text-sm text-slate-600 flex items-center gap-1">
-                                                <Mail className="w-4 h-4 text-slate-400" />
-                                                {userItem.email}
-                                            </p>
-                                            {userItem.phone && (
-                                                <p className="text-sm text-slate-500 flex items-center gap-1 mt-1">
-                                                    <Phone className="w-4 h-4 text-slate-400" />
-                                                    {userItem.phone}
-                                                </p>
-                                            )}
-                                        </td>
-                                        <td className="py-4 px-6">
-                                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadgeClass(userItem.role)}`}>
+                                        <td className="p-4">
+                                            <span className={`pill ${userItem.role === 'ADMIN' ? 'tertiary' : userItem.role === 'FACILITY_OWNER' ? 'secondary' : 'neutral'}`}>
                                                 {userItem.role === 'FACILITY_OWNER' ? 'Owner' : userItem.role}
                                             </span>
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="p-4">
                                             <div className="flex flex-col gap-1">
-                                                {userItem.isVerified ? (
-                                                    <span className="flex items-center gap-1 text-green-600 text-sm">
-                                                        <BadgeCheck className="w-4 h-4" />
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className={`w-2 h-2 rounded-full ${userItem.isBanned ? 'bg-error' : 'bg-primary-fixed-dim'}`}></div>
+                                                    <span className={`text-sm ${userItem.isBanned ? 'text-error font-medium' : 'text-on-surface'}`}>
+                                                        {userItem.isBanned ? 'Suspended' : 'Active'}
+                                                    </span>
+                                                </div>
+                                                {userItem.isVerified && (
+                                                    <span className="flex items-center gap-1 text-primary text-xs">
+                                                        <Icon name="verified" size={14} filled />
                                                         Verified
                                                     </span>
-                                                ) : (
-                                                    <span className="flex items-center gap-1 text-slate-400 text-sm">
-                                                        <Clock className="w-4 h-4" />
-                                                        Unverified
-                                                    </span>
-                                                )}
-                                                {userItem.isBanned && (
-                                                    <span className="flex items-center gap-1 text-red-600 text-sm">
-                                                        <ShieldOff className="w-4 h-4" />
-                                                        Banned
-                                                    </span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
-                                            <div className="text-sm">
-                                                {userItem.role === 'FACILITY_OWNER' ? (
-                                                    <p className="text-slate-600">
-                                                        <Building2 className="w-4 h-4 inline mr-1" />
-                                                        {userItem._count?.facilities || 0} venues
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-slate-600">
-                                                        <Calendar className="w-4 h-4 inline mr-1" />
-                                                        {userItem._count?.bookings || 0} bookings
-                                                    </p>
-                                                )}
-                                            </div>
+                                        <td className="p-4 font-mono text-sm text-on-surface-variant">
+                                            {formatDate(userItem.createdAt)}
                                         </td>
-                                        <td className="py-4 px-6">
-                                            <p className="text-sm text-slate-500">{formatDate(userItem.createdAt)}</p>
+                                        <td className="p-4 font-mono text-sm text-on-surface text-right">
+                                            {userItem.role === 'FACILITY_OWNER'
+                                                ? `${userItem._count?.facilities || 0} venues`
+                                                : `${userItem._count?.bookings || 0} bookings`
+                                            }
                                         </td>
-                                        <td className="py-4 px-6 text-right">
+                                        <td className="p-4 text-right">
                                             <div className="relative">
                                                 <button
                                                     onClick={() => setActionMenu(actionMenu === userItem.id ? null : userItem.id)}
-                                                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                                                    className="text-outline hover:text-on-surface transition-colors p-1"
                                                 >
-                                                    <MoreVertical className="w-5 h-5 text-slate-400" />
+                                                    <Icon name="more_vert" size={20} />
                                                 </button>
-                                                
+
                                                 {actionMenu === userItem.id && (
-                                                    <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-10 py-1">
+                                                    <div className="absolute right-0 top-full mt-1 w-48 card shadow-lg z-10 py-1">
                                                         {userItem.isBanned ? (
                                                             <button
                                                                 onClick={() => handleUserAction(userItem.id, 'unban')}
                                                                 disabled={processing}
-                                                                className="w-full px-4 py-2 text-left text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                                                                className="w-full px-4 py-2 text-left text-sm text-primary hover:bg-primary-container/10 flex items-center gap-2"
                                                             >
-                                                                <UserCheck className="w-4 h-4" />
+                                                                <Icon name="check" size={16} />
                                                                 Unban User
                                                             </button>
                                                         ) : (
                                                             <button
                                                                 onClick={() => handleUserAction(userItem.id, 'ban')}
                                                                 disabled={processing || userItem.role === 'ADMIN'}
-                                                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50"
+                                                                className="w-full px-4 py-2 text-left text-sm text-error hover:bg-error-container flex items-center gap-2 disabled:opacity-50"
                                                             >
-                                                                <UserX className="w-4 h-4" />
+                                                                <Icon name="block" size={16} />
                                                                 Ban User
                                                             </button>
                                                         )}
@@ -378,9 +337,9 @@ export default function UserManagementContent() {
                                                             <button
                                                                 onClick={() => handleUserAction(userItem.id, 'verify')}
                                                                 disabled={processing}
-                                                                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2"
+                                                                className="w-full px-4 py-2 text-left text-sm text-tertiary hover:bg-tertiary-fixed flex items-center gap-2"
                                                             >
-                                                                <BadgeCheck className="w-4 h-4" />
+                                                                <Icon name="verified" size={16} />
                                                                 Verify User
                                                             </button>
                                                         )}
@@ -395,32 +354,36 @@ export default function UserManagementContent() {
                     </div>
 
                     {/* Mobile List */}
-                    <div className="lg:hidden divide-y divide-slate-100">
+                    <div className="lg:hidden divide-y divide-outline-variant">
                         {users.map((userItem) => (
                             <div key={userItem.id} className="p-4">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border border-outline-variant ${
+                                            userItem.role === 'ADMIN' ? 'bg-primary-container/20 text-primary' :
+                                            userItem.role === 'FACILITY_OWNER' ? 'bg-secondary-container text-on-secondary-container' :
+                                            'bg-tertiary-fixed text-on-tertiary-fixed'
+                                        }`}>
                                             {userItem.name?.[0]?.toUpperCase() || '?'}
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-slate-900">{userItem.name}</p>
-                                            <p className="text-sm text-slate-500">{userItem.email}</p>
+                                            <p className="font-semibold text-on-surface">{userItem.name}</p>
+                                            <p className="text-sm text-on-surface-variant">{userItem.email}</p>
                                         </div>
                                     </div>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeClass(userItem.role)}`}>
+                                    <span className={`pill ${userItem.role === 'ADMIN' ? 'tertiary' : userItem.role === 'FACILITY_OWNER' ? 'secondary' : 'neutral'}`}>
                                         {userItem.role === 'FACILITY_OWNER' ? 'Owner' : userItem.role}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-4 mt-3 text-sm text-slate-500">
+                                <div className="flex items-center gap-4 mt-3 text-sm text-on-surface-variant">
                                     <span className="flex items-center gap-1">
                                         {userItem.isVerified ? (
-                                            <><BadgeCheck className="w-4 h-4 text-green-500" /> Verified</>
+                                            <><Icon name="verified" size={14} className="text-primary" filled /> Verified</>
                                         ) : (
-                                            <><Clock className="w-4 h-4" /> Unverified</>
+                                            <><Icon name="schedule" size={14} /> Unverified</>
                                         )}
                                     </span>
-                                    <span>{formatDate(userItem.createdAt)}</span>
+                                    <span className="font-mono">{formatDate(userItem.createdAt)}</span>
                                 </div>
                             </div>
                         ))}
@@ -428,35 +391,38 @@ export default function UserManagementContent() {
 
                     {users.length === 0 && (
                         <div className="p-12 text-center">
-                            <Users className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                            <h3 className="font-semibold text-slate-900 mb-2">No Users Found</h3>
-                            <p className="text-slate-500">Try adjusting your search or filters</p>
+                            <Icon name="group" className="text-outline mx-auto mb-4" size={48} />
+                            <h3 className="font-display text-on-surface mb-2">No Users Found</h3>
+                            <p className="text-on-surface-variant">Try adjusting your search or filters</p>
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {pagination && pagination.totalPages > 1 && (
+                        <div className="p-4 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between text-sm text-on-surface-variant">
+                            <div>Showing page {filters.page} of {pagination.totalPages} ({pagination.total} users)</div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setFilters(f => ({ ...f, page: f.page - 1 }))}
+                                    disabled={filters.page === 1}
+                                    className="p-1 rounded-lg hover:bg-surface-container-high text-on-surface-variant disabled:opacity-50"
+                                >
+                                    <Icon name="chevron_left" size={20} />
+                                </button>
+                                <span className="font-mono px-3 py-1 rounded-lg bg-secondary-container text-on-secondary-container font-medium">
+                                    {filters.page}
+                                </span>
+                                <button
+                                    onClick={() => setFilters(f => ({ ...f, page: f.page + 1 }))}
+                                    disabled={filters.page === pagination.totalPages}
+                                    className="p-1 rounded-lg hover:bg-surface-container-high text-on-surface-variant disabled:opacity-50"
+                                >
+                                    <Icon name="chevron_right" size={20} />
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
-
-                {/* Pagination */}
-                {pagination && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-6">
-                        <button
-                            onClick={() => setFilters(f => ({ ...f, page: f.page - 1 }))}
-                            disabled={filters.page === 1}
-                            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50 hover:bg-slate-50"
-                        >
-                            Previous
-                        </button>
-                        <span className="px-4 py-2 text-sm text-slate-600">
-                            Page {filters.page} of {pagination.totalPages}
-                        </span>
-                        <button
-                            onClick={() => setFilters(f => ({ ...f, page: f.page + 1 }))}
-                            disabled={filters.page === pagination.totalPages}
-                            className="px-4 py-2 bg-white border border-slate-200 rounded-xl disabled:opacity-50 hover:bg-slate-50"
-                        >
-                            Next
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

@@ -1,86 +1,97 @@
 'use client';
 
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * OwnerStatsCard Component
  * Displays KPI metrics for owner dashboard
  */
-export function OwnerStatsCard({ 
-    title, 
-    value, 
-    icon: Icon, 
+export function OwnerStatsCard({
+    title,
+    value,
+    icon: IconComponent,
+    iconName,
     subtitle,
     trend = 'neutral', // 'up' | 'down' | 'neutral'
     trendValue,
     gradient = false,
-    currency = false
+    currency = false,
+    color = 'primary'
 }) {
-    const getTrendIcon = () => {
+    const getTrendIconName = () => {
         switch (trend) {
             case 'up':
-                return <TrendingUp className="w-4 h-4 text-green-500" />;
+                return 'trending_up';
             case 'down':
-                return <TrendingDown className="w-4 h-4 text-red-500" />;
+                return 'trending_down';
             default:
-                return <Minus className="w-4 h-4 text-slate-400" />;
+                return 'remove';
         }
     };
 
-    const getTrendColor = () => {
-        switch (trend) {
-            case 'up':
-                return 'text-green-600 bg-green-50';
-            case 'down':
-                return 'text-red-600 bg-red-50';
-            default:
-                return 'text-slate-600 bg-slate-50';
+    // Map color prop to token classes
+    const colorMap = {
+        primary: { circle: 'bg-primary-container text-on-primary-container', text: 'text-on-primary-container' },
+        secondary: { circle: 'bg-secondary-fixed text-on-secondary-container', text: 'text-on-secondary-container' },
+        tertiary: { circle: 'bg-tertiary-container text-on-tertiary-container', text: 'text-on-tertiary-container' },
+        error: { circle: 'bg-error-container text-on-error-container', text: 'text-on-error-container' }
+    };
+    const tone = colorMap[color] || colorMap.primary;
+
+    // Render icon (legacy lucide component prop OR iconName)
+    const renderIcon = (extraClass = '') => {
+        if (iconName) {
+            return <Icon name={iconName} size={20} className={extraClass} />;
         }
+        if (IconComponent) {
+            return <IconComponent className={`w-5 h-5 ${extraClass}`} />;
+        }
+        return null;
     };
 
     if (gradient) {
         return (
-            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white relative overflow-hidden">
+            <div className="card p-5 relative overflow-hidden bg-primary text-on-primary border-transparent">
                 {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-                
+                <div className="absolute top-0 right-0 w-32 h-32 bg-on-primary/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-on-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
                 <div className="relative">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                            {Icon && <Icon className="w-6 h-6 text-white" />}
+                    <div className="flex items-start justify-between">
+                        <div className="w-10 h-10 rounded-xl bg-on-primary/20 flex items-center justify-center backdrop-blur-sm">
+                            {renderIcon('text-on-primary')}
                         </div>
                         {trendValue && (
-                            <div className="flex items-center gap-1 bg-white/20 px-2.5 py-1 rounded-full text-sm backdrop-blur-sm">
-                                {getTrendIcon()}
-                                <span>{trendValue}</span>
+                            <div className="flex items-center gap-1 text-xs font-semibold text-on-primary/90">
+                                <Icon name={getTrendIconName()} size={14} />
+                                <span className="font-mono">{trendValue}</span>
                             </div>
                         )}
                     </div>
-                    <p className="text-sm text-white/80 mb-1">{title}</p>
-                    <p className="text-3xl font-bold">{currency ? '₹' : ''}{value}</p>
-                    {subtitle && <p className="text-sm text-white/60 mt-2">{subtitle}</p>}
+                    <p className="text-sm text-on-primary/80 mt-[18px]">{title}</p>
+                    <p className="font-display text-[32px] font-semibold leading-tight mt-1 tracking-tight font-mono">{currency ? '₹' : ''}{value}</p>
+                    {subtitle && <p className="text-xs text-on-primary/70 mt-2.5">{subtitle}</p>}
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg hover:border-purple-200 transition-all">
-            <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
-                    {Icon && <Icon className="w-6 h-6 text-purple-600" />}
+        <div className="card card-hover p-5">
+            <div className="flex items-start justify-between">
+                <div className={`w-10 h-10 rounded-xl ${tone.circle} flex items-center justify-center`}>
+                    {renderIcon(tone.text)}
                 </div>
                 {trendValue && (
-                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-sm ${getTrendColor()}`}>
-                        {getTrendIcon()}
-                        <span>{trendValue}</span>
+                    <div className={`flex items-center gap-1 text-xs font-semibold ${trend === 'up' ? 'text-primary' : trend === 'down' ? 'text-error' : 'text-on-surface-variant'}`}>
+                        <Icon name={getTrendIconName()} size={14} />
+                        <span className="font-mono">{trendValue}</span>
                     </div>
                 )}
             </div>
-            <p className="text-sm text-slate-500 mb-1">{title}</p>
-            <p className="text-2xl font-bold text-slate-900">{currency ? '₹' : ''}{value}</p>
-            {subtitle && <p className="text-sm text-slate-400 mt-2">{subtitle}</p>}
+            <p className="text-sm text-on-surface-variant mt-[18px]">{title}</p>
+            <p className="font-display text-[32px] font-semibold leading-tight mt-1 tracking-tight text-on-surface font-mono">{currency ? '₹' : ''}{value}</p>
+            {subtitle && <p className="text-xs text-on-surface-variant/80 mt-2.5">{subtitle}</p>}
         </div>
     );
 }

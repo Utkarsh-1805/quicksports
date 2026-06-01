@@ -1,34 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, Calendar, Clock, CreditCard, Info, Shield } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { CouponInput } from '@/components/ui/CouponInput';
 
 /**
  * BookingSummary Component
  * Displays complete booking details with price breakdown
  */
-export function BookingSummary({ 
-    court, 
-    venue, 
-    selectedDate, 
+export function BookingSummary({
+    court,
+    venue,
+    selectedDate,
     selectedSlots,
     pricePerHour,
     onCouponApplied,
-    onCouponRemoved
+    onCouponRemoved,
 }) {
     const [appliedDiscount, setAppliedDiscount] = useState(0);
     const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-    // Calculate booking details
     const duration = selectedSlots.length;
     const subtotal = duration * pricePerHour;
-    const convenienceFee = Math.round(subtotal * 0.02); // 2% convenience fee
+    const convenienceFee = Math.round(subtotal * 0.02);
     const amountAfterDiscount = subtotal - appliedDiscount;
-    const gst = Math.round((amountAfterDiscount + convenienceFee) * 0.18); // 18% GST on service
+    const gst = Math.round((amountAfterDiscount + convenienceFee) * 0.18);
     const totalAmount = amountAfterDiscount + convenienceFee + gst;
 
-    const handleCouponApplied = (coupon, discount, finalAmount) => {
+    const handleCouponApplied = (coupon, discount) => {
         setAppliedCoupon(coupon);
         setAppliedDiscount(discount);
         onCouponApplied?.(coupon, discount);
@@ -56,56 +55,56 @@ export function BookingSummary({
             weekday: 'long',
             month: 'long',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
         });
     };
 
     const getTimeRange = () => {
         if (selectedSlots.length === 0) return '';
-        const sortedSlots = [...selectedSlots].sort((a, b) => 
-            a.startTime.localeCompare(b.startTime)
-        );
+        const sortedSlots = [...selectedSlots].sort((a, b) => a.startTime.localeCompare(b.startTime));
         return `${formatTime(sortedSlots[0].startTime)} - ${formatTime(sortedSlots[sortedSlots.length - 1].endTime)}`;
     };
 
     const getSportIcon = (sportType) => {
         const icons = {
-            'TENNIS': '🎾',
-            'BADMINTON': '🏸',
-            'BASKETBALL': '🏀',
-            'FOOTBALL': '⚽',
-            'TABLE_TENNIS': '🏓',
-            'SWIMMING': '🏊',
-            'CRICKET': '🏏',
-            'VOLLEYBALL': '🏐',
-            'SQUASH': '🎾'
+            TENNIS: 'sports_tennis',
+            BADMINTON: 'sports_tennis',
+            BASKETBALL: 'sports_basketball',
+            FOOTBALL: 'sports_soccer',
+            TABLE_TENNIS: 'sports_tennis',
+            SWIMMING: 'pool',
+            CRICKET: 'sports_cricket',
+            VOLLEYBALL: 'sports_volleyball',
+            SQUASH: 'sports_tennis',
         };
-        return icons[sportType] || '🏆';
+        return icons[sportType] || 'sports';
     };
 
     const hasBookingDetails = court && selectedDate && selectedSlots.length > 0;
 
     return (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden sticky top-28">
+        <div className="card overflow-hidden sticky top-24">
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-500 p-6 text-white">
-                <h3 className="text-xl font-bold mb-1">Booking Summary</h3>
-                <p className="text-green-100 text-sm">Review your booking details</p>
+            <div className="px-7 pt-7 pb-5 border-b border-outline-variant/60">
+                <span className="eyebrow">Summary</span>
+                <h3 className="font-display text-xl font-semibold text-on-surface">Booking Summary</h3>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-7 space-y-6">
                 {/* Court Info */}
                 {court && (
-                    <div className="flex gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-green-50 flex items-center justify-center text-3xl shrink-0">
-                            {getSportIcon(court.sportType)}
+                    <div className="flex gap-4 items-center">
+                        <div className="w-14 h-14 rounded-xl bg-primary-container/30 flex items-center justify-center shrink-0">
+                            <Icon name={getSportIcon(court.sportType)} className="text-primary" size={28} />
                         </div>
                         <div className="min-w-0">
-                            <h4 className="font-bold text-slate-900 truncate">{court.name}</h4>
-                            <p className="text-sm text-slate-500 capitalize">{court.sportType?.toLowerCase().replace('_', ' ')}</p>
+                            <h4 className="font-semibold text-on-surface truncate">{court.name}</h4>
+                            <p className="text-sm text-on-surface-variant capitalize">
+                                {court.sportType?.toLowerCase().replace('_', ' ')}
+                            </p>
                             {venue && (
-                                <div className="flex items-center gap-1 mt-1 text-xs text-slate-400">
-                                    <MapPin className="w-3 h-3" />
+                                <div className="flex items-center gap-1 mt-1 text-xs text-on-surface-variant">
+                                    <Icon name="location_on" size={14} />
                                     <span className="truncate">{venue.name}</span>
                                 </div>
                             )}
@@ -116,77 +115,83 @@ export function BookingSummary({
                 {/* Booking Details */}
                 {hasBookingDetails ? (
                     <>
-                        <div className="space-y-3 pt-4 border-t border-slate-100">
+                        <div className="space-y-3 pt-4 border-t border-outline-variant">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                                    <Calendar className="w-5 h-5 text-slate-500" />
+                                <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
+                                    <Icon name="calendar_today" className="text-on-surface-variant" size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-400 uppercase font-medium">Date</p>
-                                    <p className="text-sm font-semibold text-slate-800">{formatDate(selectedDate)}</p>
+                                    <p className="font-mono text-xs text-on-surface-variant uppercase tracking-wider">Date</p>
+                                    <p className="text-sm font-semibold text-on-surface">{formatDate(selectedDate)}</p>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center">
-                                    <Clock className="w-5 h-5 text-slate-500" />
+                                <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
+                                    <Icon name="schedule" className="text-on-surface-variant" size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-400 uppercase font-medium">Time Slot</p>
-                                    <p className="text-sm font-semibold text-slate-800">{getTimeRange()}</p>
-                                    <p className="text-xs text-slate-500">{duration} hour{duration > 1 ? 's' : ''} duration</p>
+                                    <p className="font-mono text-xs text-on-surface-variant uppercase tracking-wider">Time Slot</p>
+                                    <p className="text-sm font-semibold text-on-surface">{getTimeRange()}</p>
+                                    <p className="text-xs text-on-surface-variant">
+                                        {duration} hour{duration > 1 ? 's' : ''} duration
+                                    </p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Price Breakdown */}
-                        <div className="pt-4 border-t border-slate-100 space-y-3">
+                        <div className="pt-4 border-t border-outline-variant space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-600 text-sm">Court Charges ({duration} hr × ₹{pricePerHour})</span>
-                                <span className="font-medium text-slate-900">₹{subtotal.toLocaleString()}</span>
+                                <span className="text-on-surface-variant text-sm">
+                                    Court Charges ({duration} hr × ₹{pricePerHour})
+                                </span>
+                                <span className="font-mono font-medium text-on-surface">₹{subtotal.toLocaleString()}</span>
                             </div>
                             {appliedDiscount > 0 && (
-                                <div className="flex justify-between items-center text-green-600">
+                                <div className="flex justify-between items-center text-primary">
                                     <span className="text-sm">Coupon Discount ({appliedCoupon?.code})</span>
-                                    <span className="font-medium">-₹{appliedDiscount.toLocaleString()}</span>
+                                    <span className="font-mono font-medium">-₹{appliedDiscount.toLocaleString()}</span>
                                 </div>
                             )}
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-1">
-                                    <span className="text-slate-600 text-sm">Convenience Fee</span>
-                                    <Info className="w-3 h-3 text-slate-400" />
+                                    <span className="text-on-surface-variant text-sm">Convenience Fee</span>
+                                    <Icon name="info" size={14} className="text-outline" />
                                 </div>
-                                <span className="font-medium text-slate-900">₹{convenienceFee.toLocaleString()}</span>
+                                <span className="font-mono font-medium text-on-surface">₹{convenienceFee.toLocaleString()}</span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-600 text-sm">GST (18%)</span>
-                                <span className="font-medium text-slate-900">₹{gst.toLocaleString()}</span>
+                                <span className="text-on-surface-variant text-sm">GST (18%)</span>
+                                <span className="font-mono font-medium text-on-surface">₹{gst.toLocaleString()}</span>
                             </div>
                         </div>
 
                         {/* Total */}
-                        <div className="pt-4 border-t-2 border-slate-200">
-                            <div className="flex justify-between items-center">
-                                <span className="text-lg font-bold text-slate-900">Total Amount</span>
-                                <span className="text-2xl font-bold text-green-600">₹{totalAmount.toLocaleString()}</span>
+                        <div className="pt-4 border-t border-outline-variant">
+                            <div className="flex justify-between items-baseline">
+                                <span className="text-sm font-medium text-on-surface">Total Amount</span>
+                                <span className="font-display font-semibold text-3xl text-on-surface">
+                                    ₹{totalAmount.toLocaleString()}
+                                </span>
                             </div>
                         </div>
 
                         {/* Security Badge */}
-                        <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl">
-                            <Shield className="w-5 h-5 text-green-600" />
+                        <div className="flex items-center gap-2 p-3 bg-surface-container-low rounded-xl border border-outline-variant/60">
+                            <Icon name="verified_user" className="text-primary" size={18} />
                             <div>
-                                <p className="text-xs font-semibold text-green-700">Secure Booking</p>
-                                <p className="text-[10px] text-green-600">Your payment is protected</p>
+                                <p className="text-xs font-semibold text-on-surface">Secure Booking</p>
+                                <p className="text-[10px] text-on-surface-variant">Your payment is protected</p>
                             </div>
                         </div>
                     </>
                 ) : (
                     <div className="py-8 text-center">
-                        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                            <Calendar className="w-8 h-8 text-slate-300" />
+                        <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-4">
+                            <Icon name="calendar_today" className="text-outline" size={32} />
                         </div>
-                        <p className="text-slate-500 text-sm">
+                        <p className="text-on-surface-variant text-sm">
                             Select a date and time slot to see your booking summary
                         </p>
                     </div>

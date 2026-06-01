@@ -167,6 +167,16 @@ export async function GET(request) {
     // This would typically integrate with a payout system
     const pendingPayouts = 0; // Placeholder
 
+    // Next scheduled payout — every Friday at 12:00 UTC. Use the next upcoming Friday.
+    const nextPayoutDate = (() => {
+      const d = new Date();
+      const day = d.getDay();
+      const daysUntilFriday = (5 - day + 7) % 7 || 7; // never today
+      d.setDate(d.getDate() + daysUntilFriday);
+      d.setUTCHours(12, 0, 0, 0);
+      return d.toISOString();
+    })();
+
     // Get recent transactions
     const recentTransactions = payments.slice(0, 20).map(payment => ({
       id: payment.id,
@@ -196,7 +206,8 @@ export async function GET(request) {
           platformFee: parseFloat(platformFee.toFixed(2)),
           totalRefunds: parseFloat(totalRefunds.toFixed(2)),
           netEarnings: parseFloat(netEarnings.toFixed(2)),
-          pendingPayouts
+          pendingPayouts,
+          nextPayoutDate
         },
         venues: Object.values(venueEarnings).map(v => ({
           ...v,

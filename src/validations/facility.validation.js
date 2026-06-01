@@ -59,6 +59,7 @@ const coordinateSchema = z
   .number()
   .or(z.string().transform(val => parseFloat(val)))
   .refine(val => !isNaN(val), 'Must be a valid number')
+  .nullable()
   .optional();
 
 const priceSchema = z
@@ -159,8 +160,8 @@ export function validateQueryParams(searchParams, schema) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map(err => {
-        const path = err.path.join('.');
+      const errors = (error.issues || error.errors || []).map(err => {
+        const path = (err.path || []).join('.');
         return path ? `${path}: ${err.message}` : err.message;
       });
       return {
@@ -191,8 +192,8 @@ export function validateRequest(data, schema) {
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.errors.map(err => {
-        const path = err.path.join('.');
+      const errors = (error.issues || error.errors || []).map(err => {
+        const path = (err.path || []).join('.');
         return path ? `${path}: ${err.message}` : err.message;
       });
       return {

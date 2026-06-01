@@ -3,26 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-    Calendar, 
-    Clock, 
-    MapPin,
-    Loader2, 
-    AlertCircle, 
-    ChevronLeft,
-    ChevronRight,
-    Filter,
-    RefreshCw,
-    Download,
-    XCircle,
-    CheckCircle2,
-    Ticket,
-    Search,
-    SlidersHorizontal
-} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BookingCard } from '@/components/dashboard';
-import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * MyBookingsPage Component
@@ -32,7 +15,7 @@ export default function MyBookingsPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user, loading: authLoading } = useAuth();
-    
+
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -40,11 +23,12 @@ export default function MyBookingsPage() {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [bookingToCancel, setBookingToCancel] = useState(null);
     const [cancelReason, setCancelReason] = useState('');
-    
+    const [refundStatus, setRefundStatus] = useState(null); // { state: 'success'|'partial'|'none', ...details }
+
     // Filters
     const [activeFilter, setActiveFilter] = useState(searchParams.get('filter') || 'all');
     const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'all');
-    
+
     // Pagination
     const [pagination, setPagination] = useState({
         page: 1,
@@ -55,7 +39,7 @@ export default function MyBookingsPage() {
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/dashboard/bookings');
             return;
@@ -81,13 +65,13 @@ export default function MyBookingsPage() {
             const params = new URLSearchParams();
             params.append('page', pagination.page.toString());
             params.append('limit', pagination.limit.toString());
-            
+
             if (activeFilter === 'upcoming') {
                 params.append('upcoming', 'true');
             } else if (activeFilter === 'past') {
                 params.append('upcoming', 'false');
             }
-            
+
             if (statusFilter !== 'all') {
                 params.append('status', statusFilter);
             }
@@ -120,8 +104,9 @@ export default function MyBookingsPage() {
 
     const handleCancelBooking = async () => {
         if (!bookingToCancel) return;
-        
+
         setCancellingId(bookingToCancel.id);
+        setRefundStatus(null);
 
         try {
             const token = document.cookie
@@ -142,17 +127,65 @@ export default function MyBookingsPage() {
 
             const data = await res.json();
 
-            if (data.success) {
-                // Update the booking in the list
-                setBookings(prev => prev.map(b => 
-                    b.id === bookingToCancel.id ? { ...b, status: 'CANCELLED' } : b
-                ));
-                setShowCancelModal(false);
-                setBookingToCancel(null);
-                setCancelReason('');
-            } else {
+            if (!data.success) {
                 throw new Error(data.message || 'Failed to cancel booking');
             }
+
+            // Update local booking state
+            setBookings(prev => prev.map(b =>
+                b.id === bookingToCancel.id ? { ...b, status: 'CANCELLED' } : b
+            ));
+
+            // If a refund is owed AND a payment was made, automatically request the refund
+            const paymentId = bookingToCancel.payment?.id || bookingToCancel.paymentId;
+            const refundPct = data.refund?.refundPercentage ?? 0;
+            const wasPaid = !!data.refund?.wasPaymentMade;
+
+            if (wasPaid && refundPct > 0 && paymentId) {
+                try {
+                    const refundRes = await fetch('/api/payments/refund', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            paymentId,
+                            reason: cancelReason || 'User requested cancellation'
+                        })
+                    });
+                    const refundData = await refundRes.json();
+                    if (refundRes.ok && refundData.success) {
+                        setRefundStatus({
+                            state: refundPct === 100 ? 'success' : 'partial',
+                            amount: refundData.data?.amount ?? data.refund.refundAmount,
+                            percentage: refundData.data?.percentage ?? refundPct,
+                            estimatedDays: refundData.data?.estimatedProcessingTime || '5–7 business days',
+                            policy: data.refund?.policy
+                        });
+                    } else {
+                        setRefundStatus({
+                            state: 'failed',
+                            message: refundData.error || refundData.details || 'Refund could not be initiated. Contact support.'
+                        });
+                    }
+                } catch (refundErr) {
+                    console.error('Refund request error:', refundErr);
+                    setRefundStatus({
+                        state: 'failed',
+                        message: 'Refund request failed. Contact support to claim your refund.'
+                    });
+                }
+            } else if (wasPaid && refundPct === 0) {
+                setRefundStatus({
+                    state: 'none',
+                    policy: data.refund?.policy || 'No refund - cancelled too close to booking time'
+                });
+            }
+
+            setShowCancelModal(false);
+            setBookingToCancel(null);
+            setCancelReason('');
         } catch (err) {
             console.error('Cancel booking error:', err);
             setError(err.message);
@@ -170,13 +203,13 @@ export default function MyBookingsPage() {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch receipt');
             }
-            
+
             const html = await response.text();
-            
+
             // Open new window and write HTML directly
             const receiptWindow = window.open('', '_blank');
             if (receiptWindow) {
@@ -210,9 +243,9 @@ export default function MyBookingsPage() {
     };
 
     const filterTabs = [
-        { value: 'all', label: 'All Bookings', count: null },
-        { value: 'upcoming', label: 'Upcoming', count: null },
-        { value: 'past', label: 'Past', count: null }
+        { value: 'all', label: 'All Bookings' },
+        { value: 'upcoming', label: 'Upcoming' },
+        { value: 'past', label: 'Past' }
     ];
 
     const statusTabs = [
@@ -225,101 +258,149 @@ export default function MyBookingsPage() {
 
     if (authLoading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-28 pb-12 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+            <div className="min-h-screen bg-surface pt-28 pb-12 flex items-center justify-center">
+                <Icon name="progress_activity" size={32} className="text-primary animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-28 pb-12">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div>
-                        <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
-                            <Link href="/dashboard" className="hover:text-green-600">Dashboard</Link>
-                            <ChevronRight className="w-4 h-4" />
-                            <span className="text-slate-900">My Bookings</span>
+        <div className="min-h-screen bg-surface pt-24 pb-16">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                {/* Refund status banner (appears after cancel) */}
+                {refundStatus && (
+                    <div
+                        className={`mb-6 rounded-xl border p-4 flex items-start gap-3 ${
+                            refundStatus.state === 'success'
+                                ? 'bg-primary-container/40 border-primary/30 text-on-primary-container'
+                                : refundStatus.state === 'partial'
+                                ? 'bg-secondary-container/40 border-secondary/30 text-on-secondary-container'
+                                : refundStatus.state === 'none'
+                                ? 'bg-surface-container border-outline-variant text-on-surface'
+                                : 'bg-error-container/40 border-error/30 text-on-error-container'
+                        }`}
+                    >
+                        <Icon
+                            name={
+                                refundStatus.state === 'failed'
+                                    ? 'error'
+                                    : refundStatus.state === 'none'
+                                    ? 'info'
+                                    : 'paid'
+                            }
+                            size={22}
+                            className="mt-0.5 shrink-0"
+                        />
+                        <div className="flex-1">
+                            {refundStatus.state === 'success' && (
+                                <>
+                                    <p className="font-semibold">Refund initiated</p>
+                                    <p className="text-sm">
+                                        ₹{Number(refundStatus.amount).toLocaleString()} ({refundStatus.percentage}%) will land in your account in {refundStatus.estimatedDays}.
+                                    </p>
+                                </>
+                            )}
+                            {refundStatus.state === 'partial' && (
+                                <>
+                                    <p className="font-semibold">Partial refund initiated</p>
+                                    <p className="text-sm">
+                                        ₹{Number(refundStatus.amount).toLocaleString()} ({refundStatus.percentage}%) per our cancellation policy. Arrives in {refundStatus.estimatedDays}.
+                                    </p>
+                                </>
+                            )}
+                            {refundStatus.state === 'none' && (
+                                <>
+                                    <p className="font-semibold">Booking cancelled — no refund</p>
+                                    <p className="text-sm">{refundStatus.policy}</p>
+                                </>
+                            )}
+                            {refundStatus.state === 'failed' && (
+                                <>
+                                    <p className="font-semibold">Refund couldn&apos;t be initiated automatically</p>
+                                    <p className="text-sm">{refundStatus.message}</p>
+                                </>
+                            )}
                         </div>
-                        <h1 className="text-3xl font-extrabold text-slate-900">My Bookings</h1>
+                        <button
+                            onClick={() => setRefundStatus(null)}
+                            className="text-sm font-medium hover:opacity-70"
+                            aria-label="Dismiss"
+                        >
+                            <Icon name="close" size={18} />
+                        </button>
                     </div>
-                    <Link href="/venues">
-                        <Button>
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Book New Court
-                        </Button>
+                )}
+
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+                    <div>
+                        <div className="flex items-center gap-2 text-sm text-on-surface-variant mb-2">
+                            <Link href="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link>
+                            <Icon name="chevron_right" size={16} />
+                            <span className="text-on-surface">My Bookings</span>
+                        </div>
+                        <h1 className="font-display text-4xl md:text-5xl font-semibold text-on-surface tracking-tight mb-2">My bookings</h1>
+                        <p className="text-on-surface-variant">Manage your upcoming matches and view past history.</p>
+                    </div>
+                    <Link href="/venues" className="btn btn-cta self-start md:self-auto">
+                        <Icon name="add" size={16} />
+                        Book new court
                     </Link>
                 </div>
 
-                {/* Filters */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                        {/* Time Filter */}
-                        <div className="flex-1">
-                            <label className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2 block">Time Period</label>
-                            <div className="flex gap-2">
-                                {filterTabs.map((tab) => (
-                                    <button
-                                        key={tab.value}
-                                        onClick={() => {
-                                            setActiveFilter(tab.value);
-                                            setPagination(prev => ({ ...prev, page: 1 }));
-                                        }}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                            activeFilter === tab.value
-                                                ? 'bg-green-600 text-white shadow-sm'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Status Filter */}
-                        <div className="flex-1">
-                            <label className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2 block">Status</label>
-                            <div className="flex flex-wrap gap-2">
-                                {statusTabs.map((tab) => (
-                                    <button
-                                        key={tab.value}
-                                        onClick={() => {
-                                            setStatusFilter(tab.value);
-                                            setPagination(prev => ({ ...prev, page: 1 }));
-                                        }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                                            statusFilter === tab.value
-                                                ? 'bg-green-600 text-white'
-                                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Refresh */}
+                {/* Tabs */}
+                <div className="flex border-b border-outline-variant mb-8 overflow-x-auto gap-2">
+                    {filterTabs.map((tab) => (
                         <button
-                            onClick={fetchBookings}
-                            disabled={loading}
-                            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors self-end"
+                            key={tab.value}
+                            onClick={() => {
+                                setActiveFilter(tab.value);
+                                setPagination(prev => ({ ...prev, page: 1 }));
+                            }}
+                            className={`tab ${activeFilter === tab.value ? 'active' : ''}`}
                         >
-                            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                            {tab.label}
                         </button>
+                    ))}
+                </div>
+
+                {/* Status Filter Pills */}
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div className="flex flex-wrap gap-2">
+                        {statusTabs.map((tab) => (
+                            <button
+                                key={tab.value}
+                                onClick={() => {
+                                    setStatusFilter(tab.value);
+                                    setPagination(prev => ({ ...prev, page: 1 }));
+                                }}
+                                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                                    statusFilter === tab.value
+                                        ? 'bg-primary-container text-on-primary-container border-primary-container'
+                                        : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:bg-surface-container-low'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
+                    <button
+                        onClick={fetchBookings}
+                        disabled={loading}
+                        className="p-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface-variant hover:bg-surface-container-low transition-colors"
+                    >
+                        <Icon name="refresh" size={20} className={loading ? 'animate-spin' : ''} />
+                    </button>
                 </div>
 
                 {/* Error State */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                        <p className="text-red-700">{error}</p>
-                        <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">
-                            <XCircle className="w-5 h-5" />
+                    <div className="bg-error-container border border-error/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+                        <Icon name="error" size={20} className="text-error shrink-0" />
+                        <p className="text-on-error-container flex-1">{error}</p>
+                        <button onClick={() => setError(null)} className="text-error hover:opacity-80">
+                            <Icon name="close" size={20} />
                         </button>
                     </div>
                 )}
@@ -328,13 +409,13 @@ export default function MyBookingsPage() {
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 animate-pulse">
+                            <div key={i} className="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 animate-pulse">
                                 <div className="flex gap-4">
-                                    <div className="w-20 h-20 bg-slate-200 rounded-xl"></div>
+                                    <div className="w-20 h-20 bg-surface-container rounded-xl"></div>
                                     <div className="flex-1">
-                                        <div className="h-5 w-1/3 bg-slate-200 rounded mb-2"></div>
-                                        <div className="h-4 w-1/2 bg-slate-100 rounded mb-4"></div>
-                                        <div className="h-4 w-2/3 bg-slate-100 rounded"></div>
+                                        <div className="h-5 w-1/3 bg-surface-container rounded mb-2"></div>
+                                        <div className="h-4 w-1/2 bg-surface-container-low rounded mb-4"></div>
+                                        <div className="h-4 w-2/3 bg-surface-container-low rounded"></div>
                                     </div>
                                 </div>
                             </div>
@@ -343,7 +424,7 @@ export default function MyBookingsPage() {
                 ) : bookings.length > 0 ? (
                     <>
                         {/* Booking List */}
-                        <div className="space-y-4">
+                        <div className="flex flex-col gap-6">
                             {bookings.map((booking) => (
                                 <BookingCard
                                     key={booking.id}
@@ -359,19 +440,19 @@ export default function MyBookingsPage() {
 
                         {/* Pagination */}
                         {pagination.totalPages > 1 && (
-                            <div className="flex items-center justify-between mt-8 bg-white rounded-xl border border-slate-200 p-4">
-                                <p className="text-sm text-slate-500">
-                                    Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
-                                    <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                                    <span className="font-medium">{pagination.total}</span> bookings
+                            <div className="flex items-center justify-between mt-8 bg-surface-container-lowest rounded-xl border border-outline-variant p-4">
+                                <p className="text-sm text-on-surface-variant">
+                                    Showing <span className="font-medium text-on-surface">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
+                                    <span className="font-medium text-on-surface">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                                    <span className="font-medium text-on-surface">{pagination.total}</span> bookings
                                 </p>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                                         disabled={pagination.page === 1}
-                                        className="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        <ChevronLeft className="w-5 h-5" />
+                                        <Icon name="chevron_left" size={20} />
                                     </button>
                                     <div className="flex items-center gap-1">
                                         {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
@@ -390,8 +471,8 @@ export default function MyBookingsPage() {
                                                     onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))}
                                                     className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
                                                         pagination.page === pageNum
-                                                            ? 'bg-green-600 text-white'
-                                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                            ? 'bg-primary text-on-primary'
+                                                            : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
                                                     }`}
                                                 >
                                                     {pageNum}
@@ -402,33 +483,31 @@ export default function MyBookingsPage() {
                                     <button
                                         onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                                         disabled={pagination.page === pagination.totalPages}
-                                        className="p-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        <ChevronRight className="w-5 h-5" />
+                                        <Icon name="chevron_right" size={20} />
                                     </button>
                                 </div>
                             </div>
                         )}
                     </>
                 ) : (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Ticket className="w-10 h-10 text-slate-400" />
+                    <div className="card p-12 text-center">
+                        <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Icon name="event_busy" size={40} className="text-on-surface-variant" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">No Bookings Found</h3>
-                        <p className="text-slate-500 mb-6">
-                            {activeFilter === 'upcoming' 
+                        <h3 className="font-display text-xl font-semibold text-on-surface mb-2">Nothing here yet.</h3>
+                        <p className="text-on-surface-variant mb-6">
+                            {activeFilter === 'upcoming'
                                 ? "You don't have any upcoming bookings"
                                 : activeFilter === 'past'
                                 ? "You don't have any past bookings"
                                 : "You haven't made any bookings yet"
                             }
                         </p>
-                        <Link href="/venues">
-                            <Button>
-                                <Search className="w-4 h-4 mr-2" />
-                                Find a Court
-                            </Button>
+                        <Link href="/venues" className="btn btn-cta">
+                            <Icon name="search" size={16} />
+                            Find a Court
                         </Link>
                     </div>
                 )}
@@ -437,25 +516,28 @@ export default function MyBookingsPage() {
             {/* Cancel Booking Modal */}
             {showCancelModal && bookingToCancel && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                        <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-                            <XCircle className="w-8 h-8 text-red-600" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-900 text-center mb-2">Cancel Booking?</h3>
-                        <p className="text-slate-500 text-center mb-6">
-                            Are you sure you want to cancel your booking for <strong>{bookingToCancel.court?.name}</strong>?
-                            This action cannot be undone.
+                    <div className="card anim-slide-up max-w-md w-full p-7">
+                        <h3 className="font-display text-2xl font-semibold text-on-surface mb-2">Cancel this booking?</h3>
+                        <p className="text-on-surface-variant mb-4">
+                            <span className="text-on-surface font-semibold">{bookingToCancel.court?.name}</span> — this action cannot be undone.
                         </p>
 
+                        <div className="p-4 bg-surface-container-low rounded-xl text-sm text-on-surface-variant mb-5 flex gap-3">
+                            <Icon name="info" size={18} className="text-tertiary shrink-0 mt-0.5" />
+                            <div>
+                                Eligible refunds are credited back to your original payment method per our cancellation policy.
+                            </div>
+                        </div>
+
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Reason for cancellation (optional)
+                            <label className="block font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-1.5">
+                                Reason (optional)
                             </label>
                             <textarea
                                 value={cancelReason}
                                 onChange={(e) => setCancelReason(e.target.value)}
-                                placeholder="Let us know why you're cancelling..."
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none resize-none"
+                                placeholder="Anything we can do better?"
+                                className="input resize-none"
                                 rows={3}
                             />
                         </div>
@@ -467,22 +549,22 @@ export default function MyBookingsPage() {
                                     setBookingToCancel(null);
                                     setCancelReason('');
                                 }}
-                                className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+                                className="btn btn-outline flex-1"
                             >
-                                Keep Booking
+                                Keep booking
                             </button>
                             <button
                                 onClick={handleCancelBooking}
                                 disabled={cancellingId === bookingToCancel.id}
-                                className="flex-1 px-4 py-3 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className="btn flex-1 bg-error text-on-error disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {cancellingId === bookingToCancel.id ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <Icon name="progress_activity" size={16} className="animate-spin" />
                                         Cancelling...
                                     </>
                                 ) : (
-                                    'Yes, Cancel'
+                                    'Yes, cancel'
                                 )}
                             </button>
                         </div>

@@ -6,12 +6,20 @@ import { verifyAuthToken } from "../../../../lib/auth";
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    
-    const facility = await prisma.facility.findFirst({
-      where: {
-        id,
-        status: 'APPROVED'
-      },
+
+    // Optionally identify the requester. Owners/admins may view their own
+    // venue at ANY status (PENDING/REJECTED) — needed for the edit flow.
+    // The public only sees APPROVED venues.
+    let requester = null;
+    try {
+      const auth = await verifyAuthToken(request);
+      if (auth?.user) requester = auth.user;
+    } catch {
+      // anonymous request — fine
+    }
+
+    const facility = await prisma.facility.findUnique({
+      where: { id },
       include: {
         owner: {
           select: {
@@ -60,6 +68,16 @@ export async function GET(request, { params }) {
     });
     
     if (!facility) {
+      return NextResponse.json(
+        { success: false, message: 'Venue not found' },
+        { status: 404 }
+      );
+    }
+
+    // Hide non-approved venues from anyone who isn't the owner or an admin
+    const isOwnerOrAdmin =
+      requester && (facility.ownerId === requester.id || requester.role === 'ADMIN');
+    if (facility.status !== 'APPROVED' && !isOwnerOrAdmin) {
       return NextResponse.json(
         { success: false, message: 'Venue not found' },
         { status: 404 }

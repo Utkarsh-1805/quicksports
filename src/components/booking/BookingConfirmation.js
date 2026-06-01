@@ -3,26 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-    CheckCircle2,
-    Calendar,
-    Clock,
-    MapPin,
-    Download,
-    Share2,
-    CalendarPlus,
-    Ticket,
-    ArrowRight,
-    Copy,
-    Check,
-    QrCode,
-    Star,
-    Phone,
-    Mail,
-    Printer
-} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Icon } from '@/components/ui/Icon';
 import QRCode from 'qrcode';
+import OpenToOthersCard from '@/components/booking/OpenToOthersCard';
 
 /**
  * BookingConfirmation Component
@@ -51,7 +35,7 @@ export default function BookingConfirmation({ booking, payment }) {
                             width: 200,
                             margin: 2,
                             color: {
-                                dark: '#16a34a',
+                                dark: '#006b2c',
                                 light: '#ffffff'
                             }
                         }
@@ -133,13 +117,13 @@ export default function BookingConfirmation({ booking, payment }) {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch receipt');
             }
-            
+
             const html = await response.text();
-            
+
             // Open new window and write HTML directly
             const receiptWindow = window.open('', '_blank');
             if (receiptWindow) {
@@ -161,7 +145,7 @@ export default function BookingConfirmation({ booking, payment }) {
         const baseAmount = booking?.totalAmount || 0;
         const totalPaid = payment?.amount || baseAmount;
         const fees = totalPaid - baseAmount;
-        
+
         // Create a simple text receipt as fallback
         const receipt = `
 QUICKCOURT BOOKING RECEIPT
@@ -216,13 +200,13 @@ Thank you for booking with QuickCourt!
 
     if (!booking) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-32 pb-20 flex items-center justify-center">
+            <div className="min-h-screen bg-surface pt-32 pb-20 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Ticket className="w-8 h-8 text-slate-400" />
+                    <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Icon name="receipt" size={32} className="text-on-surface-variant" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Booking Not Found</h2>
-                    <p className="text-slate-500 mb-6">We couldn't find this booking</p>
+                    <h2 className="font-display text-xl font-semibold text-on-surface mb-2">Booking Not Found</h2>
+                    <p className="text-on-surface-variant mb-6">We couldn&apos;t find this booking</p>
                     <Link href="/venues">
                         <Button>Browse Venues</Button>
                     </Link>
@@ -231,197 +215,228 @@ Thank you for booking with QuickCourt!
         );
     }
 
+    const baseAmount = booking.totalAmount || 0;
+    const totalPaid = payment?.amount || baseAmount;
+    const fees = totalPaid - baseAmount;
+
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-50 via-white to-slate-50 pt-24 pb-20">
-            <div className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="min-h-screen bg-surface pt-24 pb-20">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6">
 
                 {/* Success Animation Header */}
-                <div className="text-center mb-10">
-                    <div className="relative inline-flex mb-6">
-                        <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping"></div>
-                        <div className="relative w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-2xl shadow-green-500/40">
-                            <CheckCircle2 className="w-12 h-12 text-white" />
+                <section className="flex flex-col items-center text-center gap-4 mb-10 page-enter">
+                    <div className="relative">
+                        <div className="absolute inset-0 rounded-full bg-primary-container/40 animate-ping" style={{ animationDuration: '3s' }}></div>
+                        <div className="relative w-20 h-20 bg-primary text-on-primary rounded-full flex items-center justify-center shadow-sm">
+                            <Icon name="check_circle" size={48} filled />
                         </div>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">
-                        Booking Confirmed! 🎉
-                    </h1>
-                    <p className="text-slate-600 text-lg">
-                        You're all set! We've sent a confirmation to your email.
-                    </p>
-                </div>
-
-                {/* Booking Card */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden mb-8">
-                    
-                    {/* Header with Sport Icon */}
-                    <div className="bg-gradient-to-r from-green-600 to-green-500 p-6 text-white relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
-                        
-                        <div className="relative flex items-center gap-4">
-                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
-                                {getSportIcon(booking.court?.sportType)}
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold">{booking.court?.name}</h2>
-                                <p className="text-green-100 capitalize">{booking.court?.sportType?.toLowerCase().replace('_', ' ')}</p>
-                            </div>
-                        </div>
+                    <div>
+                        <span className="eyebrow">Confirmed</span>
+                        <h1 className="font-display text-5xl md:text-6xl font-semibold text-on-surface tracking-tight">
+                            Confirmed.
+                        </h1>
+                        <p className="text-on-surface-variant mt-3 max-w-md mx-auto">
+                            Your court is secured. Present the QR code below upon arrival at the venue.
+                        </p>
                     </div>
+                </section>
 
-                    {/* Booking Details */}
-                    <div className="p-6 space-y-6">
-                        
-                        {/* Booking ID */}
-                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
-                            <div className="flex items-center gap-3">
-                                <Ticket className="w-5 h-5 text-slate-500" />
-                                <div>
-                                    <p className="text-xs text-slate-400 font-medium uppercase">Booking ID</p>
-                                    <p className="font-mono font-bold text-slate-800">{booking.id}</p>
-                                </div>
+                {/* Bento Grid Content */}
+                <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+
+                    {/* QR Code Card (Left) */}
+                    <div className="lg:col-span-4 card p-6 text-center flex flex-col items-center justify-center">
+                        <h2 className="font-display text-xl font-semibold text-on-surface mb-6">Venue Check-In</h2>
+                        {qrCodeUrl ? (
+                            <div className="bg-white p-4 rounded-lg shadow-sm border border-outline-variant mb-4 w-full aspect-square relative max-w-[240px]">
+                                <img src={qrCodeUrl} alt="Booking QR Code" className="w-full h-full object-contain" />
                             </div>
+                        ) : (
+                            <div className="bg-surface-container-low p-4 rounded-lg border border-outline-variant mb-4 w-full aspect-square max-w-[240px] flex items-center justify-center">
+                                <Icon name="qr_code_2" size={120} className="text-on-surface-variant/40" />
+                            </div>
+                        )}
+                        <p className="text-sm text-on-surface-variant flex items-center gap-1 flex-wrap justify-center">
+                            Booking ID:
+                            <span className="font-mono text-on-surface ml-1">{booking.id}</span>
                             <button
                                 onClick={copyBookingId}
-                                className="p-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 transition-colors"
+                                className="ml-1 p-1 rounded hover:bg-surface-container transition-colors"
+                                aria-label="Copy booking ID"
                             >
-                                {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-slate-500" />}
+                                {copied ? (
+                                    <Icon name="check" size={16} className="text-primary" />
+                                ) : (
+                                    <Icon name="content_copy" size={16} className="text-on-surface-variant" />
+                                )}
                             </button>
-                        </div>
+                        </p>
+                    </div>
 
-                        {/* Date & Time */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                    <Calendar className="w-6 h-6 text-green-600" />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-slate-400 font-medium uppercase">Date</p>
-                                    <p className="font-bold text-slate-800">{formatDate(booking.date)}</p>
-                                </div>
+                    {/* Details & Actions (Right) */}
+                    <div className="lg:col-span-8 flex flex-col gap-6">
+
+                        {/* Booking Details Card */}
+                        <div className="card p-6">
+                            <div className="flex items-center justify-between border-b border-outline-variant pb-4 mb-4">
+                                <h2 className="font-display text-xl font-semibold text-on-surface">Reservation Details</h2>
+                                <span className="pill">
+                                    Confirmed
+                                </span>
                             </div>
-                            <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl">
-                                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                    <Clock className="w-6 h-6 text-green-600" />
+
+                            {/* Sport / Venue Header */}
+                            <div className="flex items-center gap-4 mb-6 p-4 bg-primary-container/10 rounded-xl border border-outline-variant">
+                                <div className="w-14 h-14 bg-primary-container/20 rounded-xl flex items-center justify-center text-3xl shrink-0">
+                                    {getSportIcon(booking.court?.sportType)}
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-400 font-medium uppercase">Time</p>
-                                    <p className="font-bold text-slate-800">
-                                        {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                                    <h3 className="text-lg font-semibold text-on-surface">{booking.court?.name}</h3>
+                                    <p className="text-sm text-on-surface-variant capitalize">
+                                        {booking.court?.sportType?.toLowerCase().replace('_', ' ')}
                                     </p>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Venue */}
-                        <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl">
-                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
-                                <MapPin className="w-6 h-6 text-green-600" />
-                            </div>
-                            <div>
-                                <p className="text-xs text-slate-400 font-medium uppercase">Venue</p>
-                                <p className="font-bold text-slate-800">{booking.court?.facility?.name}</p>
-                                <p className="text-sm text-slate-500">
-                                    {booking.court?.facility?.address}, {booking.court?.facility?.city}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Payment Breakdown */}
-                        <div className="p-4 bg-slate-50 rounded-2xl space-y-3">
-                            <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-600">Court Booking</span>
-                                <span className="font-medium text-slate-800">₹{booking.totalAmount?.toLocaleString()}</span>
-                            </div>
-                            {payment?.amount && payment.amount > booking.totalAmount && (
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-slate-600">GST & Convenience Fee</span>
-                                    <span className="font-medium text-slate-800">₹{(payment.amount - booking.totalAmount).toLocaleString()}</span>
+                            {/* Detail Rows */}
+                            <div className="space-y-0">
+                                <div className="flex justify-between border-b border-outline-variant py-3 text-sm">
+                                    <span className="text-on-surface-variant">Venue</span>
+                                    <span className="text-on-surface font-medium text-right">{booking.court?.facility?.name}</span>
                                 </div>
-                            )}
-                            <div className="pt-3 border-t border-slate-200 flex items-center justify-between">
-                                <span className="font-semibold text-slate-900">Total Paid</span>
-                                <span className="text-xl font-bold text-green-600">₹{(payment?.amount || booking.totalAmount)?.toLocaleString()}</span>
-                            </div>
-                        </div>
+                                <div className="flex justify-between border-b border-outline-variant py-3 text-sm">
+                                    <span className="text-on-surface-variant flex items-center gap-1">
+                                        <Icon name="location_on" size={16} />
+                                        Address
+                                    </span>
+                                    <span className="text-on-surface font-medium text-right max-w-[60%]">
+                                        {booking.court?.facility?.address}, {booking.court?.facility?.city}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between border-b border-outline-variant py-3 text-sm">
+                                    <span className="text-on-surface-variant flex items-center gap-1">
+                                        <Icon name="calendar_today" size={16} />
+                                        Date
+                                    </span>
+                                    <span className="text-on-surface font-mono font-medium">{formatDate(booking.date)}</span>
+                                </div>
+                                <div className="flex justify-between border-b border-outline-variant py-3 text-sm">
+                                    <span className="text-on-surface-variant flex items-center gap-1">
+                                        <Icon name="schedule" size={16} />
+                                        Time
+                                    </span>
+                                    <span className="text-on-surface font-mono font-medium">
+                                        {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+                                    </span>
+                                </div>
 
-                        {/* Payment Status Badge */}
-                        <div className="flex items-center justify-center">
-                            <div className="px-4 py-2 bg-green-100 text-green-700 text-sm font-bold rounded-full flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4" />
-                                PAYMENT SUCCESSFUL
-                            </div>
-                        </div>
+                                {/* Payment Breakdown */}
+                                <div className="flex justify-between border-b border-outline-variant py-3 text-sm">
+                                    <span className="text-on-surface-variant">Court Booking</span>
+                                    <span className="text-on-surface font-mono font-medium">₹{baseAmount.toLocaleString()}</span>
+                                </div>
+                                {fees > 0 && (
+                                    <div className="flex justify-between border-b border-outline-variant py-3 text-sm">
+                                        <span className="text-on-surface-variant">GST & Convenience Fee</span>
+                                        <span className="text-on-surface font-mono font-medium">₹{fees.toLocaleString()}</span>
+                                    </div>
+                                )}
 
-                        {/* QR Code */}
-                        {qrCodeUrl && (
-                            <div className="flex flex-col items-center py-6 border-t border-dashed border-slate-200">
-                                <p className="text-sm text-slate-500 mb-3">Show this QR code at the venue</p>
-                                <div className="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-lg">
-                                    <img src={qrCodeUrl} alt="Booking QR Code" className="w-40 h-40" />
+                                <div className="flex justify-between items-center pt-4 mt-2 border-t border-dashed border-outline-variant">
+                                    <span className="text-sm text-on-surface-variant">Total Amount Paid</span>
+                                    <span className="font-mono text-on-surface text-xl font-bold">₹{totalPaid.toLocaleString()}</span>
                                 </div>
                             </div>
-                        )}
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="border-t border-slate-100 p-6">
+                            {/* Status Badge */}
+                            <div className="flex items-center justify-center mt-6">
+                                <div className="px-4 py-2 bg-primary-container/30 text-primary text-sm font-bold rounded-full flex items-center gap-2">
+                                    <Icon name="check_circle" size={16} />
+                                    PAYMENT SUCCESSFUL
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <button
                                 onClick={addToCalendar}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-green-50 text-slate-700 hover:text-green-700 transition-colors"
+                                className="btn btn-outline"
                             >
-                                <CalendarPlus className="w-6 h-6" />
-                                <span className="text-xs font-medium">Add to Calendar</span>
+                                <Icon name="calendar_today" size={20} className="text-primary" />
+                                <span className="hidden sm:inline">Calendar</span>
                             </button>
                             <button
                                 onClick={shareBooking}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-green-50 text-slate-700 hover:text-green-700 transition-colors"
+                                className="btn btn-outline"
                             >
-                                <Share2 className="w-6 h-6" />
-                                <span className="text-xs font-medium">Share</span>
+                                <Icon name="share" size={20} className="text-primary" />
+                                <span className="hidden sm:inline">Share</span>
                             </button>
                             <button
                                 onClick={downloadReceipt}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-green-50 text-slate-700 hover:text-green-700 transition-colors"
+                                className="btn btn-outline"
                             >
-                                <Download className="w-6 h-6" />
-                                <span className="text-xs font-medium">Receipt</span>
+                                <Icon name="download" size={20} className="text-primary" />
+                                <span className="hidden sm:inline">Receipt</span>
                             </button>
                             <button
                                 onClick={() => window.print()}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl bg-slate-50 hover:bg-green-50 text-slate-700 hover:text-green-700 transition-colors"
+                                className="btn btn-outline"
                             >
-                                <Printer className="w-6 h-6" />
-                                <span className="text-xs font-medium">Print</span>
+                                <Icon name="print" size={20} className="text-primary" />
+                                <span className="hidden sm:inline">Print</span>
                             </button>
                         </div>
                     </div>
-                </div>
+
+                    {/* Match-making — open this booking to other players */}
+                    <div className="lg:col-span-12 mt-2">
+                        <OpenToOthersCard booking={booking} />
+                    </div>
+
+                    {/* Rate Venue Upsell */}
+                    <div className="lg:col-span-12 card p-6 flex flex-col md:flex-row items-center justify-between gap-6 mt-2">
+                        <div className="flex flex-col gap-1 text-center md:text-left">
+                            <h3 className="font-display text-lg font-semibold text-on-surface">Rate this venue after your visit</h3>
+                            <p className="text-sm text-on-surface-variant">Help other athletes find the best spots to play.</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                    key={star}
+                                    className="p-2 text-outline-variant hover:text-secondary-container transition-colors cursor-pointer"
+                                >
+                                    <Icon name="star" size={28} />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
                 {/* Contact Support */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8">
-                    <h3 className="font-bold text-slate-900 mb-4">Need Help?</h3>
+                <div className="card p-6 mt-8 mb-8">
+                    <h3 className="font-display text-lg font-semibold text-on-surface mb-4">Need Help?</h3>
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <a 
+                        <a
                             href="tel:+919999900000"
-                            className="flex items-center gap-3 p-3 bg-slate-50 hover:bg-green-50 rounded-xl transition-colors flex-1"
+                            className="flex items-center gap-3 p-3 bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors flex-1 border border-outline-variant"
                         >
-                            <Phone className="w-5 h-5 text-green-600" />
+                            <Icon name="call" size={20} className="text-primary" />
                             <div>
-                                <p className="text-xs text-slate-400">Call Support</p>
-                                <p className="font-semibold text-slate-700">+91 99999 00000</p>
+                                <p className="text-xs text-on-surface-variant">Call Support</p>
+                                <p className="font-semibold text-on-surface">+91 99999 00000</p>
                             </div>
                         </a>
-                        <a 
+                        <a
                             href="mailto:support@quickcourt.in"
-                            className="flex items-center gap-3 p-3 bg-slate-50 hover:bg-green-50 rounded-xl transition-colors flex-1"
+                            className="flex items-center gap-3 p-3 bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors flex-1 border border-outline-variant"
                         >
-                            <Mail className="w-5 h-5 text-green-600" />
+                            <Icon name="mail" size={20} className="text-primary" />
                             <div>
-                                <p className="text-xs text-slate-400">Email Us</p>
-                                <p className="font-semibold text-slate-700">support@quickcourt.in</p>
+                                <p className="text-xs text-on-surface-variant">Email Us</p>
+                                <p className="font-semibold text-on-surface">support@quickcourt.in</p>
                             </div>
                         </a>
                     </div>
@@ -432,29 +447,29 @@ Thank you for booking with QuickCourt!
                     <Link href="/venues" className="flex-1">
                         <Button variant="outline" fullWidth size="lg">
                             Book Another Court
-                            <ArrowRight className="w-5 h-5 ml-2" />
+                            <Icon name="arrow_forward" size={20} className="ml-2" />
                         </Button>
                     </Link>
                     <Link href="/dashboard" className="flex-1">
-                        <Button fullWidth size="lg">
+                        <Button
+                            fullWidth
+                            size="lg"
+                            className="bg-secondary text-on-secondary hover:bg-secondary-container hover:text-on-secondary-container font-bold rounded-lg"
+                        >
                             View My Bookings
                         </Button>
                     </Link>
                 </div>
 
-                {/* Rating Prompt */}
-                <div className="mt-8 text-center">
-                    <p className="text-slate-500 text-sm mb-3">How was your booking experience?</p>
-                    <div className="flex items-center justify-center gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                                key={star}
-                                className="w-10 h-10 rounded-full bg-slate-100 hover:bg-yellow-100 flex items-center justify-center transition-colors group"
-                            >
-                                <Star className="w-5 h-5 text-slate-300 group-hover:text-yellow-500 group-hover:fill-yellow-500 transition-colors" />
-                            </button>
-                        ))}
-                    </div>
+                {/* Return Action */}
+                <div className="flex justify-center mt-8">
+                    <Link
+                        href="/dashboard"
+                        className="text-sm text-primary hover:text-primary-container transition-colors font-medium hover:underline flex items-center gap-1"
+                    >
+                        <Icon name="arrow_back" size={18} />
+                        Return to Dashboard
+                    </Link>
                 </div>
             </div>
         </div>

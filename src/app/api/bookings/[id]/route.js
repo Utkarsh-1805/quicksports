@@ -267,6 +267,10 @@ export async function GET(request, { params }) {
         endTime: booking.endTime,
         totalAmount: booking.totalAmount,
         paymentId: booking.paymentId,
+        isPublic: booking.isPublic,
+        maxPlayers: booking.maxPlayers,
+        skillLevel: booking.skillLevel,
+        matchNotes: booking.matchNotes,
         court: {
           id: booking.court.id,
           name: booking.court.name,

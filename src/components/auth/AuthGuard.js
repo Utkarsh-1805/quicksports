@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { PageLoader } from '@/components/ui/Spinner';
 
-export default function AuthGuard({ children, allowedRoles = [] }) {
+export function AuthGuard({ children, allowedRoles = [] }) {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -42,3 +42,5 @@ export default function AuthGuard({ children, allowedRoles = [] }) {
   // Render children if all checks pass
   return <>{children}</>;
 }
+
+export default AuthGuard;

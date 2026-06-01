@@ -88,8 +88,8 @@ export function validateAdminVenueAction(data) {
   } catch (error) {
     return {
       success: false,
-      errors: error.errors.map(err => ({
-        field: err.path.join('.'),
+      errors: (error.issues || error.errors || []).map(err => ({
+        field: (err.path || []).join('.'),
         message: err.message
       }))
     };
@@ -110,8 +110,8 @@ export function validateAdminVenueQuery(params) {
   } catch (error) {
     return {
       success: false,
-      errors: error.errors.map(err => ({
-        field: err.path.join('.'),
+      errors: (error.issues || error.errors || []).map(err => ({
+        field: (err.path || []).join('.'),
         message: err.message
       }))
     };

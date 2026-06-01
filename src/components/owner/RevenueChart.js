@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { TrendingUp, ChevronDown } from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 
 /**
  * RevenueChart Component
@@ -16,6 +16,9 @@ export function RevenueChart({ data = [], loading = false }) {
         { value: 'month', label: 'Last 30 Days' },
         { value: 'quarter', label: 'Last 3 Months' }
     ];
+
+    // Stable preset heights for skeleton (avoids React purity error from Math.random in render)
+    const skeletonHeights = [62, 38, 75, 49, 80, 33, 68, 55, 42, 70, 28, 64, 47, 73];
 
     // Get max value for scaling
     const maxRevenue = Math.max(...data.map(d => d.revenue || 0), 1);
@@ -38,17 +41,17 @@ export function RevenueChart({ data = [], loading = false }) {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+            <div className="card p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <div className="h-6 w-32 bg-slate-200 rounded animate-pulse"></div>
-                    <div className="h-10 w-28 bg-slate-200 rounded animate-pulse"></div>
+                    <div className="h-6 w-32 bg-surface-container-high rounded animate-pulse"></div>
+                    <div className="h-10 w-28 bg-surface-container-high rounded animate-pulse"></div>
                 </div>
                 <div className="h-64 flex items-end gap-1">
-                    {[...Array(14)].map((_, i) => (
-                        <div 
-                            key={i} 
-                            className="flex-1 bg-slate-200 rounded-t animate-pulse"
-                            style={{ height: `${Math.random() * 60 + 20}%` }}
+                    {skeletonHeights.map((h, i) => (
+                        <div
+                            key={i}
+                            className="flex-1 bg-surface-container-high rounded-t animate-pulse"
+                            style={{ height: `${h}%` }}
                         ></div>
                     ))}
                 </div>
@@ -57,32 +60,27 @@ export function RevenueChart({ data = [], loading = false }) {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="card p-6">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-purple-600" />
-                    </div>
-                    <div>
-                        <h3 className="font-bold text-slate-900">Revenue Trends</h3>
-                        <p className="text-sm text-slate-500">Daily revenue performance</p>
-                    </div>
+            <div className="flex items-start justify-between mb-5">
+                <div>
+                    <h3 className="font-display text-lg font-semibold text-on-surface">Revenue trend</h3>
+                    <p className="text-sm text-on-surface-variant mt-1">Daily · gross, before platform fee</p>
                 </div>
-                
+
                 {/* Period Selector */}
                 <div className="relative">
                     <button
                         onClick={() => setShowPeriodMenu(!showPeriodMenu)}
-                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+                        className="flex items-center gap-2 px-3 py-2 bg-surface-container rounded-[10px] text-sm font-medium text-on-surface hover:bg-surface-container-high transition-colors"
                     >
-                        {periods.find(p => p.value === period)?.label}
-                        <ChevronDown className="w-4 h-4" />
+                        <span className="font-mono text-xs">{periods.find(p => p.value === period)?.label}</span>
+                        <Icon name="expand_more" size={16} />
                     </button>
                     {showPeriodMenu && (
                         <>
                             <div className="fixed inset-0 z-10" onClick={() => setShowPeriodMenu(false)} />
-                            <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-20">
+                            <div className="absolute right-0 mt-2 w-40 card p-1 z-20">
                                 {periods.map((p) => (
                                     <button
                                         key={p.value}
@@ -90,7 +88,7 @@ export function RevenueChart({ data = [], loading = false }) {
                                             setPeriod(p.value);
                                             setShowPeriodMenu(false);
                                         }}
-                                        className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 transition-colors ${period === p.value ? 'text-purple-600 font-medium' : 'text-slate-700'}`}
+                                        className={`w-full px-4 py-2 text-left text-sm rounded-lg hover:bg-surface-container transition-colors ${period === p.value ? 'text-primary font-semibold' : 'text-on-surface'}`}
                                     >
                                         {p.label}
                                     </button>
@@ -103,13 +101,13 @@ export function RevenueChart({ data = [], loading = false }) {
 
             {/* Summary Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl">
-                    <p className="text-xs text-purple-600 font-medium uppercase tracking-wide">Total Revenue</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">₹{totalRevenue.toLocaleString()}</p>
+                <div className="p-4 bg-surface-container-low rounded-2xl">
+                    <p className="font-mono text-[11px] text-on-surface-variant font-semibold uppercase tracking-[0.08em]">Total Revenue</p>
+                    <p className="font-display text-2xl font-semibold text-on-surface mt-1 font-mono">₹{totalRevenue.toLocaleString()}</p>
                 </div>
-                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
-                    <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Daily Average</p>
-                    <p className="text-2xl font-bold text-green-900 mt-1">₹{Math.round(avgRevenue).toLocaleString()}</p>
+                <div className="p-4 bg-surface-container-low rounded-2xl">
+                    <p className="font-mono text-[11px] text-on-surface-variant font-semibold uppercase tracking-[0.08em]">Daily Average</p>
+                    <p className="font-display text-2xl font-semibold text-on-surface mt-1 font-mono">₹{Math.round(avgRevenue).toLocaleString()}</p>
                 </div>
             </div>
 
@@ -120,35 +118,40 @@ export function RevenueChart({ data = [], loading = false }) {
                         {displayData.map((item, index) => {
                             const height = (item.revenue / maxRevenue) * 100;
                             const isHighest = item.revenue === maxRevenue;
-                            
+
                             return (
                                 <div
                                     key={item.date || index}
                                     className="flex-1 group relative"
                                 >
                                     <div
-                                        className={`w-full rounded-t transition-all duration-300 ${
-                                            isHighest ? 'bg-purple-600' : 'bg-purple-200 hover:bg-purple-400'
-                                        }`}
-                                        style={{ height: `${Math.max(height, 2)}%` }}
+                                        className="w-full rounded-t-md transition-all duration-300"
+                                        style={{
+                                            height: `${Math.max(height, 2)}%`,
+                                            backgroundColor: isHighest ? 'var(--secondary-container)' : 'var(--primary)',
+                                            opacity: isHighest ? 1 : 0.85
+                                        }}
                                     />
-                                    
+
                                     {/* Tooltip */}
                                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                        <div className="bg-slate-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap">
-                                            <p className="font-medium">{formatDate(item.date)}</p>
-                                            <p className="text-purple-300">₹{item.revenue?.toLocaleString()}</p>
-                                            <p className="text-slate-400">{item.bookings} bookings</p>
+                                        <div className="bg-inverse-surface text-inverse-on-surface text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                                            <p className="font-mono text-[10px] uppercase tracking-wide opacity-70">{formatDate(item.date)}</p>
+                                            <p className="font-mono font-semibold">₹{item.revenue?.toLocaleString()}</p>
+                                            <p className="font-mono opacity-70">{item.bookings} bookings</p>
                                         </div>
-                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                                        <div
+                                            className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent"
+                                            style={{ borderTopColor: 'var(--inverse-surface)' }}
+                                        />
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
-                    
+
                     {/* X-axis labels - show every nth label */}
-                    <div className="flex justify-between mt-3 text-xs text-slate-500">
+                    <div className="flex justify-between mt-3 text-xs text-on-surface-variant font-mono">
                         <span>{formatDate(displayData[0]?.date)}</span>
                         <span>{formatDate(displayData[Math.floor(displayData.length / 2)]?.date)}</span>
                         <span>{formatDate(displayData[displayData.length - 1]?.date)}</span>
@@ -157,8 +160,8 @@ export function RevenueChart({ data = [], loading = false }) {
             ) : (
                 <div className="h-48 flex items-center justify-center">
                     <div className="text-center">
-                        <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-500">No revenue data available</p>
+                        <Icon name="trending_up" size={48} className="text-on-surface-variant/40 mx-auto mb-3" />
+                        <p className="text-on-surface-variant">No revenue data available</p>
                     </div>
                 </div>
             )}

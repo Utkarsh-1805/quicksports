@@ -18,7 +18,7 @@ export const updateReviewSchema = z.object({
 
 // Owner response validation
 export const ownerResponseSchema = z.object({
-  response: z.string().trim().min(10, 'Response must be at least 10 characters').max(1000, 'Response must be under 1000 characters'),
+  response: z.string().trim().min(1, 'Response cannot be empty').max(1000, 'Response must be under 1000 characters'),
 });
 
 // Flag review validation

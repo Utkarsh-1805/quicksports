@@ -3,30 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { 
-    Building2, 
-    MapPin, 
-    Clock, 
-    Star,
-    Plus,
-    Pencil,
-    Trash2,
-    ChevronLeft,
-    ChevronRight,
-    Loader2,
-    AlertCircle,
-    RefreshCw,
-    Calendar,
-    DollarSign,
-    CheckCircle,
-    XCircle,
-    MoreVertical,
-    Settings,
-    Eye,
-    X
-} from 'lucide-react';
+import { Icon } from '@/components/ui/Icon';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
+import FacilityPhotosManager from '@/components/owner/FacilityPhotosManager';
+import BlockSlotsManager from '@/components/owner/BlockSlotsManager';
 
 /**
  * FacilityDetailContent Component
@@ -37,7 +18,7 @@ export default function FacilityDetailContent() {
     const params = useParams();
     const facilityId = params?.id;
     const { user, loading: authLoading } = useAuth();
-    
+
     const [facility, setFacility] = useState(null);
     const [courts, setCourts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -67,7 +48,7 @@ export default function FacilityDetailContent() {
 
     useEffect(() => {
         if (authLoading) return;
-        
+
         if (!user) {
             router.push('/auth/login?redirect=/owner/facilities');
             return;
@@ -121,7 +102,7 @@ export default function FacilityDetailContent() {
 
     const handleAddCourt = async () => {
         if (!courtForm.name || !courtForm.pricePerHour) return;
-        
+
         setSavingCourt(true);
         setError(null);
 
@@ -164,7 +145,7 @@ export default function FacilityDetailContent() {
 
     const handleUpdateCourt = async () => {
         if (!editingCourt || !courtForm.name || !courtForm.pricePerHour) return;
-        
+
         setSavingCourt(true);
         setError(null);
 
@@ -191,8 +172,8 @@ export default function FacilityDetailContent() {
             const data = await res.json();
 
             if (data.success) {
-                setCourts(prev => prev.map(c => 
-                    c.id === editingCourt.id 
+                setCourts(prev => prev.map(c =>
+                    c.id === editingCourt.id
                         ? { ...c, ...courtForm, pricePerHour: parseFloat(courtForm.pricePerHour) }
                         : c
                 ));
@@ -268,41 +249,62 @@ export default function FacilityDetailContent() {
     const getStatusConfig = (status) => {
         switch (status) {
             case 'APPROVED':
-                return { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', label: 'Active' };
+                return {
+                    iconName: 'check_circle',
+                    pillClass: 'pill',
+                    label: 'Active'
+                };
             case 'PENDING':
-                return { icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50', label: 'Pending' };
+                return {
+                    iconName: 'schedule',
+                    pillClass: 'pill secondary',
+                    label: 'Pending'
+                };
             case 'REJECTED':
-                return { icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', label: 'Rejected' };
+                return {
+                    iconName: 'cancel',
+                    pillClass: 'pill error',
+                    label: 'Rejected'
+                };
             default:
-                return { icon: Building2, color: 'text-slate-600', bg: 'bg-slate-50', label: status };
+                return {
+                    iconName: 'domain',
+                    pillClass: 'pill neutral',
+                    label: status
+                };
         }
     };
 
     if (authLoading || loading) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-purple-600 animate-spin" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center">
+                <Icon name="progress_activity" size={32} className="text-primary animate-spin" />
             </div>
         );
     }
 
     if (error && !facility) {
         return (
-            <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md w-full text-center">
-                    <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-                        <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="min-h-screen bg-surface pt-20 flex items-center justify-center p-4">
+                <div className="card p-8 max-w-md w-full text-center">
+                    <div className="w-16 h-16 rounded-full bg-error-container flex items-center justify-center mx-auto mb-4">
+                        <Icon name="error" size={32} className="text-error" />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Error Loading Facility</h2>
-                    <p className="text-slate-500 mb-6">{error}</p>
+                    <h2 className="font-display text-xl font-semibold text-on-surface mb-2">Error Loading Facility</h2>
+                    <p className="text-on-surface-variant mb-6">{error}</p>
                     <div className="flex gap-3 justify-center">
                         <Link href="/owner/facilities">
-                            <Button variant="outline">Back to Facilities</Button>
+                            <button className="btn btn-outline">
+                                Back to Facilities
+                            </button>
                         </Link>
-                        <Button onClick={fetchFacilityDetails}>
-                            <RefreshCw className="w-4 h-4 mr-2" />
+                        <button
+                            onClick={fetchFacilityDetails}
+                            className="btn btn-cta"
+                        >
+                            <Icon name="refresh" size={16} />
                             Try Again
-                        </Button>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -310,132 +312,112 @@ export default function FacilityDetailContent() {
     }
 
     const statusConfig = getStatusConfig(facility?.status);
-    const StatusIcon = statusConfig?.icon;
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20">
+        <div className="min-h-screen bg-surface pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <Link 
+                    <Link
                         href="/owner/facilities"
-                        className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1 mb-4"
+                        className="text-sm text-primary hover:opacity-80 flex items-center gap-1 mb-4"
                     >
-                        <ChevronLeft className="w-4 h-4" />
+                        <Icon name="chevron_left" size={16} />
                         Back to Facilities
                     </Link>
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                <h1 className="font-display text-2xl sm:text-4xl font-semibold text-on-surface tracking-tight">
                                     {facility?.name}
                                 </h1>
                                 {statusConfig && (
-                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.color}`}>
-                                        <StatusIcon className="w-3.5 h-3.5" />
+                                    <span className={statusConfig.pillClass}>
+                                        <Icon name={statusConfig.iconName} size={14} />
                                         {statusConfig.label}
-                                    </div>
+                                    </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 text-slate-500">
-                                <MapPin className="w-4 h-4" />
+                            <div className="flex items-center gap-2 text-on-surface-variant text-sm">
+                                <Icon name="location_on" size={16} />
                                 <span>{facility?.address}, {facility?.city}</span>
                             </div>
                         </div>
                         <Link href={`/owner/facilities/${facilityId}/edit`}>
-                            <Button variant="outline">
-                                <Pencil className="w-4 h-4 mr-2" />
+                            <button className="btn btn-cta btn-sm">
+                                <Icon name="edit" size={16} />
                                 Edit Facility
-                            </Button>
+                            </button>
                         </Link>
                     </div>
                 </div>
 
                 {/* Error Banner */}
                 {error && (
-                    <div className="flex items-center gap-3 bg-red-50 text-red-700 px-4 py-3 rounded-xl mb-6">
-                        <AlertCircle className="w-5 h-5 shrink-0" />
+                    <div className="bg-error-container/40 border border-error/30 text-on-error-container rounded-2xl p-4 flex items-center gap-3 mb-6">
+                        <Icon name="error" size={20} className="shrink-0 text-error" />
                         <p className="text-sm">{error}</p>
                         <button onClick={() => setError(null)} className="ml-auto">
-                            <X className="w-4 h-4" />
+                            <Icon name="close" size={16} />
                         </button>
                     </div>
                 )}
 
                 {/* Stats Overview */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-                                <Building2 className="w-5 h-5 text-purple-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{courts.length}</p>
-                                <p className="text-xs text-slate-500">Courts</p>
-                            </div>
+                    <div className="card p-5">
+                        <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center mb-3">
+                            <Icon name="domain" size={20} />
                         </div>
+                        <p className="font-display font-semibold text-[28px] leading-none text-on-surface font-mono">{courts.length}</p>
+                        <p className="text-xs text-on-surface-variant mt-2">Courts</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-green-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">{facility?.totalBookings || 0}</p>
-                                <p className="text-xs text-slate-500">Bookings</p>
-                            </div>
+                    <div className="card p-5">
+                        <div className="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center mb-3">
+                            <Icon name="calendar_today" size={20} />
                         </div>
+                        <p className="font-display font-semibold text-[28px] leading-none text-on-surface font-mono">{facility?.totalBookings || 0}</p>
+                        <p className="text-xs text-on-surface-variant mt-2">Bookings</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                                <DollarSign className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-slate-900">₹{((facility?.totalEarnings || 0) / 1000).toFixed(1)}k</p>
-                                <p className="text-xs text-slate-500">Revenue</p>
-                            </div>
+                    <div className="card p-5">
+                        <div className="w-10 h-10 rounded-xl bg-secondary-fixed text-on-secondary-container flex items-center justify-center mb-3">
+                            <Icon name="payments" size={20} />
                         </div>
+                        <p className="font-display font-semibold text-[28px] leading-none text-on-surface font-mono">₹{((facility?.totalEarnings || 0) / 1000).toFixed(1)}k</p>
+                        <p className="text-xs text-on-surface-variant mt-2">Revenue</p>
                     </div>
-                    <div className="bg-white rounded-xl border border-slate-200 p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
-                                <Star className="w-5 h-5 text-yellow-600" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-1">
-                                    <p className="text-2xl font-bold text-slate-900">{facility?.rating || '-'}</p>
-                                </div>
-                                <p className="text-xs text-slate-500">{facility?.reviewCount || 0} reviews</p>
-                            </div>
+                    <div className="card p-5">
+                        <div className="w-10 h-10 rounded-xl bg-secondary-fixed text-on-secondary-container flex items-center justify-center mb-3">
+                            <Icon name="star" filled size={20} />
                         </div>
+                        <p className="font-display font-semibold text-[28px] leading-none text-on-surface font-mono">{facility?.rating || '-'}</p>
+                        <p className="text-xs text-on-surface-variant mt-2">{facility?.reviewCount || 0} reviews</p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                    <div className="border-b border-slate-200">
-                        <div className="flex gap-1 p-2">
+                <div className="card overflow-hidden">
+                    <div className="border-b border-outline-variant px-6">
+                        <div className="flex gap-7">
                             {[
-                                { id: 'courts', label: 'Courts', count: courts.length },
-                                { id: 'details', label: 'Details', count: null }
+                                { id: 'courts', label: 'Courts', icon: 'sports', count: courts.length },
+                                { id: 'photos', label: 'Photos', icon: 'photo_library', count: null },
+                                { id: 'blocked', label: 'Blocked Slots', icon: 'event_busy', count: null },
+                                { id: 'details', label: 'Details', icon: 'info', count: null }
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                        activeTab === tab.id
-                                            ? 'bg-purple-50 text-purple-700'
-                                            : 'text-slate-600 hover:bg-slate-50'
-                                    }`}
+                                    className={`tab inline-flex items-center gap-2 ${activeTab === tab.id ? 'active' : ''}`}
                                 >
+                                    <Icon name={tab.icon} size={16} />
                                     {tab.label}
                                     {tab.count !== null && (
-                                        <span className={`ml-2 px-1.5 py-0.5 rounded text-xs ${
+                                        <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${
                                             activeTab === tab.id
-                                                ? 'bg-purple-200 text-purple-800'
-                                                : 'bg-slate-200 text-slate-600'
+                                                ? 'bg-primary-container text-on-primary-container'
+                                                : 'bg-surface-container text-on-surface-variant'
                                         }`}>
                                             {tab.count}
                                         </span>
@@ -447,13 +429,19 @@ export default function FacilityDetailContent() {
 
                     {/* Courts Tab */}
                     {activeTab === 'courts' && (
-                        <div className="p-6">
+                        <div className="p-6 anim-fade">
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="font-bold text-lg text-slate-900">Manage Courts</h3>
-                                <Button onClick={() => setShowAddCourtModal(true)}>
-                                    <Plus className="w-4 h-4 mr-2" />
+                                <div>
+                                    <h3 className="font-display text-xl font-semibold text-on-surface">Courts</h3>
+                                    <p className="text-sm text-on-surface-variant mt-1">{courts.length} courts</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowAddCourtModal(true)}
+                                    className="btn btn-primary btn-sm"
+                                >
+                                    <Icon name="add" size={16} />
                                     Add Court
-                                </Button>
+                                </button>
                             </div>
 
                             {courts.length > 0 ? (
@@ -461,104 +449,126 @@ export default function FacilityDetailContent() {
                                     {courts.map((court) => (
                                         <div
                                             key={court.id}
-                                            className="bg-slate-50 rounded-xl p-5 border border-slate-200 hover:border-purple-200 transition-all"
+                                            className="card card-hover p-5"
                                         >
                                             <div className="flex items-start justify-between mb-3">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-2xl">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center text-xl">
                                                         {getSportIcon(court.sportType)}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-semibold text-slate-900">{court.name}</h4>
-                                                        <p className="text-sm text-slate-500">{court.sportType?.replace(/_/g, ' ')}</p>
+                                                        <h4 className="font-display text-on-surface font-semibold">{court.name}</h4>
+                                                        <p className="text-sm text-on-surface-variant">{court.sportType?.replace(/_/g, ' ')}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-1">
                                                     <button
                                                         onClick={() => openEditCourtModal(court)}
-                                                        className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                                                        className="p-2 hover:bg-surface-container rounded-lg transition-colors"
                                                     >
-                                                        <Pencil className="w-4 h-4 text-slate-500" />
+                                                        <Icon name="edit" size={16} className="text-on-surface-variant" />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteCourt(court.id)}
                                                         disabled={deletingCourtId === court.id}
-                                                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                                                        className="p-2 hover:bg-error-container/40 rounded-lg transition-colors"
                                                     >
                                                         {deletingCourtId === court.id ? (
-                                                            <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
+                                                            <Icon name="progress_activity" size={16} className="text-on-surface-variant animate-spin" />
                                                         ) : (
-                                                            <Trash2 className="w-4 h-4 text-red-500" />
+                                                            <Icon name="delete" size={16} className="text-error" />
                                                         )}
                                                     </button>
                                                 </div>
                                             </div>
-                                            
-                                            <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+
+                                            <div className="flex items-center justify-between pt-3 border-t border-outline-variant/40">
                                                 <div>
-                                                    <p className="text-xs text-slate-500">Price per hour</p>
-                                                    <p className="text-lg font-bold text-purple-600">₹{court.pricePerHour}</p>
+                                                    <p className="font-mono text-[11px] text-on-surface-variant uppercase tracking-[0.08em]">Price / hr</p>
+                                                    <p className="font-mono text-on-surface font-semibold text-xl mt-0.5">₹{court.pricePerHour}</p>
                                                 </div>
-                                                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                    court.isActive !== false ? 'bg-green-50 text-green-600' : 'bg-slate-200 text-slate-500'
-                                                }`}>
+                                                <span className={court.isActive !== false ? 'pill' : 'pill neutral'}>
                                                     {court.isActive !== false ? 'Active' : 'Inactive'}
-                                                </div>
+                                                </span>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
                                 <div className="text-center py-12">
-                                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                                        <Building2 className="w-8 h-8 text-slate-400" />
+                                    <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mx-auto mb-4">
+                                        <Icon name="domain" size={32} className="text-on-surface-variant" />
                                     </div>
-                                    <h3 className="font-medium text-slate-900 mb-1">No Courts Yet</h3>
-                                    <p className="text-sm text-slate-500 mb-4">
+                                    <h3 className="font-display text-on-surface font-semibold mb-1">No Courts Yet</h3>
+                                    <p className="text-sm text-on-surface-variant mb-4">
                                         Add courts to start accepting bookings.
                                     </p>
-                                    <Button onClick={() => setShowAddCourtModal(true)}>
-                                        <Plus className="w-4 h-4 mr-2" />
+                                    <button
+                                        onClick={() => setShowAddCourtModal(true)}
+                                        className="btn btn-primary"
+                                    >
+                                        <Icon name="add" size={16} />
                                         Add Your First Court
-                                    </Button>
+                                    </button>
                                 </div>
                             )}
                         </div>
                     )}
 
+                    {/* Photos Tab */}
+                    {activeTab === 'photos' && (
+                        <div className="p-6 anim-fade">
+                            <div className="mb-6">
+                                <h3 className="font-display text-xl font-semibold text-on-surface mb-1">Photos</h3>
+                                <p className="text-sm text-on-surface-variant">
+                                    Upload photos that showcase your facility. The first photo is used as the cover image.
+                                </p>
+                            </div>
+                            <FacilityPhotosManager venueId={facilityId} />
+                        </div>
+                    )}
+
+                    {/* Blocked Slots Tab */}
+                    {activeTab === 'blocked' && (
+                        <div className="p-6 anim-fade">
+                            <BlockSlotsManager courts={courts} />
+                        </div>
+                    )}
+
                     {/* Details Tab */}
                     {activeTab === 'details' && (
-                        <div className="p-6">
+                        <div className="p-6 anim-fade">
+                            <h3 className="font-display text-xl font-semibold text-on-surface mb-6">Facility details</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <h4 className="font-semibold text-slate-900 mb-3">Description</h4>
-                                    <p className="text-slate-600">{facility?.description || 'No description provided.'}</p>
+                                    <h4 className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-2">Description</h4>
+                                    <p className="text-on-surface-variant text-sm leading-relaxed">{facility?.description || 'No description provided.'}</p>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-900 mb-3">Contact</h4>
-                                    <div className="space-y-2 text-slate-600">
-                                        {facility?.phone && <p>📞 {facility.phone}</p>}
-                                        {facility?.email && <p>✉️ {facility.email}</p>}
+                                    <h4 className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-2">Contact</h4>
+                                    <div className="space-y-2 text-on-surface-variant text-sm">
+                                        {facility?.phone && <p className="font-mono">📞 {facility.phone}</p>}
+                                        {facility?.email && <p className="font-mono">✉️ {facility.email}</p>}
                                     </div>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-900 mb-3">Location</h4>
-                                    <div className="text-slate-600">
+                                    <h4 className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-2">Location</h4>
+                                    <div className="text-on-surface-variant text-sm">
                                         <p>{facility?.address}</p>
-                                        <p>{facility?.city}, {facility?.state} {facility?.pincode}</p>
+                                        <p className="font-mono mt-1">{facility?.city}, {facility?.state} {facility?.pincode}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold text-slate-900 mb-3">Amenities</h4>
+                                    <h4 className="font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-2">Amenities</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {facility?.amenities?.length > 0 ? (
                                             facility.amenities.map((amenity, idx) => (
-                                                <span key={idx} className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm">
+                                                <span key={idx} className="pill neutral normal-case tracking-normal">
                                                     {amenity}
                                                 </span>
                                             ))
                                         ) : (
-                                            <p className="text-slate-500">No amenities listed</p>
+                                            <p className="text-on-surface-variant text-sm">No amenities listed</p>
                                         )}
                                     </div>
                                 </div>
@@ -569,65 +579,86 @@ export default function FacilityDetailContent() {
 
                 {/* Add/Edit Court Modal */}
                 {(showAddCourtModal || editingCourt) && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-                            <h3 className="text-xl font-bold text-slate-900 mb-6">
-                                {editingCourt ? 'Edit Court' : 'Add New Court'}
-                            </h3>
-                            
+                    <div className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="card max-w-md w-full p-6 anim-slide-up">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="font-display text-xl font-semibold text-on-surface">
+                                    {editingCourt ? 'Edit Court' : 'Add New Court'}
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        setShowAddCourtModal(false);
+                                        setEditingCourt(null);
+                                        resetCourtForm();
+                                    }}
+                                    className="p-1 rounded-lg hover:bg-surface-container transition-colors"
+                                >
+                                    <Icon name="close" size={20} className="text-on-surface-variant" />
+                                </button>
+                            </div>
+
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-1.5">
                                         Court Name *
                                     </label>
                                     <input
                                         type="text"
                                         value={courtForm.name}
                                         onChange={(e) => setCourtForm(prev => ({ ...prev, name: e.target.value }))}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                                        className="input"
                                         placeholder="e.g., Court 1"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-1.5">
                                         Sport Type *
                                     </label>
-                                    <select
-                                        value={courtForm.sportType}
-                                        onChange={(e) => setCourtForm(prev => ({ ...prev, sportType: e.target.value }))}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
-                                    >
-                                        {sportTypes.map((sport) => (
-                                            <option key={sport.value} value={sport.value}>
-                                                {sport.icon} {sport.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {sportTypes.map((sport) => {
+                                            const selected = courtForm.sportType === sport.value;
+                                            return (
+                                                <button
+                                                    type="button"
+                                                    key={sport.value}
+                                                    onClick={() => setCourtForm(prev => ({ ...prev, sportType: sport.value }))}
+                                                    className={`rounded-xl p-3 cursor-pointer flex flex-col items-center gap-1 transition-all border ${
+                                                        selected
+                                                            ? 'border-primary bg-primary-container text-on-primary-container'
+                                                            : 'border-outline-variant hover:border-primary text-on-surface'
+                                                    }`}
+                                                >
+                                                    <span className="text-2xl">{sport.icon}</span>
+                                                    <span className="text-xs font-medium">{sport.label}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-1.5">
                                         Price per Hour (₹) *
                                     </label>
                                     <input
                                         type="number"
                                         value={courtForm.pricePerHour}
                                         onChange={(e) => setCourtForm(prev => ({ ...prev, pricePerHour: e.target.value }))}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                                        className="input font-mono"
                                         placeholder="500"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                                    <label className="block font-mono text-[11px] uppercase tracking-[0.1em] text-on-surface-variant mb-1.5">
                                         Description (Optional)
                                     </label>
                                     <textarea
                                         value={courtForm.description}
                                         onChange={(e) => setCourtForm(prev => ({ ...prev, description: e.target.value }))}
                                         rows={3}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all resize-none"
+                                        className="input resize-none"
                                         placeholder="Any special features or details about this court..."
                                     />
                                 </div>
@@ -640,23 +671,23 @@ export default function FacilityDetailContent() {
                                         setEditingCourt(null);
                                         resetCourtForm();
                                     }}
-                                    className="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-colors"
+                                    className="btn btn-outline flex-1"
                                 >
                                     Cancel
                                 </button>
-                                <Button
+                                <button
                                     onClick={editingCourt ? handleUpdateCourt : handleAddCourt}
                                     disabled={savingCourt || !courtForm.name || !courtForm.pricePerHour}
-                                    className="flex-1"
+                                    className="btn btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {savingCourt ? (
-                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <Icon name="progress_activity" size={20} className="animate-spin" />
                                     ) : editingCourt ? (
                                         'Update Court'
                                     ) : (
                                         'Add Court'
                                     )}
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>

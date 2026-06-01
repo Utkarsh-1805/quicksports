@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { verifyAuthToken } from "../../../../../lib/auth";
-import { 
-  validateReview, 
+import {
+  validateReview,
   validateReviewQuery,
-  createReviewSchema 
+  createReviewSchema
 } from "../../../../../validations/review.validation";
 
 // GET /api/venues/[id]/reviews - Get all reviews for a venue
@@ -12,7 +12,7 @@ export async function GET(request, { params }) {
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    
+
     // Validate query parameters
     const validation = validateReviewQuery(searchParams);
     if (!validation.isValid) {
@@ -21,29 +21,39 @@ export async function GET(request, { params }) {
         { status: 400 }
       );
     }
-    
+
     const { page, limit, sort } = validation.data;
     const skip = (page - 1) * limit;
-    
+
+    // Try to identify current user (optional — public endpoint, but we hydrate
+    // `userHasVoted` per-review when a valid token is present)
+    let currentUserId = null;
+    try {
+      const auth = await verifyAuthToken(request);
+      if (auth?.user?.id) currentUserId = auth.user.id;
+    } catch {
+      // ignore: anonymous reads are fine
+    }
+
     // Check if venue exists
     const venue = await prisma.facility.findFirst({
       where: { id, status: 'APPROVED' }
     });
-    
+
     if (!venue) {
       return NextResponse.json(
         { success: false, message: 'Venue not found' },
         { status: 404 }
       );
     }
-    
+
     // Determine sort order
     let orderBy = { createdAt: 'desc' };
     if (sort === 'highest') orderBy = { rating: 'desc' };
     if (sort === 'lowest') orderBy = { rating: 'asc' };
-    
+
     // Get reviews with pagination
-    const [reviews, total] = await Promise.all([
+    const [reviewsRaw, total] = await Promise.all([
       prisma.review.findMany({
         where: { facilityId: id },
         include: {
@@ -60,6 +70,15 @@ export async function GET(request, { params }) {
       }),
       prisma.review.count({ where: { facilityId: id } })
     ]);
+
+    // Annotate each review with whether the current user has voted helpful
+    const reviews = reviewsRaw.map(r => {
+      const voters = Array.isArray(r.helpfulVoters) ? r.helpfulVoters : [];
+      const userHasVoted = currentUserId ? voters.includes(currentUserId) : false;
+      // Strip the raw voters array — the client only needs the count + own state
+      const { helpfulVoters, ...rest } = r;
+      return { ...rest, userHasVoted };
+    });
     
     // Calculate rating distribution
     const ratingStats = await prisma.review.groupBy({

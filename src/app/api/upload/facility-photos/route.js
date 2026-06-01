@@ -17,6 +17,7 @@
 import { NextResponse } from "next/server";
 import { verifyAuth } from "../../../../lib/auth";
 import prisma from "../../../../lib/prisma";
+import { isCloudinaryConfigured, uploadBufferToCloudinary } from "../../../../lib/cloudinary";
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -130,9 +131,10 @@ export async function POST(request) {
     }
 
     // ==========================================
-    // STEP 5: Ensure Upload Directory Exists
+    // STEP 5: Ensure Upload Directory Exists (disk fallback only)
     // ==========================================
-    if (!existsSync(UPLOAD_DIR)) {
+    const useCloudinary = isCloudinaryConfigured();
+    if (!useCloudinary && !existsSync(UPLOAD_DIR)) {
       await mkdir(UPLOAD_DIR, { recursive: true });
     }
 
@@ -144,22 +146,30 @@ export async function POST(request) {
     for (let i = 0; i < photos.length; i++) {
       const photo = photos[i];
       const caption = captions[i] || '';
-      
-      // Generate unique filename
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2);
-      const extension = path.extname(photo.name);
-      const filename = `${facilityId}-${timestamp}-${random}${extension}`;
-      const filepath = path.join(UPLOAD_DIR, filename);
-      
+
       try {
-        // Save file to disk
         const bytes = await photo.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
-        
+
+        let photoUrl;
+        if (useCloudinary) {
+          // Upload to Cloudinary CDN
+          const { url } = await uploadBufferToCloudinary(buffer, {
+            folder: `quickcourt/facilities/${facilityId}`,
+          });
+          photoUrl = url;
+        } else {
+          // Save file to local disk (dev fallback)
+          const timestamp = Date.now();
+          const random = Math.random().toString(36).substring(2);
+          const extension = path.extname(photo.name);
+          const filename = `${facilityId}-${timestamp}-${random}${extension}`;
+          const filepath = path.join(UPLOAD_DIR, filename);
+          await writeFile(filepath, buffer);
+          photoUrl = `/uploads/facilities/${filename}`;
+        }
+
         // Save to database
-        const photoUrl = `/uploads/facilities/${filename}`;
         const savedPhoto = await prisma.facilityPhoto.create({
           data: {
             facilityId: facilityId,
@@ -167,9 +177,9 @@ export async function POST(request) {
             caption: caption || null
           }
         });
-        
+
         uploadedPhotos.push(savedPhoto);
-        
+
       } catch (error) {
         console.error(`Error uploading photo ${i + 1}:`, error);
         validationErrors.push(`Photo ${i + 1}: Upload failed`);
