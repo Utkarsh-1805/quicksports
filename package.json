@@ -4,13 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "node scripts/api-e2e-test.mjs"
+    "test:e2e": "node scripts/api-e2e-test.mjs",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "schema": "src/prisma/schema"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
